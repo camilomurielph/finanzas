@@ -22,11 +22,11 @@
     data-clerk-publishable-key="pk_test_dXB3YXJkLXdyZW4tNzguY2xlcmsuYWNjb3VudHMuZGV2JA">
   </script>
 
-  <!-- Import Map con la URL correcta de Turso (jsdelivr) -->
+  <!-- Import Map con la URL CORRECTA de Turso (dist/web/index.js) -->
   <script type="importmap">
   {
     "imports": {
-      "@libsql/client/web": "https://cdn.jsdelivr.net/npm/@libsql/client@0.14.0/web/index.js",
+      "@libsql/client/web": "https://cdn.jsdelivr.net/npm/@libsql/client@0.14.0/dist/web/index.js",
       "jspdf": "https://esm.sh/jspdf@2.5.1"
     }
   }
@@ -44,7 +44,7 @@
     </main>
   </div>
 
-  <!-- Carga del módulo principal (con type="module") -->
+  <!-- Carga del módulo principal -->
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
