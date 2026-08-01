@@ -17,7 +17,6 @@ export async function renderDeudas(container) {
     const progress = debt.total_amount > 0 ? ((debt.total_amount - debt.current_balance) / debt.total_amount) * 100 : 0;
 
     const card = createElement('div', 'card');
-    // Barra de progreso
     const progressBar = createElement('div', 'debt-progress');
     const fill = createElement('div', 'fill', { style: `width:${progress}%;` });
     progressBar.appendChild(fill);
@@ -38,7 +37,7 @@ export async function renderDeudas(container) {
 
     const payBtn = createElement('button', 'btn btn-primary', { textContent: 'Abonar' });
     payBtn.addEventListener('click', () => {
-      const modal = showModal('Abonar a deuda', `
+      showModal('Abonar a deuda', `
         <div class="form-group"><label>Monto a abonar</label><input type="number" id="pay-amount" step="0.01" max="${debt.current_balance}" /></div>
       `, async () => {
         const amount = parseFloat(document.getElementById('pay-amount').value);
@@ -54,7 +53,7 @@ export async function renderDeudas(container) {
   }
 
   addBtn.addEventListener('click', () => {
-    const modal = showModal('Nueva Deuda', `
+    showModal('Nueva Deuda', `
       <div class="form-group"><label>Nombre</label><input type="text" id="debt-name" /></div>
       <div class="form-group"><label>Monto total</label><input type="number" id="debt-total" step="0.01" /></div>
       <div class="form-group"><label>Saldo actual (opcional)</label><input type="number" id="debt-balance" step="0.01" /></div>
