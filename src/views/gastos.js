@@ -8,14 +8,32 @@ export function renderGastos(container) {
   const activeExpenses = getExpenses(null, false);
   const archivedExpenses = getExpenses(null, true);
 
-  const catSelect = createElement('select', '', { id: 'category-filter' });
-  const allOption = createElement('option', '', { value: '', textContent: 'Todas las categorías' });
-  catSelect.appendChild(allOption);
+  // --- Contenedor de pestañas (filtro) ---
+  const filterContainer = createElement('div', 'filter-tabs', { style: 'display:flex;gap:var(--space-sm);margin-bottom:var(--space-md);flex-wrap:wrap;' });
+  
+  // Botón "Todos"
+  const allTab = createElement('button', 'btn btn-secondary active', { textContent: 'Todos' });
+  allTab.dataset.cat = '';
+  allTab.addEventListener('click', () => {
+    filterContainer.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    allTab.classList.add('active');
+    renderExpenses(null);
+  });
+  filterContainer.appendChild(allTab);
+
+  // Botones por categoría
   categories.forEach(cat => {
-    const opt = createElement('option', '', { value: cat.id, textContent: cat.name });
-    catSelect.appendChild(opt);
+    const tab = createElement('button', 'btn btn-secondary', { textContent: cat.name });
+    tab.dataset.cat = cat.id;
+    tab.addEventListener('click', () => {
+      filterContainer.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      tab.classList.add('active');
+      renderExpenses(parseInt(tab.dataset.cat));
+    });
+    filterContainer.appendChild(tab);
   });
 
+  // --- Lista de gastos ---
   const expensesContainer = createElement('div', 'expenses-list');
 
   function renderExpenses(categoryId = null) {
@@ -31,10 +49,7 @@ export function renderGastos(container) {
     }
   }
 
-  catSelect.addEventListener('change', () => {
-    renderExpenses(parseInt(catSelect.value) || null);
-  });
-
+  // --- Botón agregar gasto ---
   const addBtn = createElement('button', 'btn btn-primary', { textContent: '+ Nuevo Gasto' });
   addBtn.addEventListener('click', () => {
     const catOptions = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
@@ -55,8 +70,10 @@ export function renderGastos(container) {
     });
   });
 
+  // --- Render inicial ---
   renderExpenses();
 
+  // --- Gastos archivados (colapsable) ---
   const archiveSection = createElement('div', 'archived-section');
   const archiveToggle = createElement('button', 'btn btn-secondary', { textContent: `📦 Gastos Archivados (${archivedExpenses.length})` });
   const archiveList = createElement('div', 'archived-list', { style: 'display:none;margin-top:var(--space-sm);' });
@@ -73,21 +90,23 @@ export function renderGastos(container) {
   });
   appendChildren(archiveSection, [archiveToggle, archiveList]);
 
+  // --- Ensamblar vista ---
   appendChildren(container, [
-    createElement('div', 'filters', { style: 'display:flex;gap:var(--space-md);margin-bottom:var(--space-md);' }, [catSelect, addBtn]),
+    createElement('div', 'filters', { style: 'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--space-md);margin-bottom:var(--space-md);' }, [filterContainer, addBtn]),
     expensesContainer,
     archiveSection
   ]);
 }
 
+// --- Función para crear una fila de gasto ---
 function createExpenseRow(exp, isArchived = false) {
   const row = createElement('div', 'expense-row');
-  const checkbox = createElement('input', '', { type: 'checkbox', class: 'expense-check', checked: exp.completed ? 'checked' : '' });
   const date = createElement('span', 'expense-date', { textContent: formatDate(exp.date) });
   const desc = createElement('span', 'expense-desc', { textContent: exp.description });
   const amount = createElement('span', 'expense-amount', { textContent: formatCurrency(exp.amount) });
+  
+  // Contenedor de acciones (dividir, archivar)
   const actions = createElement('div', 'expense-actions');
-
   if (!isArchived) {
     const divideBtn = createElement('button', 'btn-icon', { textContent: '🔗' });
     divideBtn.addEventListener('click', () => {
@@ -117,27 +136,31 @@ function createExpenseRow(exp, isArchived = false) {
     actions.appendChild(archiveBtn);
   }
 
+  // Checkbox (al final de la fila)
+  const checkbox = createElement('input', '', { type: 'checkbox', class: 'expense-check', checked: exp.completed ? 'checked' : '' });
   checkbox.addEventListener('change', () => {
     toggleExpenseCompleted(exp.id);
     renderGastos(document.getElementById('view-container'));
   });
 
-  appendChildren(row, [checkbox, date, desc, amount, actions]);
+  // Ensamblar la fila (orden: fecha, descripción, monto, acciones, checkbox)
+  appendChildren(row, [date, desc, amount, actions, checkbox]);
 
+  // --- Subgastos (indentados) ---
   const subContainer = createElement('div', 'sub-expenses', { style: 'grid-column:1/-1;padding-left:var(--space-xl);' });
   const subs = getSubExpenses(exp.id);
   if (subs.length > 0) {
     subs.forEach(sub => {
       const subRow = createElement('div', 'sub-expense-row');
-      const subCheck = createElement('input', '', { type: 'checkbox', class: 'sub-check', checked: sub.completed ? 'checked' : '' });
       const subDesc = createElement('span', 'sub-desc', { textContent: sub.description });
       const subAmount = createElement('span', 'sub-amount', { textContent: formatCurrency(sub.amount) });
       const subNote = createElement('span', 'sub-note', { textContent: sub.note || '' });
+      const subCheck = createElement('input', '', { type: 'checkbox', class: 'sub-check', checked: sub.completed ? 'checked' : '' });
       subCheck.addEventListener('change', () => {
         toggleSubExpenseCompleted(sub.id);
         renderGastos(document.getElementById('view-container'));
       });
-      appendChildren(subRow, [subCheck, subDesc, subAmount, subNote]);
+      appendChildren(subRow, [subDesc, subAmount, subNote, subCheck]);
       subContainer.appendChild(subRow);
     });
   }
