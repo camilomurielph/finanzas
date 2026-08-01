@@ -1,4 +1,5 @@
-import jsPDF from 'jspdf';
+// src/views/reporte.js
+// import jsPDF from 'jspdf'; // <-- Elimina esta línea
 import { getPockets, getMovements, getExpenses, getSubscriptions, getDebts, getInvestments } from '../services/dbService.js';
 import { formatCurrency, normalizeSubscriptionAmount } from '../utils/mathUtils.js';
 import { createElement } from '../utils/domHelpers.js';
@@ -10,64 +11,13 @@ export function renderReporte(container) {
   generarBtn.addEventListener('click', async () => {
     status.textContent = 'Generando reporte...';
     try {
-      // Consolidar datos
-      const pockets = getPockets();
-      const pocketBalances = {};
-      let totalPockets = 0;
-      for (const p of pockets) {
-        const movs = getMovements(p.id);
-        const balance = movs.reduce((acc, m) => acc + m.amount, 0);
-        pocketBalances[p.name] = balance;
-        totalPockets += balance;
-      }
+      // ... (código de consolidación de datos igual) ...
 
-      const expenses = getExpenses(null, false);
-      const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
-
-      const subscriptions = getSubscriptions();
-      const totalSubs = subscriptions.reduce((acc, s) => acc + normalizeSubscriptionAmount(s.amount, s.frequency), 0);
-
-      const debts = getDebts();
-      const totalDebts = debts.reduce((acc, d) => acc + d.currentBalance, 0);
-
-      const investments = getInvestments();
-      const totalInvestments = investments.reduce((acc, i) => acc + i.currentValue, 0);
-
-      // Generar PDF
+      // Usar window.jspdf (cargado globalmente)
+      const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      doc.setFontSize(18);
-      doc.text('Reporte Financiero Personal', 14, 22);
-      doc.setFontSize(12);
-      doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 32);
+      // ... (resto del código del PDF igual) ...
 
-      let y = 40;
-      doc.setFontSize(14);
-      doc.text('Resumen General', 14, y);
-      y += 8;
-      doc.setFontSize(12);
-      doc.text(`Total en Bolsillos: ${formatCurrency(totalPockets)}`, 14, y);
-      y += 6;
-      doc.text(`Gastos del mes: ${formatCurrency(totalExpenses)}`, 14, y);
-      y += 6;
-      doc.text(`Suscripciones (mensual): ${formatCurrency(totalSubs)}`, 14, y);
-      y += 6;
-      doc.text(`Deudas pendientes: ${formatCurrency(totalDebts)}`, 14, y);
-      y += 6;
-      doc.text(`Inversiones: ${formatCurrency(totalInvestments)}`, 14, y);
-
-      y += 10;
-      doc.setFontSize(14);
-      doc.text('Detalle de Bolsillos', 14, y);
-      y += 8;
-      doc.setFontSize(12);
-      for (const [name, balance] of Object.entries(pocketBalances)) {
-        doc.text(`${name}: ${formatCurrency(balance)}`, 14, y);
-        y += 6;
-        if (y > 270) { doc.addPage(); y = 20; }
-      }
-
-      doc.save('reporte-financiero.pdf');
-      status.textContent = '✅ Reporte generado correctamente.';
     } catch (error) {
       console.error(error);
       status.textContent = '❌ Error al generar el reporte.';
