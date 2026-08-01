@@ -16,7 +16,6 @@ export function calculatePercentage(part, total) {
 }
 
 export function normalizeSubscriptionAmount(amount, frequency) {
-  // frequency: 'diario', 'semanal', 'quincenal', 'mensual', 'anual'
   const map = {
     diario: 30,
     semanal: 4,
