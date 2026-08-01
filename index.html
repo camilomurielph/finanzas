@@ -9,6 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   
+  <!-- Redirección si se entra a la raíz -->
+  <script>
+    if (window.location.pathname === '/') {
+      window.location.replace('/finanzas/');
+    }
+  </script>
+
   <!-- Carga de Clerk con la clave publicable como atributo -->
   <script 
     src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
