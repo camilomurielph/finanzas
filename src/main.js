@@ -1,3 +1,5 @@
+console.log('🚀 main.js se está ejecutando');
+
 import { initClerk, getClerk } from './config/clerk.js';
 import { router } from './router.js';
 import { renderSidebar } from './views/sidebar.js';
@@ -10,9 +12,11 @@ const viewTitle = document.getElementById('view-title');
 
 // Inicializar Clerk y luego arrancar la app
 async function initApp() {
+  console.log('⏳ Iniciando Clerk...');
   try {
     // Esperar autenticación
     const user = await initClerk();
+    console.log('👤 Usuario autenticado:', user);
     if (!user) {
       // Clerk maneja la UI de login automáticamente
       return;
@@ -20,6 +24,7 @@ async function initApp() {
 
     // Cargar datos del usuario (opcional)
     await loadUserData(user.id);
+    console.log('📦 Datos cargados');
 
     // Renderizar sidebar
     renderSidebar(sidebarEl);
@@ -35,7 +40,7 @@ async function initApp() {
     });
 
   } catch (error) {
-    console.error('Error al iniciar la aplicación:', error);
+    console.error('❌ Error al iniciar la aplicación:', error);
   }
 }
 
