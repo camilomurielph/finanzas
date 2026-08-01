@@ -3,12 +3,12 @@ import { formatCurrency } from '../utils/mathUtils.js';
 import { formatDate } from '../utils/dateUtils.js';
 import { createElement, appendChildren, showModal } from '../utils/domHelpers.js';
 
-export async function renderBolsillos(container) {
-  const pockets = await getPockets();
+export function renderBolsillos(container) {
+  const pockets = getPockets();
   const grid = createElement('div', 'cards-grid', { style: 'display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--space-md);' });
 
   for (const pocket of pockets) {
-    const movements = await getMovements(pocket.id);
+    const movements = getMovements(pocket.id);
     const balance = movements.reduce((acc, m) => acc + m.amount, 0);
 
     const card = createElement('div', 'card');
@@ -27,6 +27,7 @@ export async function renderBolsillos(container) {
     const withdrawBtn = createElement('button', 'btn btn-danger', { textContent: '- Retirar' });
     appendChildren(actionRow, [addBtn, withdrawBtn]);
 
+    // Movimientos recientes
     const movContainer = createElement('div', 'movements');
     const toggle = createElement('button', 'btn btn-secondary', { textContent: '▼ Movimientos recientes' });
     const movList = createElement('ul', 'mov-list', { style: 'display:none;list-style:none;margin-top:var(--space-sm);' });
@@ -44,16 +45,17 @@ export async function renderBolsillos(container) {
     appendChildren(card, [header, amount, actionRow, movContainer]);
     grid.appendChild(card);
 
+    // Event listeners
     editBtn.addEventListener('click', () => {
       showModal('Editar bolsillo', `
         <div class="form-group">
           <label>Nombre</label>
           <input type="text" id="edit-pocket-name" value="${pocket.name}" />
         </div>
-      `, async () => {
+      `, () => {
         const name = document.getElementById('edit-pocket-name').value.trim();
         if (name) {
-          await updatePocket(pocket.id, name);
+          updatePocket(pocket.id, name);
           renderBolsillos(container);
         }
       });
@@ -61,7 +63,8 @@ export async function renderBolsillos(container) {
 
     deleteBtn.addEventListener('click', () => {
       if (confirm(`¿Eliminar el bolsillo "${pocket.name}"?`)) {
-        deletePocket(pocket.id).then(() => renderBolsillos(container));
+        deletePocket(pocket.id);
+        renderBolsillos(container);
       }
     });
 
@@ -75,11 +78,11 @@ export async function renderBolsillos(container) {
           <label>Descripción (opcional)</label>
           <input type="text" id="mov-desc" />
         </div>
-      `, async () => {
+      `, () => {
         const amount = parseFloat(document.getElementById('mov-amount').value);
         const desc = document.getElementById('mov-desc').value.trim();
         if (!isNaN(amount) && amount > 0) {
-          await createMovement(pocket.id, amount, desc);
+          createMovement(pocket.id, amount, desc);
           renderBolsillos(container);
         }
       });
@@ -95,11 +98,11 @@ export async function renderBolsillos(container) {
           <label>Descripción (opcional)</label>
           <input type="text" id="mov-desc" />
         </div>
-      `, async () => {
+      `, () => {
         const amount = parseFloat(document.getElementById('mov-amount').value);
         const desc = document.getElementById('mov-desc').value.trim();
         if (!isNaN(amount) && amount > 0) {
-          await createMovement(pocket.id, -amount, desc);
+          createMovement(pocket.id, -amount, desc);
           renderBolsillos(container);
         }
       });
@@ -113,10 +116,10 @@ export async function renderBolsillos(container) {
         <label>Nombre</label>
         <input type="text" id="new-pocket-name" />
       </div>
-    `, async () => {
+    `, () => {
       const name = document.getElementById('new-pocket-name').value.trim();
       if (name) {
-        await createPocket(name);
+        createPocket(name);
         renderBolsillos(container);
       }
     });
