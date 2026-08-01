@@ -1,0 +1,13 @@
+{
+  "name": "finanzas-personales-spa",
+  "version": "1.0.0",
+  "description": "SPA de finanzas personales con Clerk y Turso",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^4.5.0"
+  }
+}
