@@ -27,7 +27,6 @@ export async function renderBolsillos(container) {
     const withdrawBtn = createElement('button', 'btn btn-danger', { textContent: '- Retirar' });
     appendChildren(actionRow, [addBtn, withdrawBtn]);
 
-    // Movimientos recientes
     const movContainer = createElement('div', 'movements');
     const toggle = createElement('button', 'btn btn-secondary', { textContent: '▼ Movimientos recientes' });
     const movList = createElement('ul', 'mov-list', { style: 'display:none;list-style:none;margin-top:var(--space-sm);' });
@@ -45,9 +44,8 @@ export async function renderBolsillos(container) {
     appendChildren(card, [header, amount, actionRow, movContainer]);
     grid.appendChild(card);
 
-    // Event listeners
     editBtn.addEventListener('click', () => {
-      const modal = showModal('Editar bolsillo', `
+      showModal('Editar bolsillo', `
         <div class="form-group">
           <label>Nombre</label>
           <input type="text" id="edit-pocket-name" value="${pocket.name}" />
@@ -68,7 +66,7 @@ export async function renderBolsillos(container) {
     });
 
     addBtn.addEventListener('click', () => {
-      const modal = showModal('Añadir dinero', `
+      showModal('Añadir dinero', `
         <div class="form-group">
           <label>Monto</label>
           <input type="number" id="mov-amount" step="0.01" />
@@ -88,7 +86,7 @@ export async function renderBolsillos(container) {
     });
 
     withdrawBtn.addEventListener('click', () => {
-      const modal = showModal('Retirar dinero', `
+      showModal('Retirar dinero', `
         <div class="form-group">
           <label>Monto</label>
           <input type="number" id="mov-amount" step="0.01" />
@@ -108,10 +106,9 @@ export async function renderBolsillos(container) {
     });
   }
 
-  // Botón para crear nuevo bolsillo
   const addPocketBtn = createElement('button', 'btn btn-primary', { textContent: '+ Nuevo Bolsillo' });
   addPocketBtn.addEventListener('click', () => {
-    const modal = showModal('Nuevo Bolsillo', `
+    showModal('Nuevo Bolsillo', `
       <div class="form-group">
         <label>Nombre</label>
         <input type="text" id="new-pocket-name" />
