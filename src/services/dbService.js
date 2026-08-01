@@ -3,14 +3,12 @@ import { getUserId } from '../config/clerk.js';
 
 const client = getTursoClient();
 
-// Helper para obtener el user_id actual
 function getUserIdOrThrow() {
   const id = getUserId();
   if (!id) throw new Error('Usuario no autenticado');
   return id;
 }
 
-// --- BOLSILLOS ---
 export async function getPockets() {
   const userId = getUserIdOrThrow();
   const result = await client.execute({
@@ -46,7 +44,6 @@ export async function deletePocket(id) {
   });
 }
 
-// --- MOVIMIENTOS ---
 export async function getMovements(pocketId, limit = 10) {
   const userId = getUserIdOrThrow();
   const result = await client.execute({
@@ -65,7 +62,6 @@ export async function createMovement(pocketId, amount, description = '') {
   return result.rows?.[0] || null;
 }
 
-// --- GASTOS ---
 export async function getExpenses(categoryId = null, archived = false) {
   const userId = getUserIdOrThrow();
   let sql = 'SELECT * FROM expenses WHERE user_id = ? AND is_archived = ?';
@@ -107,7 +103,6 @@ export async function archiveExpense(id) {
   return result.rows?.[0] || null;
 }
 
-// --- SUBGASTOS ---
 export async function getSubExpenses(expenseId) {
   const userId = getUserIdOrThrow();
   const result = await client.execute({
@@ -135,7 +130,6 @@ export async function toggleSubExpenseCompleted(id) {
   return result.rows?.[0] || null;
 }
 
-// --- CATEGORÍAS ---
 export async function getCategories() {
   const userId = getUserIdOrThrow();
   const result = await client.execute({
@@ -154,7 +148,6 @@ export async function createCategory(name) {
   return result.rows?.[0] || null;
 }
 
-// --- SUSCRIPCIONES ---
 export async function getSubscriptions() {
   const userId = getUserIdOrThrow();
   const result = await client.execute({
@@ -181,7 +174,6 @@ export async function deleteSubscription(id) {
   });
 }
 
-// --- INVERSIONES ---
 export async function getInvestments() {
   const userId = getUserIdOrThrow();
   const result = await client.execute({
@@ -227,7 +219,6 @@ export async function addInvestmentCapital(id, additionalCapital) {
   return result.rows?.[0] || null;
 }
 
-// --- DEUDAS ---
 export async function getDebts() {
   const userId = getUserIdOrThrow();
   const result = await client.execute({
@@ -264,94 +255,38 @@ export async function deleteDebt(id) {
   });
 }
 
-// --- FUNCIÓN DE CARGA INICIAL (crear tablas si no existen) ---
 export async function loadUserData(userId) {
   console.log('📦 Cargando datos para usuario:', userId);
   
-  // Intentar una consulta simple para verificar conexión
   try {
     const test = await client.execute('SELECT 1');
-    console.log('✅ Conexión a Turso verificada:', test);
+    console.log('✅ Conexión a Turso verificada');
   } catch (err) {
     console.error('❌ No se pudo conectar a Turso:', err);
     throw err;
   }
 
-  // Crear tablas si no existen (idempotente)
   const queries = [
-    `CREATE TABLE IF NOT EXISTS pockets (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      name TEXT NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS movements (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      pocket_id INTEGER NOT NULL,
-      amount REAL NOT NULL,
-      description TEXT,
-      date TEXT NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      name TEXT NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS expenses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      description TEXT NOT NULL,
-      amount REAL NOT NULL,
-      category_id INTEGER NOT NULL,
-      date TEXT NOT NULL,
-      is_completed INTEGER DEFAULT 0,
-      is_archived INTEGER DEFAULT 0
-    )`,
-    `CREATE TABLE IF NOT EXISTS sub_expenses (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      expense_id INTEGER NOT NULL,
-      description TEXT NOT NULL,
-      amount REAL NOT NULL,
-      note TEXT,
-      is_completed INTEGER DEFAULT 0
-    )`,
-    `CREATE TABLE IF NOT EXISTS subscriptions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      amount REAL NOT NULL,
-      frequency TEXT NOT NULL,
-      charge_date TEXT NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS investments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      capital REAL NOT NULL,
-      current_value REAL NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS debts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      total_amount REAL NOT NULL,
-      current_balance REAL NOT NULL
-    )`
+    `CREATE TABLE IF NOT EXISTS pockets ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, name TEXT NOT NULL )`,
+    `CREATE TABLE IF NOT EXISTS movements ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, pocket_id INTEGER NOT NULL, amount REAL NOT NULL, description TEXT, date TEXT NOT NULL )`,
+    `CREATE TABLE IF NOT EXISTS categories ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, name TEXT NOT NULL )`,
+    `CREATE TABLE IF NOT EXISTS expenses ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, description TEXT NOT NULL, amount REAL NOT NULL, category_id INTEGER NOT NULL, date TEXT NOT NULL, is_completed INTEGER DEFAULT 0, is_archived INTEGER DEFAULT 0 )`,
+    `CREATE TABLE IF NOT EXISTS sub_expenses ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, expense_id INTEGER NOT NULL, description TEXT NOT NULL, amount REAL NOT NULL, note TEXT, is_completed INTEGER DEFAULT 0 )`,
+    `CREATE TABLE IF NOT EXISTS subscriptions ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, name TEXT NOT NULL, amount REAL NOT NULL, frequency TEXT NOT NULL, charge_date TEXT NOT NULL )`,
+    `CREATE TABLE IF NOT EXISTS investments ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, name TEXT NOT NULL, capital REAL NOT NULL, current_value REAL NOT NULL )`,
+    `CREATE TABLE IF NOT EXISTS debts ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, name TEXT NOT NULL, total_amount REAL NOT NULL, current_balance REAL NOT NULL )`
   ];
 
   for (const sql of queries) {
     try {
-      const result = await client.execute({ sql });
-      // Extraer nombre de tabla del SQL para el log
+      await client.execute({ sql });
       const tableName = sql.match(/CREATE TABLE IF NOT EXISTS (\w+)/)?.[1] || 'tabla';
       console.log(`✅ Tabla creada/verificada: ${tableName}`);
     } catch (error) {
-      console.error(`❌ Error creando tabla: ${sql}`, error);
+      console.error(`❌ Error creando tabla:`, error);
     }
   }
 
-  // Crear categorías por defecto si no existen
   try {
     const existing = await client.execute({
       sql: 'SELECT name FROM categories WHERE user_id = ?',
