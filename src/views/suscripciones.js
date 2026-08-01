@@ -2,8 +2,8 @@ import { getSubscriptions, createSubscription, deleteSubscription } from '../ser
 import { formatCurrency, normalizeSubscriptionAmount } from '../utils/mathUtils.js';
 import { createElement, appendChildren, showModal } from '../utils/domHelpers.js';
 
-export async function renderSuscripciones(container) {
-  const subs = await getSubscriptions();
+export function renderSuscripciones(container) {
+  const subs = getSubscriptions();
   const totalMonthly = subs.reduce((acc, s) => acc + normalizeSubscriptionAmount(s.amount, s.frequency), 0);
 
   const header = createElement('div', '', { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-md);' });
@@ -17,13 +17,13 @@ export async function renderSuscripciones(container) {
     const info = createElement('div', '');
     const name = createElement('strong', '', { textContent: sub.name });
     const details = createElement('span', '', { 
-      textContent: ` | ${formatCurrency(sub.amount)} / ${sub.frequency} | Cobro: ${sub.charge_date}` 
+      textContent: ` | ${formatCurrency(sub.amount)} / ${sub.frequency} | Cobro: ${sub.chargeDate}` 
     });
     appendChildren(info, [name, details]);
     const deleteBtn = createElement('button', 'btn btn-danger', { textContent: 'Eliminar' });
-    deleteBtn.addEventListener('click', async () => {
+    deleteBtn.addEventListener('click', () => {
       if (confirm(`Eliminar suscripción "${sub.name}"?`)) {
-        await deleteSubscription(sub.id);
+        deleteSubscription(sub.id);
         renderSuscripciones(container);
       }
     });
@@ -44,14 +44,14 @@ export async function renderSuscripciones(container) {
           <option value="anual">Anual</option>
         </select>
       </div>
-      <div class="form-group"><label>Fecha de cobro (día)</label><input type="number" id="sub-charge" min="1" max="31" value="1" /></div>
-    `, async () => {
+      <div class="form-group"><label>Día de cobro</label><input type="number" id="sub-charge" min="1" max="31" value="1" /></div>
+    `, () => {
       const name = document.getElementById('sub-name').value.trim();
       const amount = parseFloat(document.getElementById('sub-amount').value);
       const frequency = document.getElementById('sub-freq').value;
       const chargeDate = document.getElementById('sub-charge').value;
       if (name && !isNaN(amount) && amount > 0 && chargeDate) {
-        await createSubscription(name, amount, frequency, chargeDate);
+        createSubscription(name, amount, frequency, chargeDate);
         renderSuscripciones(container);
       }
     });
