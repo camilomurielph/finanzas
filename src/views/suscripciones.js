@@ -32,7 +32,7 @@ export async function renderSuscripciones(container) {
   }
 
   addBtn.addEventListener('click', () => {
-    const modal = showModal('Nueva Suscripción', `
+    showModal('Nueva Suscripción', `
       <div class="form-group"><label>Nombre</label><input type="text" id="sub-name" /></div>
       <div class="form-group"><label>Monto</label><input type="number" id="sub-amount" step="0.01" /></div>
       <div class="form-group"><label>Frecuencia</label>
