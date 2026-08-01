@@ -9,11 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   
-  <!-- Import Map: Clerk desde jsdelivr (tiene export default) -->
+  <!-- Import Map definitivo con URL oficial ESM de Clerk -->
   <script type="importmap">
   {
     "imports": {
-      "@clerk/clerk-js": "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js",
+      "@clerk/clerk-js": "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.esm.js",
       "@libsql/client/web": "https://esm.sh/@libsql/client@0.14.0/web",
       "jspdf": "https://esm.sh/jspdf@2.5.1"
     }
@@ -23,21 +23,16 @@
 <body>
   <!-- Contenedor principal de la app -->
   <div id="app-container">
-    <!-- Sidebar se inyecta aquí -->
     <aside id="sidebar"></aside>
-    <!-- Contenido principal -->
     <main id="main-content">
       <header id="view-header">
         <h1 id="view-title">Dashboard</h1>
         <div id="header-actions"></div>
       </header>
-      <section id="view-container">
-        <!-- Las vistas se renderizan dinámicamente aquí -->
-      </section>
+      <section id="view-container"></section>
     </main>
   </div>
 
-  <!-- Carga del módulo principal -->
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
