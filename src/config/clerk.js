@@ -33,7 +33,12 @@ export async function initClerk() {
   }
 
   // Si no está autenticado, mostrar el modal de inicio de sesión
-  clerk.openSignIn();
+  // ⚠️ Ahora redirige a /finanzas/ después de login
+  clerk.openSignIn({
+    signInUrl: '/finanzas/',
+    afterSignInUrl: '/finanzas/',
+    afterSignUpUrl: '/finanzas/',
+  });
   return null;
 }
 
