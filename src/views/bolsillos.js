@@ -27,7 +27,7 @@ export function renderBolsillos(container) {
     const withdrawBtn = createElement('button', 'btn btn-danger', { textContent: '- Retirar' });
     appendChildren(actionRow, [addBtn, withdrawBtn]);
 
-    // Movimientos recientes
+    // Movimientos recientes (desplegable)
     const movContainer = createElement('div', 'movements');
     const toggle = createElement('button', 'btn btn-secondary', { textContent: '▼ Movimientos recientes' });
     const movList = createElement('ul', 'mov-list', { style: 'display:none;list-style:none;margin-top:var(--space-sm);' });
