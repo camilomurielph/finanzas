@@ -8,16 +8,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
-  <!-- Import Map para dependencias desde CDN -->
+  
+  <!-- Import Map con todas las dependencias desde esm.sh -->
   <script type="importmap">
-{
-  "imports": {
-    "@clerk/clerk-js": "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js",
-    "@libsql/client/web": "https://esm.sh/@libsql/client@0.14.0/web",
-    "jspdf": "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.es.min.js"
+  {
+    "imports": {
+      "@clerk/clerk-js": "https://esm.sh/@clerk/clerk-js@5",
+      "@libsql/client/web": "https://esm.sh/@libsql/client@0.14.0/web",
+      "jspdf": "https://esm.sh/jspdf@2.5.1"
+    }
   }
-}
-</script>
+  </script>
 </head>
 <body>
   <!-- Contenedor principal de la app -->
