@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Finanzas Personales (Simple)</title>
+  <title>Finanzas Personales (Demo)</title>
   <style>
     /* ===== DESIGN TOKENS ===== */
     :root {
@@ -21,7 +21,6 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: var(--font-family); background: var(--bg-primary); color: var(--text-primary); font-size: var(--fs-body); height: 100vh; overflow: hidden; }
     #app { display: flex; height: 100vh; }
-    /* Sidebar */
     #sidebar { width: 220px; background: var(--bg-secondary); padding: var(--space-lg) var(--space-md); display: flex; flex-direction: column; border-right: 1px solid var(--border-subtle); }
     #sidebar .logo { font-size: var(--fs-h2); font-weight: 700; color: var(--color-primary); margin-bottom: var(--space-lg); }
     #sidebar nav ul { list-style: none; display: flex; flex-direction: column; gap: var(--space-xs); }
@@ -30,19 +29,16 @@
     #sidebar nav ul li.active { background: var(--bg-tertiary); color: var(--color-primary); }
     #sidebar .user-profile { margin-top: auto; padding-top: var(--space-md); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; gap: var(--space-md); }
     #sidebar .user-profile .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-weight: 600; }
-    /* Main */
     #main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
     #header { padding: var(--space-lg) var(--space-xl); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; }
     #header h1 { font-size: var(--fs-h1); }
     #content { padding: var(--space-xl); max-width: 1200px; margin: 0 auto; width: 100%; }
-    /* Cards */
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-md); }
     .card { background: var(--bg-secondary); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: var(--space-lg); box-shadow: var(--shadow-md); }
     .card-header { display: flex; justify-content: space-between; align-items: center; }
     .card-title { color: var(--text-secondary); }
     .card-amount { font-size: var(--fs-h1); font-weight: 700; }
     .card-actions { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-top: var(--space-sm); }
-    /* Buttons */
     .btn { padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm); border: none; font-weight: 600; cursor: pointer; }
     .btn-primary { background: var(--color-primary); color: #000; }
     .btn-primary:hover { background: var(--color-primary-hover); }
@@ -50,16 +46,14 @@
     .btn-danger:hover { background: var(--color-danger); color: #000; }
     .btn-secondary { background: transparent; border: 1px solid var(--border-strong); color: var(--text-secondary); }
     .btn-icon { background: none; border: none; color: var(--text-secondary); cursor: pointer; }
-    /* Inputs */
     input, select { background: var(--bg-tertiary); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); color: var(--text-primary); padding: var(--space-sm) var(--space-md); width: 100%; outline: none; }
     input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
-    /* Modal */
     .modal-overlay { position: fixed; top:0;left:0;right:0;bottom:0; background: rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; }
     .modal-content { background: var(--bg-secondary); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); padding: var(--space-xl); max-width: 500px; width: 90%; }
     .modal-content .form-group { margin-bottom: var(--space-md); }
     .modal-content .form-group label { display: block; margin-bottom: var(--space-xs); color: var(--text-secondary); }
     .modal-content .form-actions { display: flex; gap: var(--space-sm); justify-content: flex-end; margin-top: var(--space-md); }
-    /* Responsive */
+    .expense-row { display: flex; justify-content: space-between; padding: var(--space-sm); border-bottom: 1px solid var(--border-subtle); align-items: center; }
     @media (max-width: 768px) {
       #sidebar { width: 60px; padding: var(--space-sm); }
       #sidebar .logo, #sidebar .user-profile span, #sidebar nav ul li span { display: none; }
@@ -72,7 +66,7 @@
   <aside id="sidebar">
     <div class="logo">💰</div>
     <nav><ul id="nav-list"></ul></nav>
-    <div class="user-profile"><div class="avatar" id="user-avatar">U</div><span id="user-name">Usuario</span></div>
+    <div class="user-profile"><div class="avatar">D</div><span>Demo</span></div>
   </aside>
   <main id="main">
     <header id="header"><h1 id="view-title">Dashboard</h1></header>
@@ -80,10 +74,6 @@
   </main>
 </div>
 
-<!-- Carga de Clerk (script tradicional) -->
-<script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js"></script>
-
-<!-- Importamos Turso y jspdf desde CDN (sin importmap) -->
 <script type="importmap">
 {
   "imports": {
@@ -95,20 +85,24 @@
 
 <script type="module">
 // ============================================================
-// 1. CONFIGURACIÓN (reemplaza con tus credenciales)
+// 1. USUARIO FIJO (sin Clerk)
 // ============================================================
-const CLERK_PUBLISHABLE_KEY = 'pk_test_dXB3YXJkLXdyZW4tNzguY2xlcmsuYWNjb3VudHMuZGV2JA';
+const USER_ID = 'demo-user';
+
+// ============================================================
+// 2. CONFIGURACIÓN TURSO
+// ============================================================
 const TURSO_URL = 'libsql://finanzas-camilomurielph.aws-us-west-2.turso.io';
 const TURSO_TOKEN = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3ODU1NTM5MjQsImlkIjoiMDE5ZmJiNGQtODkwMS03ZWI1LTljYTYtNzkxZGVhNDFmZmQzIiwia2lkIjoicG11UzJqeERaZTZEa0lZUk10bl9ZNUhxa0pRLVJFZEFHbmhkSDhOT2QydyIsInJpZCI6ImQ2MGYwYzI3LTFlZjYtNDEyOC04MjgwLTJmMDg4NmNmYmE1NCJ9.gwWta4HwT9P7k-RbHi14-gmVR04A3o-kJ6t_3cvrvzRke37s5RB6GD7OlY_KNwpdIcl9gVRP_oh7YKanWlqOAg';
 
 // ============================================================
-// 2. IMPORTACIÓN DE TURSO (dinámica para evitar errores)
+// 3. IMPORTAR TURSO
 // ============================================================
 const { createClient } = await import('@libsql/client/web');
 const turso = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
 
 // ============================================================
-// 3. UTILIDADES DOM
+// 4. UTILIDADES DOM
 // ============================================================
 function el(tag, cls='', attrs={}, children=[]) {
   const e = document.createElement(tag);
@@ -148,40 +142,12 @@ function formatDate(d) {
 }
 
 // ============================================================
-// 4. CLERK (autenticación)
-// ============================================================
-let currentUser = null;
-async function initClerk() {
-  // Esperar a que Clerk esté disponible
-  let attempts = 0;
-  while (typeof window.Clerk === 'undefined' && attempts < 20) {
-    await new Promise(r => setTimeout(r, 100));
-    attempts++;
-  }
-  if (typeof window.Clerk === 'undefined') {
-    console.error('❌ Clerk no cargó');
-    return null;
-  }
-  const clerk = window.Clerk;
-  if (!clerk.loaded) await clerk.load();
-  if (clerk.user) {
-    currentUser = clerk.user;
-    return currentUser;
-  }
-  clerk.openSignIn({ signInUrl: '/finanzas/', afterSignInUrl: '/finanzas/', afterSignUpUrl: '/finanzas/' });
-  return null;
-}
-function getUserId() { return currentUser ? currentUser.id : null; }
-
-// ============================================================
-// 5. BASE DE DATOS (funciones CRUD)
+// 5. BASE DE DATOS
 // ============================================================
 async function dbExecute(sql, args=[]) {
-  if (!getUserId()) throw new Error('No autenticado');
-  return await turso.execute({ sql, args: [getUserId(), ...args] });
+  return await turso.execute({ sql, args: [USER_ID, ...args] });
 }
 
-// Tablas
 async function initTables() {
   const queries = [
     `CREATE TABLE IF NOT EXISTS pockets ( id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT, name TEXT )`,
@@ -196,29 +162,26 @@ async function initTables() {
   for (const sql of queries) {
     try { await turso.execute({ sql }); } catch(e) { console.warn('Tabla ya existe o error:', e); }
   }
-  // Categorías por defecto
-  const userId = getUserId();
-  const existing = await turso.execute({ sql: 'SELECT name FROM categories WHERE user_id = ?', args: [userId] });
+  const existing = await turso.execute({ sql: 'SELECT name FROM categories WHERE user_id = ?', args: [USER_ID] });
   const names = existing.rows.map(r => r.name);
   for (const cat of ['Tarjeta 1', 'Débito', 'Efectivo']) {
     if (!names.includes(cat)) {
-      await turso.execute({ sql: 'INSERT INTO categories (user_id, name) VALUES (?, ?)', args: [userId, cat] });
+      await turso.execute({ sql: 'INSERT INTO categories (user_id, name) VALUES (?, ?)', args: [USER_ID, cat] });
     }
   }
 }
 
 // ============================================================
-// 6. VISTAS (simplificadas)
+// 6. VISTAS
 // ============================================================
 const views = {};
 
-// Vista: Bolsillos
+// --- Bolsillos ---
 views.bolsillos = async function(container) {
-  const userId = getUserId();
-  const pockets = await turso.execute({ sql: 'SELECT * FROM pockets WHERE user_id = ?', args: [userId] });
+  const pockets = await turso.execute({ sql: 'SELECT * FROM pockets WHERE user_id = ?', args: [USER_ID] });
   const grid = el('div', 'cards-grid');
   for (const pocket of pockets.rows) {
-    const movs = await turso.execute({ sql: 'SELECT * FROM movements WHERE pocket_id = ? AND user_id = ?', args: [pocket.id, userId] });
+    const movs = await turso.execute({ sql: 'SELECT * FROM movements WHERE pocket_id = ? AND user_id = ?', args: [pocket.id, USER_ID] });
     const balance = movs.rows.reduce((acc, m) => acc + m.amount, 0);
     const card = el('div', 'card');
     const header = el('div', 'card-header');
@@ -241,18 +204,18 @@ views.bolsillos = async function(container) {
       showModal('Editar Bolsillo', `<input id="edit-name" value="${pocket.name}">`, async () => {
         const newName = document.getElementById('edit-name').value.trim();
         if (newName) {
-          await turso.execute({ sql: 'UPDATE pockets SET name = ? WHERE id = ? AND user_id = ?', args: [newName, pocket.id, userId] });
+          await turso.execute({ sql: 'UPDATE pockets SET name = ? WHERE id = ? AND user_id = ?', args: [newName, pocket.id, USER_ID] });
           renderView('bolsillos');
         }
       });
     };
-    delBtn.onclick = () => { if(confirm('Eliminar?')) { turso.execute({ sql: 'DELETE FROM pockets WHERE id = ? AND user_id = ?', args: [pocket.id, userId] }); renderView('bolsillos'); } };
+    delBtn.onclick = () => { if(confirm('Eliminar?')) { turso.execute({ sql: 'DELETE FROM pockets WHERE id = ? AND user_id = ?', args: [pocket.id, USER_ID] }); renderView('bolsillos'); } };
     addBtn.onclick = () => {
       showModal('Añadir dinero', `<input id="mov-amount" type="number" step="0.01" placeholder="Monto"><input id="mov-desc" placeholder="Descripción">`, async () => {
         const amount = parseFloat(document.getElementById('mov-amount').value);
         const desc = document.getElementById('mov-desc').value.trim();
         if (!isNaN(amount) && amount > 0) {
-          await turso.execute({ sql: 'INSERT INTO movements (user_id, pocket_id, amount, description, date) VALUES (?, ?, ?, ?, datetime("now"))', args: [userId, pocket.id, amount, desc] });
+          await turso.execute({ sql: 'INSERT INTO movements (user_id, pocket_id, amount, description, date) VALUES (?, ?, ?, ?, datetime("now"))', args: [USER_ID, pocket.id, amount, desc] });
           renderView('bolsillos');
         }
       });
@@ -262,19 +225,18 @@ views.bolsillos = async function(container) {
         const amount = parseFloat(document.getElementById('mov-amount').value);
         const desc = document.getElementById('mov-desc').value.trim();
         if (!isNaN(amount) && amount > 0) {
-          await turso.execute({ sql: 'INSERT INTO movements (user_id, pocket_id, amount, description, date) VALUES (?, ?, ?, ?, datetime("now"))', args: [userId, pocket.id, -amount, desc] });
+          await turso.execute({ sql: 'INSERT INTO movements (user_id, pocket_id, amount, description, date) VALUES (?, ?, ?, ?, datetime("now"))', args: [USER_ID, pocket.id, -amount, desc] });
           renderView('bolsillos');
         }
       });
     };
   }
-  // Nuevo bolsillo
   const addPocket = el('button', 'btn btn-primary', { textContent: '+ Nuevo Bolsillo' });
   addPocket.onclick = () => {
     showModal('Nuevo Bolsillo', `<input id="new-pocket-name" placeholder="Nombre">`, async () => {
       const name = document.getElementById('new-pocket-name').value.trim();
       if (name) {
-        await turso.execute({ sql: 'INSERT INTO pockets (user_id, name) VALUES (?, ?)', args: [userId, name] });
+        await turso.execute({ sql: 'INSERT INTO pockets (user_id, name) VALUES (?, ?)', args: [USER_ID, name] });
         renderView('bolsillos');
       }
     });
@@ -282,26 +244,24 @@ views.bolsillos = async function(container) {
   append(container, grid, addPocket);
 };
 
-// Vista: Gastos (simplificada)
+// --- Gastos ---
 views.gastos = async function(container) {
-  const userId = getUserId();
-  const categories = await turso.execute({ sql: 'SELECT * FROM categories WHERE user_id = ?', args: [userId] });
-  const expenses = await turso.execute({ sql: 'SELECT * FROM expenses WHERE user_id = ? AND is_archived = 0', args: [userId] });
+  const categories = await turso.execute({ sql: 'SELECT * FROM categories WHERE user_id = ?', args: [USER_ID] });
+  const expenses = await turso.execute({ sql: 'SELECT * FROM expenses WHERE user_id = ? AND is_archived = 0', args: [USER_ID] });
   const list = el('div');
   for (const exp of expenses.rows) {
-    const row = el('div', 'expense-row', { style: 'display:flex;justify-content:space-between;padding:var(--space-sm);border-bottom:1px solid var(--border-subtle);' });
+    const row = el('div', 'expense-row');
     const info = el('span', '', { textContent: `${formatDate(exp.date)} - ${exp.description} - ${formatCurrency(exp.amount)}` });
     const actions = el('span');
     const archiveBtn = el('button', 'btn-icon', { textContent: '📁' });
     archiveBtn.onclick = async () => {
-      await turso.execute({ sql: 'UPDATE expenses SET is_archived = 1 WHERE id = ? AND user_id = ?', args: [exp.id, userId] });
+      await turso.execute({ sql: 'UPDATE expenses SET is_archived = 1 WHERE id = ? AND user_id = ?', args: [exp.id, USER_ID] });
       renderView('gastos');
     };
     append(actions, archiveBtn);
     append(row, info, actions);
     list.appendChild(row);
   }
-  // Botón agregar
   const addBtn = el('button', 'btn btn-primary', { textContent: '+ Nuevo Gasto' });
   addBtn.onclick = () => {
     const catOptions = categories.rows.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
@@ -316,7 +276,7 @@ views.gastos = async function(container) {
       const catId = document.getElementById('exp-cat').value;
       const date = document.getElementById('exp-date').value;
       if (desc && !isNaN(amount) && amount > 0 && catId) {
-        await turso.execute({ sql: 'INSERT INTO expenses (user_id, description, amount, category_id, date, is_completed, is_archived) VALUES (?, ?, ?, ?, ?, ?, ?)', args: [userId, desc, amount, parseInt(catId), date, 0, 0] });
+        await turso.execute({ sql: 'INSERT INTO expenses (user_id, description, amount, category_id, date, is_completed, is_archived) VALUES (?, ?, ?, ?, ?, ?, ?)', args: [USER_ID, desc, amount, parseInt(catId), date, 0, 0] });
         renderView('gastos');
       }
     });
@@ -324,17 +284,16 @@ views.gastos = async function(container) {
   append(container, list, addBtn);
 };
 
-// Vista: Suscripciones (simplificada)
+// --- Suscripciones ---
 views.suscripciones = async function(container) {
-  const userId = getUserId();
-  const subs = await turso.execute({ sql: 'SELECT * FROM subscriptions WHERE user_id = ?', args: [userId] });
+  const subs = await turso.execute({ sql: 'SELECT * FROM subscriptions WHERE user_id = ?', args: [USER_ID] });
   const list = el('div');
   for (const s of subs.rows) {
-    const row = el('div', '', { style: 'display:flex;justify-content:space-between;padding:var(--space-sm);border-bottom:1px solid var(--border-subtle);' });
+    const row = el('div', 'expense-row');
     append(row, el('span', '', { textContent: `${s.name} - ${formatCurrency(s.amount)} / ${s.frequency}` }));
     const del = el('button', 'btn btn-danger', { textContent: 'Eliminar' });
     del.onclick = async () => {
-      if(confirm('Eliminar?')) { await turso.execute({ sql: 'DELETE FROM subscriptions WHERE id = ? AND user_id = ?', args: [s.id, userId] }); renderView('suscripciones'); }
+      if(confirm('Eliminar?')) { await turso.execute({ sql: 'DELETE FROM subscriptions WHERE id = ? AND user_id = ?', args: [s.id, USER_ID] }); renderView('suscripciones'); }
     };
     append(row, del);
     list.appendChild(row);
@@ -354,7 +313,7 @@ views.suscripciones = async function(container) {
       const freq = document.getElementById('sub-freq').value;
       const charge = document.getElementById('sub-charge').value;
       if (name && !isNaN(amount) && amount > 0 && charge) {
-        await turso.execute({ sql: 'INSERT INTO subscriptions (user_id, name, amount, frequency, charge_date) VALUES (?, ?, ?, ?, ?)', args: [userId, name, amount, freq, charge] });
+        await turso.execute({ sql: 'INSERT INTO subscriptions (user_id, name, amount, frequency, charge_date) VALUES (?, ?, ?, ?, ?)', args: [USER_ID, name, amount, freq, charge] });
         renderView('suscripciones');
       }
     });
@@ -362,20 +321,13 @@ views.suscripciones = async function(container) {
   append(container, list, addBtn);
 };
 
-// Otras vistas (Inversiones, Deudas, Sueldo, Reporte) - se pueden añadir igual pero para simplificar dejamos solo las esenciales
-// En caso de que el usuario quiera ver todas, se pueden implementar de forma similar.
-
 // ============================================================
-// 7. RENDERIZADO Y NAVEGACIÓN
+// 7. NAVEGACIÓN
 // ============================================================
 const navItems = [
   { id: 'bolsillos', label: '💰 Bolsillos' },
   { id: 'gastos', label: '💳 Gastos' },
   { id: 'suscripciones', label: '🔄 Suscripciones' },
-  // { id: 'inversiones', label: '📈 Inversiones' },
-  // { id: 'deudas', label: '🏦 Deudas' },
-  // { id: 'sueldo', label: '🧾 Sueldo' },
-  // { id: 'reporte', label: '📊 Reporte' }
 ];
 
 const sidebarNav = document.getElementById('nav-list');
@@ -404,27 +356,24 @@ async function renderView(viewId) {
     await views[viewId](content);
   } catch (e) {
     console.error(e);
-    content.innerHTML = `<p>Error al cargar la vista: ${e.message}</p>`;
+    content.innerHTML = `<p>Error: ${e.message}</p>`;
   }
 }
 
 // ============================================================
-// 8. INICIO DE LA APLICACIÓN
+// 8. INICIO
 // ============================================================
 async function startApp() {
-  const user = await initClerk();
-  if (!user) return;
-  // Mostrar nombre de usuario
-  document.getElementById('user-name').textContent = user.firstName || user.username || 'Usuario';
-  document.getElementById('user-avatar').textContent = (user.firstName || 'U')[0].toUpperCase();
-
-  // Inicializar tablas
-  await initTables();
-
-  // Cargar vista por defecto
-  renderView('bolsillos');
+  console.log('🚀 Iniciando app demo sin Clerk...');
+  try {
+    await initTables();
+    console.log('✅ Tablas inicializadas');
+    renderView('bolsillos');
+  } catch (e) {
+    console.error('❌ Error:', e);
+    content.innerHTML = `<p>Error al conectar con Turso: ${e.message}</p>`;
+  }
 }
-
 startApp();
 </script>
 </body>
