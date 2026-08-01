@@ -24,27 +24,19 @@ export const router = {
     container = containerEl;
     titleEl = titleElement;
   },
-
   navigate(viewName) {
     if (!container || !titleEl) {
       console.warn('Router no inicializado');
       return;
     }
-
     const view = viewMap[viewName];
     if (!view) {
       console.error(`Vista no encontrada: ${viewName}`);
       return;
     }
-
-    // Actualizar título
     titleEl.textContent = view.title;
-
-    // Limpiar contenedor y renderizar nueva vista
     container.innerHTML = '';
     view.render(container);
-
-    // Marcar elemento activo en sidebar (evento)
     document.dispatchEvent(new CustomEvent('view-changed', { detail: { view: viewName } }));
   }
 };
