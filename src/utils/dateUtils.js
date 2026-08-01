@@ -7,7 +7,6 @@ export function formatDate(dateStr) {
 }
 
 export function formatDateInput(dateStr) {
-  // Para input type="date" formato YYYY-MM-DD
   const d = new Date(dateStr);
   return d.toISOString().split('T')[0];
 }
