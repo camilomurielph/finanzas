@@ -9,11 +9,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   
-  <!-- Import Map definitivo con URL oficial ESM de Clerk -->
+  <!-- Carga de Clerk como script tradicional (no módulo) -->
+  <script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.browser.js"></script>
+
+  <!-- Import Map solo para libsql y jspdf -->
   <script type="importmap">
   {
     "imports": {
-      "@clerk/clerk-js": "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@5/dist/clerk.esm.js",
       "@libsql/client/web": "https://esm.sh/@libsql/client@0.14.0/web",
       "jspdf": "https://esm.sh/jspdf@2.5.1"
     }
@@ -33,6 +35,7 @@
     </main>
   </div>
 
+  <!-- Carga del módulo principal (con type="module") -->
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
