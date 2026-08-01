@@ -15,10 +15,7 @@ export function renderSidebar(container) {
   const user = getCurrentUser();
   const firstName = user?.firstName || user?.username || 'Usuario';
 
-  // Logo
   const logo = createElement('div', 'logo', { textContent: '💰 Finanzas' });
-
-  // Navegación
   const nav = createElement('nav');
   const ul = createElement('ul');
   navItems.forEach(item => {
@@ -34,7 +31,6 @@ export function renderSidebar(container) {
   });
   appendChildren(nav, [ul]);
 
-  // Perfil de usuario
   const profile = createElement('div', 'user-profile');
   const avatar = createElement('div', 'avatar', { textContent: firstName.charAt(0).toUpperCase() });
   const nameSpan = createElement('span', '', { textContent: firstName });
@@ -42,7 +38,6 @@ export function renderSidebar(container) {
 
   appendChildren(container, [logo, nav, profile]);
 
-  // Marcar vista activa al cambiar
   document.addEventListener('view-changed', (e) => {
     const activeView = e.detail.view;
     const items = container.querySelectorAll('nav ul li');
