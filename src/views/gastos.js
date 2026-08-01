@@ -20,16 +20,18 @@ export async function renderGastos(container) {
   // Contenedor de gastos
   const expensesContainer = createElement('div', 'expenses-list');
 
-  function renderExpenses(categoryId = null) {
+  // 📌 Función async para renderizar gastos (para poder usar await)
+  async function renderExpenses(categoryId = null) {
     expensesContainer.innerHTML = '';
     const filtered = categoryId ? activeExpenses.filter(e => e.category_id == categoryId) : activeExpenses;
     if (filtered.length === 0) {
       expensesContainer.appendChild(createElement('p', '', { textContent: 'No hay gastos activos.' }));
     } else {
-      filtered.forEach(exp => {
-        const row = createExpenseRow(exp);
+      // Usamos for...of para esperar cada fila
+      for (const exp of filtered) {
+        const row = await createExpenseRow(exp);
         expensesContainer.appendChild(row);
-      });
+      }
     }
   }
 
@@ -42,7 +44,7 @@ export async function renderGastos(container) {
   const addBtn = createElement('button', 'btn btn-primary', { textContent: '+ Nuevo Gasto' });
   addBtn.addEventListener('click', () => {
     const catOptions = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-    const modal = showModal('Nuevo Gasto', `
+    showModal('Nuevo Gasto', `
       <div class="form-group"><label>Descripción</label><input type="text" id="exp-desc" /></div>
       <div class="form-group"><label>Monto</label><input type="number" id="exp-amount" step="0.01" /></div>
       <div class="form-group"><label>Categoría</label><select id="exp-cat">${catOptions}</select></div>
@@ -59,8 +61,8 @@ export async function renderGastos(container) {
     });
   });
 
-  // Render inicial
-  renderExpenses();
+  // Render inicial (esperamos a que termine)
+  await renderExpenses();
 
   // Mostrar archivados colapsables
   const archiveSection = createElement('div', 'archived-section');
@@ -69,10 +71,11 @@ export async function renderGastos(container) {
   if (archivedExpenses.length === 0) {
     archiveList.appendChild(createElement('p', '', { textContent: 'No hay gastos archivados.' }));
   } else {
-    archivedExpenses.forEach(exp => {
-      const row = createExpenseRow(exp, true);
+    // También usamos for...of para esperar cada fila archivada
+    for (const exp of archivedExpenses) {
+      const row = await createExpenseRow(exp, true);
       archiveList.appendChild(row);
-    });
+    }
   }
   archiveToggle.addEventListener('click', () => {
     archiveList.style.display = archiveList.style.display === 'none' ? 'block' : 'none';
@@ -86,7 +89,8 @@ export async function renderGastos(container) {
   ]);
 }
 
-function createExpenseRow(exp, isArchived = false) {
+// 📌 Ahora la función es async para poder usar await dentro
+async function createExpenseRow(exp, isArchived = false) {
   const row = createElement('div', 'expense-row');
   const checkbox = createElement('input', '', { type: 'checkbox', class: 'expense-check', checked: exp.is_completed ? 'checked' : '' });
   const date = createElement('span', 'expense-date', { textContent: formatDate(exp.date) });
@@ -98,8 +102,7 @@ function createExpenseRow(exp, isArchived = false) {
     // Botón dividir
     const divideBtn = createElement('button', 'btn-icon', { textContent: '🔗' });
     divideBtn.addEventListener('click', () => {
-      // Mostrar formulario para crear subgasto
-      const modal = showModal('Dividir Gasto', `
+      showModal('Dividir Gasto', `
         <div class="form-group"><label>Descripción cuota</label><input type="text" id="sub-desc" placeholder="Cuota 1" /></div>
         <div class="form-group"><label>Monto</label><input type="number" id="sub-amount" step="0.01" /></div>
         <div class="form-group"><label>Anotación</label><input type="text" id="sub-note" placeholder="Opcional" /></div>
@@ -109,7 +112,7 @@ function createExpenseRow(exp, isArchived = false) {
         const note = document.getElementById('sub-note').value.trim();
         if (desc && !isNaN(amount) && amount > 0) {
           await createSubExpense(exp.id, desc, amount, note);
-          renderGastos(document.getElementById('view-container')); // recargar
+          renderGastos(document.getElementById('view-container'));
         }
       });
     });
@@ -134,7 +137,7 @@ function createExpenseRow(exp, isArchived = false) {
 
   appendChildren(row, [checkbox, date, desc, amount, actions]);
 
-  // Subgastos
+  // Subgastos (esta parte ahora funciona porque la función es async)
   const subContainer = createElement('div', 'sub-expenses', { style: 'grid-column:1/-1;padding-left:var(--space-xl);' });
   const subs = await getSubExpenses(exp.id);
   if (subs.length > 0) {
