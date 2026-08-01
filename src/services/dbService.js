@@ -266,7 +266,10 @@ export async function deleteDebt(id) {
 }
 
 // --- FUNCIÓN DE CARGA INICIAL (crear tablas si no existen) ---
+// ⚠️ CORREGIDA: maneja correctamente casos de undefined/null
 export async function loadUserData(userId) {
+  console.log('📦 Cargando datos para usuario:', userId);
+  
   // Crear tablas si no existen (idempotente)
   const queries = [
     `CREATE TABLE IF NOT EXISTS pockets (
@@ -331,22 +334,34 @@ export async function loadUserData(userId) {
   ];
 
   for (const sql of queries) {
-    await client.execute({ sql });
+    try {
+      await client.execute({ sql });
+    } catch (error) {
+      console.error('❌ Error creando tabla:', sql, error);
+    }
   }
 
   // Crear categorías por defecto si no existen
-  const defaultCategories = ['Tarjeta 1', 'Débito', 'Efectivo'];
-  const existing = await client.execute({
-    sql: 'SELECT name FROM categories WHERE user_id = ?',
-    args: [userId]
-  });
-  const existingNames = existing.rows.map(r => r.name);
-  for (const cat of defaultCategories) {
-    if (!existingNames.includes(cat)) {
-      await client.execute({
-        sql: 'INSERT INTO categories (user_id, name) VALUES (?, ?)',
-        args: [userId, cat]
-      });
+  try {
+    const existing = await client.execute({
+      sql: 'SELECT name FROM categories WHERE user_id = ?',
+      args: [userId]
+    });
+    // Asegurar que existing.rows es un array (puede ser undefined)
+    const existingNames = (existing.rows || []).map(r => r.name);
+    const defaultCategories = ['Tarjeta 1', 'Débito', 'Efectivo'];
+    for (const cat of defaultCategories) {
+      if (!existingNames.includes(cat)) {
+        await client.execute({
+          sql: 'INSERT INTO categories (user_id, name) VALUES (?, ?)',
+          args: [userId, cat]
+        });
+        console.log(`✅ Categoría creada: ${cat}`);
+      }
     }
+  } catch (error) {
+    console.error('❌ Error creando categorías por defecto:', error);
   }
+
+  console.log('✅ Datos cargados correctamente');
 }
