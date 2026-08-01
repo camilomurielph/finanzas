@@ -1,4 +1,3 @@
-import { getCurrentUser } from '../config/clerk.js';
 import { createElement, appendChildren } from '../utils/domHelpers.js';
 
 const navItems = [
@@ -11,11 +10,11 @@ const navItems = [
   { id: 'reporte', icon: '📊', label: 'Reporte' },
 ];
 
-export function renderSidebar(container) {
-  const user = getCurrentUser();
-  const firstName = user?.firstName || user?.username || 'Usuario';
-
+export function renderSidebar(container, userName = 'Demo') {
+  // Logo
   const logo = createElement('div', 'logo', { textContent: '💰 Finanzas' });
+
+  // Navegación
   const nav = createElement('nav');
   const ul = createElement('ul');
   navItems.forEach(item => {
@@ -31,13 +30,15 @@ export function renderSidebar(container) {
   });
   appendChildren(nav, [ul]);
 
+  // Perfil de usuario
   const profile = createElement('div', 'user-profile');
-  const avatar = createElement('div', 'avatar', { textContent: firstName.charAt(0).toUpperCase() });
-  const nameSpan = createElement('span', '', { textContent: firstName });
+  const avatar = createElement('div', 'avatar', { textContent: userName.charAt(0).toUpperCase() });
+  const nameSpan = createElement('span', '', { textContent: userName });
   appendChildren(profile, [avatar, nameSpan]);
 
   appendChildren(container, [logo, nav, profile]);
 
+  // Marcar vista activa al cambiar
   document.addEventListener('view-changed', (e) => {
     const activeView = e.detail.view;
     const items = container.querySelectorAll('nav ul li');
