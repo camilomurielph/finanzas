@@ -10,7 +10,6 @@ export async function renderReporte(container) {
   generarBtn.addEventListener('click', async () => {
     status.textContent = 'Generando reporte...';
     try {
-      // Consolidar datos
       const pockets = await getPockets();
       const pocketBalances = {};
       let totalPockets = 0;
@@ -33,7 +32,6 @@ export async function renderReporte(container) {
       const investments = await getInvestments();
       const totalInvestments = investments.reduce((acc, i) => acc + i.current_value, 0);
 
-      // Generar PDF
       const doc = new jsPDF();
       doc.setFontSize(18);
       doc.text('Reporte Financiero Personal', 14, 22);
@@ -66,7 +64,6 @@ export async function renderReporte(container) {
         if (y > 270) { doc.addPage(); y = 20; }
       }
 
-      // Descargar
       doc.save('reporte-financiero.pdf');
       status.textContent = '✅ Reporte generado correctamente.';
     } catch (error) {
