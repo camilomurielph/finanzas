@@ -2,7 +2,7 @@
 import Clerk from '@clerk/clerk-js';
 
 // Reemplaza con tu clave publicable de Clerk
-const CLERK_PUBLISHABLE_KEY = 'pk_test_...';
+const CLERK_PUBLISHABLE_KEY = 'pk_test_dXB3YXJkLXdyZW4tNzguY2xlcmsuYWNjb3VudHMuZGV2JA';
 
 let clerkInstance = null;
 let currentUser = null;
