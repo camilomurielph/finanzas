@@ -8,7 +8,6 @@ export async function renderGastos(container) {
   const activeExpenses = await getExpenses(null, false);
   const archivedExpenses = await getExpenses(null, true);
 
-  // Selector de categoría
   const catSelect = createElement('select', '', { id: 'category-filter' });
   const allOption = createElement('option', '', { value: '', textContent: 'Todas las categorías' });
   catSelect.appendChild(allOption);
@@ -17,17 +16,14 @@ export async function renderGastos(container) {
     catSelect.appendChild(opt);
   });
 
-  // Contenedor de gastos
   const expensesContainer = createElement('div', 'expenses-list');
 
-  // 📌 Función async para renderizar gastos (para poder usar await)
   async function renderExpenses(categoryId = null) {
     expensesContainer.innerHTML = '';
     const filtered = categoryId ? activeExpenses.filter(e => e.category_id == categoryId) : activeExpenses;
     if (filtered.length === 0) {
       expensesContainer.appendChild(createElement('p', '', { textContent: 'No hay gastos activos.' }));
     } else {
-      // Usamos for...of para esperar cada fila
       for (const exp of filtered) {
         const row = await createExpenseRow(exp);
         expensesContainer.appendChild(row);
@@ -36,11 +32,9 @@ export async function renderGastos(container) {
   }
 
   catSelect.addEventListener('change', () => {
-    const val = catSelect.value;
-    renderExpenses(val || null);
+    renderExpenses(catSelect.value || null);
   });
 
-  // Botón agregar gasto
   const addBtn = createElement('button', 'btn btn-primary', { textContent: '+ Nuevo Gasto' });
   addBtn.addEventListener('click', () => {
     const catOptions = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
@@ -56,22 +50,19 @@ export async function renderGastos(container) {
       const date = document.getElementById('exp-date').value;
       if (desc && !isNaN(amount) && amount > 0 && catId) {
         await createExpense(desc, amount, parseInt(catId), date);
-        renderGastos(container); // recargar vista
+        renderGastos(container);
       }
     });
   });
 
-  // Render inicial (esperamos a que termine)
   await renderExpenses();
 
-  // Mostrar archivados colapsables
   const archiveSection = createElement('div', 'archived-section');
   const archiveToggle = createElement('button', 'btn btn-secondary', { textContent: `📦 Gastos Archivados (${archivedExpenses.length})` });
   const archiveList = createElement('div', 'archived-list', { style: 'display:none;margin-top:var(--space-sm);' });
   if (archivedExpenses.length === 0) {
     archiveList.appendChild(createElement('p', '', { textContent: 'No hay gastos archivados.' }));
   } else {
-    // También usamos for...of para esperar cada fila archivada
     for (const exp of archivedExpenses) {
       const row = await createExpenseRow(exp, true);
       archiveList.appendChild(row);
@@ -89,7 +80,6 @@ export async function renderGastos(container) {
   ]);
 }
 
-// 📌 Ahora la función es async para poder usar await dentro
 async function createExpenseRow(exp, isArchived = false) {
   const row = createElement('div', 'expense-row');
   const checkbox = createElement('input', '', { type: 'checkbox', class: 'expense-check', checked: exp.is_completed ? 'checked' : '' });
@@ -99,7 +89,6 @@ async function createExpenseRow(exp, isArchived = false) {
   const actions = createElement('div', 'expense-actions');
 
   if (!isArchived) {
-    // Botón dividir
     const divideBtn = createElement('button', 'btn-icon', { textContent: '🔗' });
     divideBtn.addEventListener('click', () => {
       showModal('Dividir Gasto', `
@@ -118,7 +107,6 @@ async function createExpenseRow(exp, isArchived = false) {
     });
     actions.appendChild(divideBtn);
 
-    // Botón archivar
     const archiveBtn = createElement('button', 'btn-icon', { textContent: '📁' });
     archiveBtn.addEventListener('click', async () => {
       if (confirm('Archivar este gasto?')) {
@@ -129,7 +117,6 @@ async function createExpenseRow(exp, isArchived = false) {
     actions.appendChild(archiveBtn);
   }
 
-  // Checkbox toggle
   checkbox.addEventListener('change', async () => {
     await toggleExpenseCompleted(exp.id);
     renderGastos(document.getElementById('view-container'));
@@ -137,7 +124,6 @@ async function createExpenseRow(exp, isArchived = false) {
 
   appendChildren(row, [checkbox, date, desc, amount, actions]);
 
-  // Subgastos (esta parte ahora funciona porque la función es async)
   const subContainer = createElement('div', 'sub-expenses', { style: 'grid-column:1/-1;padding-left:var(--space-xl);' });
   const subs = await getSubExpenses(exp.id);
   if (subs.length > 0) {
