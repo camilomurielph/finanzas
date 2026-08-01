@@ -31,7 +31,7 @@ export async function renderInversiones(container) {
     grid.appendChild(card);
 
     addBtn.addEventListener('click', () => {
-      const modal = showModal('Aportar a inversión', `
+      showModal('Aportar a inversión', `
         <div class="form-group"><label>Monto</label><input type="number" id="add-capital" step="0.01" /></div>
       `, async () => {
         const amount = parseFloat(document.getElementById('add-capital').value);
@@ -43,7 +43,7 @@ export async function renderInversiones(container) {
     });
 
     updateBtn.addEventListener('click', () => {
-      const modal = showModal('Actualizar valor actual', `
+      showModal('Actualizar valor actual', `
         <div class="form-group"><label>Nuevo valor</label><input type="number" id="new-value" step="0.01" value="${inv.current_value}" /></div>
       `, async () => {
         const val = parseFloat(document.getElementById('new-value').value);
@@ -57,7 +57,7 @@ export async function renderInversiones(container) {
 
   const addInvBtn = createElement('button', 'btn btn-primary', { textContent: '+ Nueva Inversión' });
   addInvBtn.addEventListener('click', () => {
-    const modal = showModal('Nueva Inversión', `
+    showModal('Nueva Inversión', `
       <div class="form-group"><label>Nombre</label><input type="text" id="inv-name" /></div>
       <div class="form-group"><label>Capital invertido</label><input type="number" id="inv-capital" step="0.01" /></div>
       <div class="form-group"><label>Valor actual (opcional)</label><input type="number" id="inv-current" step="0.01" /></div>
