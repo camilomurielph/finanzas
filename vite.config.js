@@ -1,10 +1,9 @@
+// vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/', // Cambia si despliegas en subdirectorio
-  server: {
-    port: 3000
-  }
+  base: '/finanzas/', // ← cambia por el nombre exacto de tu repositorio
+  server: { port: 3000 }
 })
