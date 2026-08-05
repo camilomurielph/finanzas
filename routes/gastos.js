@@ -40,8 +40,12 @@ router.get('/api/:id', auth, (req, res) => {
 
 // ===== Obtener todas las cuentas del usuario (API) =====
 router.get('/api/cuentas', auth, (req, res) => {
-  const tipos = TipoGasto.findAllByUser(req.session.user.id);
-  res.json(tipos);
+  try {
+    const tipos = TipoGasto.findAllByUser(req.session.user.id);
+    res.json(tipos);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ===== Crear nueva cuenta =====
