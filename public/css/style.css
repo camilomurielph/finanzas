@@ -1015,3 +1015,88 @@ a:hover {
     font-size: 0.85rem;
   }
 }
+/* ===== SUSCRIPCIONES ===== */
+.resumen-total {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border-color);
+}
+.resumen-total .total-label {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+.resumen-total .total-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.suscripcion-item {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform var(--transition);
+}
+.suscripcion-item:active {
+  transform: scale(0.99);
+}
+
+.suscripcion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  gap: 8px;
+}
+.suscripcion-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.suscripcion-info strong {
+  font-size: 0.95rem;
+}
+.suscripcion-info .dia-pago {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  background: var(--bg-primary);
+  padding: 2px 12px;
+  border-radius: 12px;
+}
+.suscripcion-valor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.suscripcion-actions {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  padding: 0 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid transparent;
+}
+.suscripcion-actions.open {
+  max-height: 200px;
+  opacity: 1;
+  padding: 10px 14px;
+  border-top-color: var(--border-color);
+}
+.suscripcion-actions .action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
