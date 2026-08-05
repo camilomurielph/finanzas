@@ -31,14 +31,8 @@ router.get('/', auth, (req, res) => {
   });
 });
 
-// ===== API para obtener un gasto en JSON =====
-router.get('/api/:id', auth, (req, res) => {
-  const gasto = Gasto.findById(req.params.id, req.session.user.id);
-  if (!gasto) return res.status(404).json({ error: 'Gasto no encontrado' });
-  res.json(gasto);
-});
-
-// ===== Obtener todas las cuentas del usuario (API) =====
+// ===== OBTENER TODAS LAS CUENTAS (API) =====
+// Esta ruta DEBE ir ANTES de /api/:id para que no la interprete como un ID
 router.get('/api/cuentas', auth, (req, res) => {
   try {
     const tipos = TipoGasto.findAllByUser(req.session.user.id);
@@ -46,6 +40,13 @@ router.get('/api/cuentas', auth, (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ===== API para obtener un gasto en JSON =====
+router.get('/api/:id', auth, (req, res) => {
+  const gasto = Gasto.findById(req.params.id, req.session.user.id);
+  if (!gasto) return res.status(404).json({ error: 'Gasto no encontrado' });
+  res.json(gasto);
 });
 
 // ===== Crear nueva cuenta =====
