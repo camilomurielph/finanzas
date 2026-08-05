@@ -4,7 +4,6 @@ const path = require('path');
 const db = new Database(path.join(__dirname, '../database/finanzas.db'));
 db.pragma('foreign_keys = ON');
 
-// Crear tablas
 db.exec(`
   CREATE TABLE IF NOT EXISTS usuarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,9 +43,20 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (gasto_id) REFERENCES gastos(id) ON DELETE CASCADE
   );
+
+  -- NUEVA TABLA: SUSCRIPCIONES
+  CREATE TABLE IF NOT EXISTS suscripciones (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    valor REAL NOT NULL,
+    dia_pago INTEGER NOT NULL CHECK (dia_pago >= 1 AND dia_pago <= 31),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+  );
 `);
 
-// Migración: asegurar que la columna 'pagado' existe en gastos
+// Migración para gastos (ya existente)
 try {
   const columnInfo = db.prepare("PRAGMA table_info(gastos)").all();
   const hasPagado = columnInfo.some(col => col.name === 'pagado');
