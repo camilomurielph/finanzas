@@ -2,7 +2,7 @@ const router = require('express').Router();
 const Gasto = require('../models/Gasto');
 const Cuota = require('../models/Cuota');
 const TipoGasto = require('../models/TipoGasto');
-const db = require('../models/db'); // Necesario para la consulta directa
+const db = require('../models/db');
 
 // Middleware de autenticación
 function auth(req, res, next) {
@@ -10,21 +10,18 @@ function auth(req, res, next) {
   next();
 }
 
-// ===== Página principal de gastos (con filtro por cuenta) =====
+// ===== Página principal (con filtro) =====
 router.get('/', auth, (req, res) => {
   const { cuenta } = req.query;
   const tipos = TipoGasto.findAllByUser(req.session.user.id);
   const gastos = Gasto.findAllByUser(req.session.user.id, cuenta || null);
-  
   gastos.forEach(g => {
     g.cuotas = Cuota.findAllByGasto(g.id);
   });
-  
   const archivados = Gasto.findArchivedByUser(req.session.user.id, cuenta || null);
   archivados.forEach(g => {
     g.cuotas = Cuota.findAllByGasto(g.id);
   });
-
   res.render('gastos/index', { 
     title: 'Gastos', 
     tipos, 
@@ -41,13 +38,42 @@ router.get('/api/:id', auth, (req, res) => {
   res.json(gasto);
 });
 
-// ===== Crear nuevo tipo de gasto (cuenta) =====
+// ===== Obtener todas las cuentas del usuario (API) =====
+router.get('/api/cuentas', auth, (req, res) => {
+  const tipos = TipoGasto.findAllByUser(req.session.user.id);
+  res.json(tipos);
+});
+
+// ===== Crear nueva cuenta =====
 router.post('/tipos', auth, (req, res) => {
   const { nombre } = req.body;
   if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
   try {
     const info = TipoGasto.create(req.session.user.id, nombre);
     res.json({ success: true, id: info.lastInsertRowid });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== Editar cuenta =====
+router.put('/tipos/:id', auth, (req, res) => {
+  const { nombre } = req.body;
+  if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
+  try {
+    const stmt = db.prepare('UPDATE tipos_gasto SET nombre = ? WHERE id = ? AND usuario_id = ?');
+    stmt.run(nombre, req.params.id, req.session.user.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== Borrar cuenta =====
+router.delete('/tipos/:id', auth, (req, res) => {
+  try {
+    TipoGasto.delete(req.params.id, req.session.user.id);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -98,7 +124,7 @@ router.put('/archivar/:id', auth, (req, res) => {
   }
 });
 
-// ===== Desarchivar gasto (restaurar) =====
+// ===== Desarchivar gasto =====
 router.put('/desarchivar/:id', auth, (req, res) => {
   try {
     const stmt = db.prepare('UPDATE gastos SET archivado = 0 WHERE id = ? AND usuario_id = ?');
