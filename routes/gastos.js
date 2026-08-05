@@ -2,7 +2,6 @@ const router = require('express').Router();
 const Gasto = require('../models/Gasto');
 const Cuota = require('../models/Cuota');
 const TipoGasto = require('../models/TipoGasto');
-const db = require('../models/db');
 
 // Middleware de autenticación
 function auth(req, res, next) {
@@ -10,14 +9,30 @@ function auth(req, res, next) {
   next();
 }
 
-// Página principal de gastos
+// ===== Página principal de gastos (con filtro por cuenta) =====
 router.get('/', auth, (req, res) => {
+  const { cuenta } = req.query;
   const tipos = TipoGasto.findAllByUser(req.session.user.id);
-  const gastos = Gasto.findAllByUser(req.session.user.id);
+  const gastos = Gasto.findAllByUser(req.session.user.id, cuenta || null);
+  
+  // Cargar cuotas para cada gasto
   gastos.forEach(g => {
     g.cuotas = Cuota.findAllByGasto(g.id);
   });
-  res.render('gastos/index', { title: 'Gastos', tipos, gastos });
+  
+  // Obtener gastos archivados
+  const archivados = Gasto.findArchivedByUser(req.session.user.id);
+  archivados.forEach(g => {
+    g.cuotas = Cuota.findAllByGasto(g.id);
+  });
+
+  res.render('gastos/index', { 
+    title: 'Gastos', 
+    tipos, 
+    gastos, 
+    archivados,
+    cuentaSeleccionada: cuenta || null
+  });
 });
 
 // ===== API para obtener un gasto en JSON (usado en edición) =====
@@ -27,7 +42,7 @@ router.get('/api/:id', auth, (req, res) => {
   res.json(gasto);
 });
 
-// Crear nuevo tipo de gasto (AJAX)
+// ===== Crear nuevo tipo de gasto (cuenta) =====
 router.post('/tipos', auth, (req, res) => {
   const { nombre } = req.body;
   if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
@@ -39,7 +54,7 @@ router.post('/tipos', auth, (req, res) => {
   }
 });
 
-// Agregar gasto
+// ===== Agregar gasto =====
 router.post('/agregar', auth, (req, res) => {
   const { tipo_gasto_id, nombre, fecha, valor_total } = req.body;
   if (!tipo_gasto_id || !nombre || !fecha || !valor_total) {
@@ -53,7 +68,7 @@ router.post('/agregar', auth, (req, res) => {
   }
 });
 
-// Editar gasto
+// ===== Editar gasto =====
 router.put('/editar/:id', auth, (req, res) => {
   const { tipo_gasto_id, nombre, fecha, valor_total } = req.body;
   try {
@@ -64,7 +79,7 @@ router.put('/editar/:id', auth, (req, res) => {
   }
 });
 
-// Borrar gasto
+// ===== Borrar gasto =====
 router.delete('/borrar/:id', auth, (req, res) => {
   try {
     Gasto.delete(req.params.id, req.session.user.id);
@@ -74,7 +89,7 @@ router.delete('/borrar/:id', auth, (req, res) => {
   }
 });
 
-// Archivar gasto
+// ===== Archivar gasto =====
 router.put('/archivar/:id', auth, (req, res) => {
   try {
     Gasto.archive(req.params.id, req.session.user.id);
@@ -84,7 +99,7 @@ router.put('/archivar/:id', auth, (req, res) => {
   }
 });
 
-// Dividir gasto (reemplazar cuotas)
+// ===== Dividir gasto (reemplazar cuotas) =====
 router.post('/dividir/:id', auth, (req, res) => {
   const { cuotas } = req.body; // array de {nombre, valor}
   if (!cuotas || !cuotas.length) {
@@ -105,7 +120,7 @@ router.post('/dividir/:id', auth, (req, res) => {
   }
 });
 
-// Marcar/desmarcar pago de cuota
+// ===== Marcar/desmarcar pago de cuota =====
 router.put('/cuota/:id/pago', auth, (req, res) => {
   const { pagado, fecha_pago } = req.body;
   try {
@@ -116,7 +131,18 @@ router.put('/cuota/:id/pago', auth, (req, res) => {
   }
 });
 
-// Vista detalle de un gasto
+// ===== Marcar/desmarcar pago de gasto (checkbox del gasto) =====
+router.put('/gasto/:id/pago', auth, (req, res) => {
+  const { pagado } = req.body;
+  try {
+    Gasto.togglePagado(req.params.id, req.session.user.id, pagado);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== Vista detalle de un gasto =====
 router.get('/detalle/:id', auth, (req, res) => {
   const gasto = Gasto.findById(req.params.id, req.session.user.id);
   if (!gasto) return res.status(404).send('Gasto no encontrado');
