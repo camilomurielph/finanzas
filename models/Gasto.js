@@ -56,21 +56,27 @@ module.exports = {
     return stmt.run(id, usuario_id);
   },
 
-  // Nuevo: marcar/desmarcar pago de gasto
+  // Marcar/desmarcar pago de gasto
   togglePagado(id, usuario_id, pagado) {
     const stmt = db.prepare('UPDATE gastos SET pagado = ? WHERE id = ? AND usuario_id = ?');
     return stmt.run(pagado ? 1 : 0, id, usuario_id);
   },
 
-  // Obtener archivados
-  findArchivedByUser(usuario_id) {
-    const stmt = db.prepare(`
+  // Obtener archivados (con filtro opcional por cuenta)
+  findArchivedByUser(usuario_id, tipo_gasto_id = null) {
+    let sql = `
       SELECT g.*, t.nombre as tipo_nombre
       FROM gastos g
       JOIN tipos_gasto t ON g.tipo_gasto_id = t.id
       WHERE g.usuario_id = ? AND g.archivado = 1
-      ORDER BY g.fecha DESC, g.created_at DESC
-    `);
-    return stmt.all(usuario_id);
+    `;
+    const params = [usuario_id];
+    if (tipo_gasto_id) {
+      sql += ` AND g.tipo_gasto_id = ?`;
+      params.push(tipo_gasto_id);
+    }
+    sql += ` ORDER BY g.fecha DESC, g.created_at DESC`;
+    const stmt = db.prepare(sql);
+    return stmt.all(...params);
   }
 };
