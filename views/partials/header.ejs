@@ -14,9 +14,11 @@
       </div>
       <nav>
         <ul>
-          <li><a href="/gastos" class="<%= active === 'gastos' ? 'active' : '' %>">📊 Gastos</a></li>
+          <li><a href="/gastos" class="<%= typeof active !== 'undefined' && active === 'gastos' ? 'active' : '' %>">📊 Gastos</a></li>
           <!-- Aquí se agregarán más herramientas -->
-          <li><a href="/logout">🚪 Cerrar sesión</a></li>
+          <% if (user) { %>
+            <li><a href="/logout">🚪 Cerrar sesión</a></li>
+          <% } %>
         </ul>
       </nav>
       <div class="sidebar-user"><%= user ? user.email : '' %></div>
