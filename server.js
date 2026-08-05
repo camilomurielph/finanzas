@@ -15,7 +15,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Sesiones
 app.use(session({
-  secret: 'cambia-este-secreto-en-produccion',
+  secret: process.env.SESSION_SECRET || 'cambia-este-secreto-en-produccion',
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 1000 * 60 * 60 * 24 } // 1 día
@@ -30,6 +30,7 @@ app.use((req, res, next) => {
 // Rutas
 app.use('/', require('./routes/auth'));
 app.use('/gastos', require('./routes/gastos'));
+app.use('/suscripciones', require('./routes/subscriptions'));
 
 // Redirección raíz
 app.get('/', (req, res) => {
