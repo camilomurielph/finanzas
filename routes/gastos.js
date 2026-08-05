@@ -2,6 +2,7 @@ const router = require('express').Router();
 const Gasto = require('../models/Gasto');
 const Cuota = require('../models/Cuota');
 const TipoGasto = require('../models/TipoGasto');
+const db = require('../models/db'); // Necesario para la consulta directa
 
 // Middleware de autenticación
 function auth(req, res, next) {
@@ -15,12 +16,10 @@ router.get('/', auth, (req, res) => {
   const tipos = TipoGasto.findAllByUser(req.session.user.id);
   const gastos = Gasto.findAllByUser(req.session.user.id, cuenta || null);
   
-  // Cargar cuotas para cada gasto
   gastos.forEach(g => {
     g.cuotas = Cuota.findAllByGasto(g.id);
   });
   
-  // Obtener gastos archivados filtrados por la misma cuenta
   const archivados = Gasto.findArchivedByUser(req.session.user.id, cuenta || null);
   archivados.forEach(g => {
     g.cuotas = Cuota.findAllByGasto(g.id);
@@ -35,7 +34,7 @@ router.get('/', auth, (req, res) => {
   });
 });
 
-// ===== API para obtener un gasto en JSON (usado en edición) =====
+// ===== API para obtener un gasto en JSON =====
 router.get('/api/:id', auth, (req, res) => {
   const gasto = Gasto.findById(req.params.id, req.session.user.id);
   if (!gasto) return res.status(404).json({ error: 'Gasto no encontrado' });
@@ -99,18 +98,27 @@ router.put('/archivar/:id', auth, (req, res) => {
   }
 });
 
-// ===== Dividir gasto (reemplazar cuotas) =====
+// ===== Desarchivar gasto (restaurar) =====
+router.put('/desarchivar/:id', auth, (req, res) => {
+  try {
+    const stmt = db.prepare('UPDATE gastos SET archivado = 0 WHERE id = ? AND usuario_id = ?');
+    stmt.run(req.params.id, req.session.user.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== Dividir gasto =====
 router.post('/dividir/:id', auth, (req, res) => {
-  const { cuotas } = req.body; // array de {nombre, valor}
+  const { cuotas } = req.body;
   if (!cuotas || !cuotas.length) {
     return res.status(400).json({ error: 'Debe enviar al menos una cuota' });
   }
   try {
     const gasto = Gasto.findById(req.params.id, req.session.user.id);
     if (!gasto) return res.status(404).json({ error: 'Gasto no encontrado' });
-    // Eliminar cuotas existentes
     Cuota.deleteAllByGasto(req.params.id);
-    // Insertar nuevas
     cuotas.forEach(c => {
       Cuota.create(req.params.id, c.nombre, parseFloat(c.valor));
     });
@@ -131,7 +139,7 @@ router.put('/cuota/:id/pago', auth, (req, res) => {
   }
 });
 
-// ===== Marcar/desmarcar pago de gasto (checkbox del gasto) =====
+// ===== Marcar/desmarcar pago de gasto =====
 router.put('/gasto/:id/pago', auth, (req, res) => {
   const { pagado } = req.body;
   try {
@@ -142,7 +150,7 @@ router.put('/gasto/:id/pago', auth, (req, res) => {
   }
 });
 
-// ===== Vista detalle de un gasto =====
+// ===== Vista detalle =====
 router.get('/detalle/:id', auth, (req, res) => {
   const gasto = Gasto.findById(req.params.id, req.session.user.id);
   if (!gasto) return res.status(404).send('Gasto no encontrado');
