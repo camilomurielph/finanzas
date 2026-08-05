@@ -117,4 +117,11 @@ router.get('/detalle/:id', auth, (req, res) => {
   res.render('gastos/detalle', { title: 'Detalle del gasto', gasto });
 });
 
+// Obtener datos de un gasto en formato JSON (para editar)
+router.get('/api/:id', auth, (req, res) => {
+  const gasto = Gasto.findById(req.params.id, req.session.user.id);
+  if (!gasto) return res.status(404).json({ error: 'No encontrado' });
+  res.json(gasto);
+});
+
 module.exports = router;
