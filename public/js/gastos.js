@@ -45,16 +45,25 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // ===== Menú contextual (tres puntos) - CORREGIDO =====
-  // Asignar evento a cada elemento de tres puntos
   document.querySelectorAll('.menu-tres-puntos').forEach(el => {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
-      e.preventDefault(); // Evita cualquier navegación
+      e.preventDefault();
       currentGastoId = this.dataset.id;
+      const archivado = this.dataset.archivado === '1';
+
+      // Posicionar el menú
       const rect = this.getBoundingClientRect();
-      // Posicionar el menú debajo del icono
       menuContextual.style.top = rect.bottom + window.scrollY + 'px';
       menuContextual.style.left = rect.left + window.scrollX - 100 + 'px';
+      
+      // Cambiar el texto de la opción según archivado
+      const opcionArchivar = document.querySelector('#menu-contextual [data-action="archivar"]');
+      if (opcionArchivar) {
+        opcionArchivar.textContent = archivado ? '📂 Desarchivar' : '📁 Archivar';
+        opcionArchivar.dataset.archivado = archivado ? '1' : '0';
+      }
+
       menuContextual.classList.remove('hidden');
     });
   });
@@ -82,7 +91,12 @@ document.addEventListener('DOMContentLoaded', function() {
           abrirDividir(currentGastoId);
           break;
         case 'archivar':
-          archivarGasto(currentGastoId);
+          const archivado = this.dataset.archivado === '1';
+          if (archivado) {
+            desarchivarGasto(currentGastoId);
+          } else {
+            archivarGasto(currentGastoId);
+          }
           break;
         case 'borrar':
           borrarGasto(currentGastoId);
@@ -231,10 +245,20 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(err => alert('Error de red'));
   });
 
-  // ===== Archivar y Borrar =====
+  // ===== Archivar y Desarchivar =====
   function archivarGasto(id) {
     if (!confirm('¿Archivar este gasto?')) return;
     fetch(`/gastos/archivar/${id}`, { method: 'PUT' })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) location.reload();
+        else alert('Error: ' + result.error);
+      });
+  }
+
+  function desarchivarGasto(id) {
+    if (!confirm('¿Restaurar este gasto? Dejará de estar archivado.')) return;
+    fetch(`/gastos/desarchivar/${id}`, { method: 'PUT' })
       .then(res => res.json())
       .then(result => {
         if (result.success) location.reload();
@@ -252,8 +276,13 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 
-  // ===== Checkbox de gasto (pagado) - CORREGIDO =====
+  // ===== Checkbox de gasto (pagado) - CORREGIDO (no navega al detalle) =====
   document.querySelectorAll('.gasto-pagado').forEach(cb => {
+    // Detener clic para que no navegue al detalle
+    cb.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+    
     cb.addEventListener('change', function(e) {
       e.stopPropagation(); // Evita navegación
       const gastoId = this.dataset.id;
