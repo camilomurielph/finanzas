@@ -1,4 +1,8 @@
+console.log('subscriptions.js cargado');
+
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM listo');
+  
   // ===== Elementos =====
   const modal = document.getElementById('modal-suscripcion');
   const form = document.getElementById('form-suscripcion');
@@ -9,14 +13,20 @@ document.addEventListener('DOMContentLoaded', function() {
   const modalTitle = document.getElementById('modal-suscripcion-title');
   const btnAgregar = document.getElementById('btn-agregar-suscripcion');
 
+  console.log('btnAgregar:', btnAgregar);
+
   // ===== Funciones auxiliares =====
   function showModal() {
-    modal.classList.add('visible');
-    modal.style.display = 'flex';
+    if (modal) {
+      modal.classList.add('visible');
+      modal.style.display = 'flex';
+    }
   }
   function hideModal() {
-    modal.classList.remove('visible');
-    modal.style.display = 'none';
+    if (modal) {
+      modal.classList.remove('visible');
+      modal.style.display = 'none';
+    }
   }
   function closeAllMenus() {
     document.querySelectorAll('.suscripcion-actions.open').forEach(el => {
@@ -25,10 +35,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Cerrar modal al hacer clic en la 'X' o fuera del contenido
-  document.querySelector('#modal-suscripcion .close').addEventListener('click', hideModal);
-  modal.addEventListener('click', function(e) {
-    if (e.target === this) hideModal();
-  });
+  const closeBtn = document.querySelector('#modal-suscripcion .close');
+  if (closeBtn) closeBtn.addEventListener('click', hideModal);
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === this) hideModal();
+    });
+  }
 
   // ===== Menú de opciones (3 puntos) =====
   document.querySelectorAll('.menu-tres-puntos').forEach(el => {
@@ -65,50 +78,61 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // ===== Agregar nueva suscripción =====
-  btnAgregar.addEventListener('click', function() {
-    idInput.value = '';
-    modalTitle.textContent = 'Agregar suscripción';
-    form.reset();
-    showModal();
-  });
+  if (btnAgregar) {
+    btnAgregar.addEventListener('click', function(e) {
+      e.preventDefault();
+      console.log('Click en Nueva suscripción');
+      if (idInput) idInput.value = '';
+      if (modalTitle) modalTitle.textContent = 'Agregar suscripción';
+      if (form) form.reset();
+      showModal();
+    });
+  } else {
+    console.error('Botón btn-agregar-suscripcion no encontrado');
+  }
 
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const data = {
-      nombre: nombreInput.value.trim(),
-      valor: valorInput.value,
-      dia_pago: diaInput.value
-    };
-    const id = idInput.value;
-    const url = id ? `/suscripciones/editar/${id}` : '/suscripciones/agregar';
-    const method = id ? 'PUT' : 'POST';
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = {
+        nombre: nombreInput ? nombreInput.value.trim() : '',
+        valor: valorInput ? valorInput.value : '',
+        dia_pago: diaInput ? diaInput.value : ''
+      };
+      const id = idInput ? idInput.value : '';
+      const url = id ? `/suscripciones/editar/${id}` : '/suscripciones/agregar';
+      const method = id ? 'PUT' : 'POST';
 
-    fetch(url, {
-      method: method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    })
-    .then(res => res.json())
-    .then(result => {
-      if (result.success) {
-        location.reload();
-      } else {
-        alert('Error: ' + result.error);
-      }
-    })
-    .catch(err => alert('Error de red'));
-  });
+      fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          location.reload();
+        } else {
+          alert('Error: ' + result.error);
+        }
+      })
+      .catch(err => alert('Error de red: ' + err.message));
+    });
+  }
 
   // ===== Editar suscripción =====
   function editarSuscripcion(id) {
     fetch(`/suscripciones/api/${id}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('No se pudo obtener la suscripción');
+        return res.json();
+      })
       .then(s => {
-        idInput.value = s.id;
-        modalTitle.textContent = 'Editar suscripción';
-        nombreInput.value = s.nombre;
-        valorInput.value = s.valor;
-        diaInput.value = s.dia_pago;
+        if (idInput) idInput.value = s.id;
+        if (modalTitle) modalTitle.textContent = 'Editar suscripción';
+        if (nombreInput) nombreInput.value = s.nombre;
+        if (valorInput) valorInput.value = s.valor;
+        if (diaInput) diaInput.value = s.dia_pago;
         showModal();
       })
       .catch(err => alert('Error al cargar datos: ' + err.message));
