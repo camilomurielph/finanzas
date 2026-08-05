@@ -931,3 +931,87 @@ a:hover {
     font-size: 0.85rem;
   }
 }
+
+/* ===== MODAL DE GESTIÓN DE CUENTAS (MEJORAS) ===== */
+.cuentas-list {
+  margin: 16px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.cuenta-item-modal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-color);
+  transition: background var(--transition);
+}
+.cuenta-item-modal:hover {
+  background: var(--bg-hover);
+}
+.cuenta-item-modal .cuenta-nombre {
+  font-weight: 500;
+  flex: 1;
+  font-size: 0.95rem;
+}
+.cuenta-item-modal .cuenta-actions {
+  display: flex;
+  gap: 6px;
+}
+.cuenta-item-modal .cuenta-actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all var(--transition);
+  font-size: 0.9rem;
+  min-height: 32px;
+}
+.cuenta-item-modal .cuenta-actions button:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+.cuenta-item-modal .cuenta-actions .btn-edit-cuenta:hover {
+  color: var(--accent);
+}
+.cuenta-item-modal .cuenta-actions .btn-delete-cuenta:hover {
+  color: var(--danger);
+}
+
+/* Botón "Agregar" en el modal de cuentas (más pequeño) */
+#form-nueva-cuenta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 16px;
+}
+#form-nueva-cuenta input {
+  flex: 1;
+  min-height: 40px;
+}
+#form-nueva-cuenta .btn-primary {
+  flex: 0 0 auto;
+  padding: 8px 20px;
+  min-height: 40px;
+  width: auto;
+  margin-top: 0;
+}
+
+/* Ajustes en móvil */
+@media (max-width: 480px) {
+  .cuenta-item-modal {
+    padding: 8px 10px;
+  }
+  .cuenta-item-modal .cuenta-nombre {
+    font-size: 0.85rem;
+  }
+  #form-nueva-cuenta .btn-primary {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+  }
+}
