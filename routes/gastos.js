@@ -20,8 +20,8 @@ router.get('/', auth, (req, res) => {
     g.cuotas = Cuota.findAllByGasto(g.id);
   });
   
-  // Obtener gastos archivados
-  const archivados = Gasto.findArchivedByUser(req.session.user.id);
+  // Obtener gastos archivados filtrados por la misma cuenta
+  const archivados = Gasto.findArchivedByUser(req.session.user.id, cuenta || null);
   archivados.forEach(g => {
     g.cuotas = Cuota.findAllByGasto(g.id);
   });
