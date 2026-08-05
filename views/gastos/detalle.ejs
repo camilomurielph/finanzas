@@ -1,0 +1,19 @@
+<%- include('../partials/header', { title: 'Detalle del gasto' }) %>
+  <div class="detalle-container">
+    <a href="/gastos" class="btn-back">← Volver</a>
+    <h2><%= gasto.nombre %></h2>
+    <p><strong>Tipo:</strong> <%= gasto.tipo_nombre %></p>
+    <p><strong>Fecha:</strong> <%= new Date(gasto.fecha).toLocaleDateString() %></p>
+    <p><strong>Valor total:</strong> $<%= gasto.valor_total.toLocaleString() %></p>
+    <h3>Cuotas</h3>
+    <% if (gasto.cuotas && gasto.cuotas.length) { %>
+      <ul>
+        <% gasto.cuotas.forEach(c => { %>
+          <li><%= c.nombre %> - $<%= c.valor.toLocaleString() %> <%= c.pagado ? '✅ Pagado' : '⏳ Pendiente' %></li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p>Este gasto no tiene cuotas.</p>
+    <% } %>
+  </div>
+<%- include('../partials/footer') %>
