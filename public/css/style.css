@@ -807,3 +807,127 @@ a:hover {
     padding: 6px 14px;
   }
 }
+
+/* ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) ===== */
+.gasto-actions {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  padding: 0 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid transparent;
+}
+.gasto-actions.open {
+  max-height: 200px;
+  opacity: 1;
+  padding: 10px 14px;
+  border-top-color: var(--border-color);
+}
+.gasto-actions .action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gasto-actions .action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  touch-action: manipulation;
+  min-height: 36px;
+}
+.gasto-actions .action-btn:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+.gasto-actions .action-btn.danger {
+  color: var(--danger);
+}
+.gasto-actions .action-btn.danger:hover {
+  background: rgba(255, 107, 107, 0.15);
+  border-color: var(--danger);
+}
+.gasto-actions .action-btn.primary {
+  color: var(--accent);
+}
+.gasto-actions .action-btn.primary:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent);
+}
+.gasto-actions .action-btn:active {
+  transform: scale(0.95);
+}
+
+/* ===== MODAL DE GESTIÓN DE CUENTAS ===== */
+.cuentas-list {
+  margin: 16px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.cuenta-item-modal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-color);
+  transition: background var(--transition);
+}
+.cuenta-item-modal:hover {
+  background: var(--bg-hover);
+}
+.cuenta-item-modal .cuenta-nombre {
+  font-weight: 500;
+  flex: 1;
+  font-size: 0.95rem;
+}
+.cuenta-item-modal .cuenta-actions {
+  display: flex;
+  gap: 6px;
+}
+.cuenta-item-modal .cuenta-actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all var(--transition);
+  font-size: 0.9rem;
+  min-height: 32px;
+}
+.cuenta-item-modal .cuenta-actions button:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+.cuenta-item-modal .cuenta-actions .btn-edit-cuenta:hover {
+  color: var(--accent);
+}
+.cuenta-item-modal .cuenta-actions .btn-delete-cuenta:hover {
+  color: var(--danger);
+}
+
+/* Ajustes para el modal de cuentas en móvil */
+@media (max-width: 480px) {
+  .gasto-actions .action-btn {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    min-height: 32px;
+  }
+  .cuenta-item-modal {
+    padding: 8px 10px;
+  }
+  .cuenta-item-modal .cuenta-nombre {
+    font-size: 0.85rem;
+  }
+}
