@@ -44,11 +44,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // ===== Menú contextual (tres puntos) =====
+  // ===== Menú contextual (tres puntos) - Corregido para no navegar =====
   document.addEventListener('click', function(e) {
     const target = e.target.closest('.menu-tres-puntos');
     if (target) {
-      e.stopPropagation();
+      e.stopPropagation(); // Evita que el click llegue al header
+      e.preventDefault();
       currentGastoId = target.dataset.id;
       const rect = target.getBoundingClientRect();
       menuContextual.style.top = rect.bottom + window.scrollY + 'px';
@@ -59,9 +60,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // También evitar navegación al hacer clic en el área del menú (dentro de gasto-header)
+  document.querySelectorAll('.gasto-header .menu-tres-puntos').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  });
+
   // Acciones del menú contextual
   document.querySelectorAll('#menu-contextual ul li').forEach(item => {
-    item.addEventListener('click', function() {
+    item.addEventListener('click', function(e) {
+      e.stopPropagation();
       const action = this.dataset.action;
       menuContextual.classList.add('hidden');
       if (!currentGastoId) return;
@@ -140,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(err => alert('Error al cargar datos: ' + err.message));
   }
 
-  // ===== Tipos de gasto =====
+  // ===== Tipos de gasto (cuentas) =====
   btnAgregarTipo.addEventListener('click', function() {
     showModal(modalTipo);
   });
@@ -244,12 +253,36 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 
-  // ===== Checkbox de cuotas (marcar pagado) =====
-  document.querySelectorAll('.cuota-item input[type="checkbox"]').forEach(cb => {
-    cb.addEventListener('change', function() {
-      const cuotaId = this.closest('.cuota-item').dataset.id;
+  // ===== Checkbox de gasto (pagado) =====
+  document.querySelectorAll('.gasto-pagado').forEach(cb => {
+    cb.addEventListener('change', function(e) {
+      e.stopPropagation(); // Evita navegación al header
+      const gastoId = this.dataset.id;
+      const pagado = this.checked;
+      fetch(`/gastos/gasto/${gastoId}/pago`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pagado })
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (!result.success) {
+          alert('Error al actualizar pago');
+          this.checked = !pagado;
+        }
+      })
+      .catch(err => alert('Error de red'));
+    });
+  });
+
+  // ===== Checkbox de cuotas (pagado) =====
+  document.querySelectorAll('.cuota-pagado').forEach(cb => {
+    cb.addEventListener('change', function(e) {
+      e.stopPropagation();
+      const cuotaId = this.dataset.id;
       const pagado = this.checked;
       const fecha_pago = pagado ? new Date().toISOString().split('T')[0] : null;
+      const cuotaItem = this.closest('.cuota-item');
       fetch(`/gastos/cuota/${cuotaId}/pago`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -259,16 +292,91 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(result => {
         if (!result.success) {
           alert('Error al actualizar pago');
-          this.checked = !pagado; // revertir
+          this.checked = !pagado;
         } else {
-          // Actualizar fecha_pago visual
-          const spanFecha = this.closest('.cuota-item').querySelector('.fecha-pago');
-          if (spanFecha) {
-            spanFecha.textContent = fecha_pago ? new Date(fecha_pago).toLocaleDateString() : '';
+          // Mostrar input de fecha si está pagado
+          const fechaSpan = cuotaItem.querySelector('.fecha-pago');
+          if (pagado) {
+            if (!fechaSpan || fechaSpan.tagName !== 'INPUT') {
+              // Reemplazar span por input
+              const input = document.createElement('input');
+              input.type = 'date';
+              input.className = 'fecha-pago-input';
+              input.value = fecha_pago;
+              input.dataset.id = cuotaId;
+              // Reemplazar
+              const old = cuotaItem.querySelector('.fecha-pago');
+              if (old) old.replaceWith(input);
+              else cuotaItem.appendChild(input);
+              // Evento para cambiar fecha
+              input.addEventListener('change', function(e) {
+                e.stopPropagation();
+                actualizarFechaCuota(cuotaId, this.value);
+              });
+            } else if (fechaSpan.tagName === 'INPUT') {
+              fechaSpan.value = fecha_pago;
+            }
+          } else {
+            // Si se desmarca, quitar input y poner span vacío
+            const input = cuotaItem.querySelector('.fecha-pago-input');
+            if (input) {
+              const span = document.createElement('span');
+              span.className = 'fecha-pago';
+              input.replaceWith(span);
+            }
           }
         }
       })
       .catch(err => alert('Error de red'));
     });
   });
+
+  // ===== Función para actualizar fecha de cuota =====
+  function actualizarFechaCuota(cuotaId, fecha) {
+    if (!fecha) return;
+    // Solo actualizar si la cuota está pagada (usamos el checkbox)
+    const cb = document.querySelector(`.cuota-pagado[data-id="${cuotaId}"]`);
+    if (!cb || !cb.checked) return;
+    fetch(`/gastos/cuota/${cuotaId}/pago`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pagado: true, fecha_pago: fecha })
+    })
+    .then(res => res.json())
+    .then(result => {
+      if (!result.success) {
+        alert('Error al actualizar fecha');
+      }
+    })
+    .catch(err => alert('Error de red'));
+  }
+
+  // Agregar eventos a los inputs de fecha ya existentes (para cuotas ya pagadas)
+  document.querySelectorAll('.fecha-pago-input').forEach(input => {
+    input.addEventListener('change', function(e) {
+      e.stopPropagation();
+      const cuotaId = this.dataset.id;
+      actualizarFechaCuota(cuotaId, this.value);
+    });
+  });
+
+  // ===== Filtro por cuenta (botones) =====
+  document.querySelectorAll('.cuenta-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const cuenta = this.dataset.cuenta;
+      // Redirigir con query param
+      const url = cuenta ? `/gastos?cuenta=${cuenta}` : '/gastos';
+      window.location.href = url;
+    });
+  });
+
+  // ===== Toggle de archivados =====
+  const archivadosToggle = document.getElementById('archivados-toggle');
+  const archivadosContent = document.getElementById('archivados-content');
+  if (archivadosToggle) {
+    archivadosToggle.addEventListener('click', function() {
+      const isOpen = this.classList.toggle('open');
+      archivadosContent.style.display = isOpen ? 'block' : 'none';
+    });
+  }
 });
