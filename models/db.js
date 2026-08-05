@@ -27,6 +27,7 @@ db.exec(`
     nombre TEXT NOT NULL,
     fecha DATE NOT NULL,
     valor_total REAL NOT NULL,
+    pagado BOOLEAN DEFAULT 0,
     archivado BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -44,5 +45,17 @@ db.exec(`
     FOREIGN KEY (gasto_id) REFERENCES gastos(id) ON DELETE CASCADE
   );
 `);
+
+// Migración: asegurar que la columna 'pagado' existe en gastos
+try {
+  const columnInfo = db.prepare("PRAGMA table_info(gastos)").all();
+  const hasPagado = columnInfo.some(col => col.name === 'pagado');
+  if (!hasPagado) {
+    db.exec('ALTER TABLE gastos ADD COLUMN pagado BOOLEAN DEFAULT 0;');
+    console.log('Migración: columna pagado agregada a gastos');
+  }
+} catch (err) {
+  console.error('Error en migración:', err.message);
+}
 
 module.exports = db;
