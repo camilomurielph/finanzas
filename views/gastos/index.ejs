@@ -1,0 +1,107 @@
+<%- include('../partials/header', { title: 'Gastos', active: 'gastos' }) %>
+
+<div class="toolbar">
+  <h1>Mis gastos</h1>
+  <div>
+    <button class="btn-primary" id="btn-agregar-tipo">➕ Nuevo tipo</button>
+    <button class="btn-primary" id="btn-agregar-gasto">➕ Nuevo gasto</button>
+  </div>
+</div>
+
+<!-- Modal para tipo de gasto -->
+<div id="modal-tipo" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Nuevo tipo de gasto</h2>
+    <form id="form-tipo">
+      <label>Nombre <input type="text" id="tipo-nombre" required></label>
+      <button type="submit" class="btn-primary">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para agregar/editar gasto -->
+<div id="modal-gasto" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2 id="modal-gasto-title">Agregar gasto</h2>
+    <form id="form-gasto">
+      <input type="hidden" id="gasto-id" value="">
+      <label>Tipo de gasto
+        <select id="tipo_gasto_id" required>
+          <% tipos.forEach(t => { %>
+            <option value="<%= t.id %>"><%= t.nombre %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Nombre <input type="text" id="nombre" required></label>
+      <label>Fecha <input type="date" id="fecha" required></label>
+      <label>Valor (COP) <input type="number" step="0.01" id="valor_total" required></label>
+      <button type="submit" class="btn-primary">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para dividir en cuotas -->
+<div id="modal-dividir" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Dividir en cuotas</h2>
+    <div id="cuotas-container">
+      <div class="cuota-input">
+        <input type="text" placeholder="Nombre cuota" class="cuota-nombre">
+        <input type="number" step="0.01" placeholder="Valor" class="cuota-valor">
+        <button class="btn-remove-cuota">✕</button>
+      </div>
+    </div>
+    <button id="btn-agregar-cuota" class="btn-secondary">➕ Agregar cuota</button>
+    <button id="btn-guardar-cuotas" class="btn-primary">Guardar división</button>
+  </div>
+</div>
+
+<!-- Menú contextual (tres puntos) -->
+<div id="menu-contextual" class="menu-contextual hidden">
+  <ul>
+    <li data-action="editar">✏️ Editar</li>
+    <li data-action="dividir">🔀 Dividir</li>
+    <li data-action="archivar">📁 Archivar</li>
+    <li data-action="borrar">🗑️ Borrar</li>
+  </ul>
+</div>
+
+<!-- Listado de gastos -->
+<div id="gastos-list">
+  <% if (gastos.length === 0) { %>
+    <p class="empty">No hay gastos registrados.</p>
+  <% } else { %>
+    <% gastos.forEach(g => { %>
+      <div class="gasto-item" data-id="<%= g.id %>">
+        <div class="gasto-header" onclick="window.location='/gastos/detalle/<%= g.id %>'">
+          <div class="gasto-info">
+            <strong><%= g.nombre %></strong>
+            <span class="tipo"><%= g.tipo_nombre %></span>
+            <span class="fecha"><%= new Date(g.fecha).toLocaleDateString() %></span>
+          </div>
+          <div class="gasto-valor">
+            $<%= g.valor_total.toLocaleString() %>
+            <span class="menu-tres-puntos" data-id="<%= g.id %>">⋮</span>
+          </div>
+        </div>
+        <% if (g.cuotas && g.cuotas.length) { %>
+          <div class="cuotas-container">
+            <% g.cuotas.forEach(c => { %>
+              <div class="cuota-item" data-id="<%= c.id %>">
+                <input type="checkbox" <%= c.pagado ? 'checked' : '' %>>
+                <span><%= c.nombre %></span>
+                <span>$<%= c.valor.toLocaleString() %></span>
+                <span class="fecha-pago"><%= c.fecha_pago ? new Date(c.fecha_pago).toLocaleDateString() : '' %></span>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>
