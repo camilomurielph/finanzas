@@ -298,3 +298,88 @@ a:hover { text-decoration: underline; }
   margin: 5px 0;
   border-radius: 6px;
 }
+/* Botones de cuentas */
+.cuentas-container {
+  margin-bottom: 25px;
+}
+.cuentas-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cuenta-btn {
+  padding: 8px 18px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 20px;
+  color: #b0b0b0;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9em;
+}
+.cuenta-btn:hover {
+  background: #2a2a2a;
+  border-color: #555;
+}
+.cuenta-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+/* Checkbox de gasto */
+.gasto-info input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+/* Fecha de pago editable en cuotas */
+.fecha-pago-input {
+  background: #0d0d0d;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #e0e0e0;
+  padding: 2px 6px;
+  font-size: 0.85em;
+  width: 130px;
+  cursor: pointer;
+}
+.fecha-pago-input:focus {
+  border-color: #3b82f6;
+  outline: none;
+}
+
+/* Sección archivados */
+.archivados-section {
+  margin-top: 40px;
+  border-top: 1px solid #2a2a2a;
+  padding-top: 15px;
+}
+.archivados-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.archivados-toggle:hover {
+  background: #222;
+}
+.archivados-toggle .arrow {
+  transition: transform 0.3s;
+}
+.archivados-toggle.open .arrow {
+  transform: rotate(90deg);
+}
+.archivados-content {
+  margin-top: 10px;
+}
+.archivados-content .gasto-item {
+  opacity: 0.7;
+  background: #111;
+}
