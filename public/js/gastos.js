@@ -120,24 +120,24 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(err => alert('Error de red'));
   });
 
+  // ===== Editar gasto (usando la API) =====
   function editarGasto(id) {
-    // Obtener datos del gasto desde el DOM o hacer fetch
-    fetch(`/gastos/detalle/${id}`)
-      .then(res => res.text())
-      .then(html => {
-        // Extraer datos (alternativa: hacer una API específica)
-        // Por simplicidad, usamos un endpoint que devuelve JSON (no implementado)
-        // Mejor hacemos otra petición AJAX a un endpoint /gastos/api/:id
-        // Pero para no complicar, usamos un truco: pedimos el detalle y parseamos?
-        // Lo correcto es crear una ruta API. La añadiré en el código de rutas.
-        // Mientras tanto, usamos una función que llama a /gastos/detalle y extrae con regex? No.
-        // Voy a implementar una ruta GET /gastos/api/:id en el backend.
-        // Por ahora, simulamos con un prompt (pero mejor lo dejamos funcional con una ruta adicional)
-        // En la práctica, debes agregar esta ruta en gastos.js:
-        // router.get('/api/:id', auth, (req,res) => { const g = Gasto.findById(...); res.json(g); })
-        // Entonces aquí haríamos fetch(`/gastos/api/${id}`) y llenamos el formulario.
-        // Como no lo incluí, lo agrego ahora en la respuesta final.
-      });
+    fetch(`/gastos/api/${id}`)
+      .then(res => {
+        if (!res.ok) throw new Error('No se pudo obtener el gasto');
+        return res.json();
+      })
+      .then(gasto => {
+        editing = true;
+        gastoIdInput.value = gasto.id;
+        modalGastoTitle.textContent = 'Editar gasto';
+        document.getElementById('tipo_gasto_id').value = gasto.tipo_gasto_id;
+        document.getElementById('nombre').value = gasto.nombre;
+        document.getElementById('fecha').value = gasto.fecha;
+        document.getElementById('valor_total').value = gasto.valor_total;
+        showModal(modalGasto);
+      })
+      .catch(err => alert('Error al cargar datos: ' + err.message));
   }
 
   // ===== Tipos de gasto =====
@@ -166,7 +166,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // ===== Dividir en cuotas =====
   function abrirDividir(id) {
     currentGastoId = id;
-    // Limpiar container y agregar una fila por defecto
     cuotasContainer.innerHTML = '';
     agregarFilaCuota();
     showModal(modalDividir);
