@@ -20,6 +20,13 @@ router.get('/', auth, (req, res) => {
   res.render('gastos/index', { title: 'Gastos', tipos, gastos });
 });
 
+// ===== API para obtener un gasto en JSON (usado en edición) =====
+router.get('/api/:id', auth, (req, res) => {
+  const gasto = Gasto.findById(req.params.id, req.session.user.id);
+  if (!gasto) return res.status(404).json({ error: 'Gasto no encontrado' });
+  res.json(gasto);
+});
+
 // Crear nuevo tipo de gasto (AJAX)
 router.post('/tipos', auth, (req, res) => {
   const { nombre } = req.body;
@@ -115,13 +122,6 @@ router.get('/detalle/:id', auth, (req, res) => {
   if (!gasto) return res.status(404).send('Gasto no encontrado');
   gasto.cuotas = Cuota.findAllByGasto(gasto.id);
   res.render('gastos/detalle', { title: 'Detalle del gasto', gasto });
-});
-
-// Obtener datos de un gasto en formato JSON (para editar)
-router.get('/api/:id', auth, (req, res) => {
-  const gasto = Gasto.findById(req.params.id, req.session.user.id);
-  if (!gasto) return res.status(404).json({ error: 'No encontrado' });
-  res.json(gasto);
 });
 
 module.exports = router;
