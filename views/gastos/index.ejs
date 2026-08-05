@@ -3,7 +3,7 @@
 <div class="toolbar">
   <h1>Mis gastos</h1>
   <div>
-    <button class="btn-primary" id="btn-agregar-tipo">➕ Nueva cuenta/tarjeta</button>
+    <button class="btn-primary" id="btn-gestion-cuentas">🏦 Cuentas/tarjetas</button>
     <button class="btn-primary" id="btn-agregar-gasto">➕ Nuevo gasto</button>
   </div>
 </div>
@@ -15,18 +15,6 @@
     <% tipos.forEach(t => { %>
       <button class="cuenta-btn <%= cuentaSeleccionada == t.id ? 'active' : '' %>" data-cuenta="<%= t.id %>">💳 <%= t.nombre %></button>
     <% }) %>
-  </div>
-</div>
-
-<!-- Modal para tipo de gasto (cuenta) -->
-<div id="modal-tipo" class="modal hidden">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <h2>Nueva cuenta/tarjeta</h2>
-    <form id="form-tipo">
-      <label>Nombre <input type="text" id="tipo-nombre" required placeholder="Ej: Tarjeta de crédito"></label>
-      <button type="submit" class="btn-primary">Guardar</button>
-    </form>
   </div>
 </div>
 
@@ -69,14 +57,21 @@
   </div>
 </div>
 
-<!-- Menú contextual (tres puntos) -->
-<div id="menu-contextual" class="menu-contextual hidden">
-  <ul>
-    <li data-action="editar">✏️ Editar</li>
-    <li data-action="dividir">🔀 Dividir</li>
-    <li data-action="archivar">📁 Archivar</li>
-    <li data-action="borrar">🗑️ Borrar</li>
-  </ul>
+<!-- Modal de gestión de cuentas -->
+<div id="modal-cuentas" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Gestionar cuentas/tarjetas</h2>
+    <div class="cuentas-list" id="cuentas-list">
+      <!-- Se llena dinámicamente con JS -->
+    </div>
+    <form id="form-nueva-cuenta" style="margin-top:16px;">
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="nueva-cuenta-nombre" placeholder="Nombre de la nueva cuenta" style="flex:1;">
+        <button type="submit" class="btn-primary" style="flex-shrink:0;">Agregar</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Listado de gastos activos -->
@@ -86,8 +81,8 @@
   <% } else { %>
     <% gastos.forEach(g => { %>
       <div class="gasto-item" data-id="<%= g.id %>">
-        <div class="gasto-header">
-          <div class="gasto-info" onclick="window.location='/gastos/detalle/<%= g.id %>'">
+        <div class="gasto-header" onclick="window.location='/gastos/detalle/<%= g.id %>'">
+          <div class="gasto-info">
             <input type="checkbox" class="gasto-pagado" <%= g.pagado ? 'checked' : '' %> data-id="<%= g.id %>">
             <strong><%= g.nombre %></strong>
             <span class="tipo"><%= g.tipo_nombre %></span>
@@ -98,6 +93,18 @@
             <span class="menu-tres-puntos" data-id="<%= g.id %>" data-archivado="0">⋮</span>
           </div>
         </div>
+        
+        <!-- Menú de acciones desplegable -->
+        <div class="gasto-actions" id="acciones-<%= g.id %>">
+          <div class="action-buttons">
+            <button class="action-btn primary" data-action="editar" data-id="<%= g.id %>">✏️ Editar</button>
+            <button class="action-btn primary" data-action="dividir" data-id="<%= g.id %>">🔀 Dividir</button>
+            <button class="action-btn" data-action="archivar" data-id="<%= g.id %>" data-archivado="0">📁 Archivar</button>
+            <button class="action-btn danger" data-action="borrar" data-id="<%= g.id %>">🗑️ Borrar</button>
+          </div>
+        </div>
+
+        <!-- Cuotas -->
         <% if (g.cuotas && g.cuotas.length) { %>
           <div class="cuotas-container">
             <% g.cuotas.forEach(c => { %>
@@ -131,8 +138,8 @@
     <% } else { %>
       <% archivados.forEach(g => { %>
         <div class="gasto-item archivado" data-id="<%= g.id %>">
-          <div class="gasto-header">
-            <div class="gasto-info" onclick="window.location='/gastos/detalle/<%= g.id %>'">
+          <div class="gasto-header" onclick="window.location='/gastos/detalle/<%= g.id %>'">
+            <div class="gasto-info">
               <strong><%= g.nombre %></strong>
               <span class="tipo"><%= g.tipo_nombre %></span>
               <span class="fecha"><%= new Date(g.fecha).toLocaleDateString() %></span>
@@ -142,6 +149,18 @@
               <span class="menu-tres-puntos" data-id="<%= g.id %>" data-archivado="1">⋮</span>
             </div>
           </div>
+          
+          <!-- Menú de acciones desplegable para archivados -->
+          <div class="gasto-actions" id="acciones-<%= g.id %>">
+            <div class="action-buttons">
+              <button class="action-btn primary" data-action="editar" data-id="<%= g.id %>">✏️ Editar</button>
+              <button class="action-btn primary" data-action="dividir" data-id="<%= g.id %>">🔀 Dividir</button>
+              <button class="action-btn" data-action="archivar" data-id="<%= g.id %>" data-archivado="1">📂 Desarchivar</button>
+              <button class="action-btn danger" data-action="borrar" data-id="<%= g.id %>">🗑️ Borrar</button>
+            </div>
+          </div>
+
+          <!-- Cuotas de archivados -->
           <% if (g.cuotas && g.cuotas.length) { %>
             <div class="cuotas-container">
               <% g.cuotas.forEach(c => { %>
