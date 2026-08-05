@@ -9,6 +9,10 @@ module.exports = {
     const stmt = db.prepare('SELECT * FROM tipos_gasto WHERE usuario_id = ? ORDER BY nombre');
     return stmt.all(usuario_id);
   },
+  update(id, usuario_id, nombre) {
+    const stmt = db.prepare('UPDATE tipos_gasto SET nombre = ? WHERE id = ? AND usuario_id = ?');
+    return stmt.run(nombre, id, usuario_id);
+  },
   delete(id, usuario_id) {
     const stmt = db.prepare('DELETE FROM tipos_gasto WHERE id = ? AND usuario_id = ?');
     return stmt.run(id, usuario_id);
