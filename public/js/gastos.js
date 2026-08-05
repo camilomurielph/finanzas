@@ -168,13 +168,16 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(err => alert('Error al cargar datos: ' + err.message));
   }
 
-  // ===== GESTIÓN DE CUENTAS =====
+  // ===== GESTIÓN DE CUENTAS (CORREGIDO) =====
   function cargarCuentas() {
     fetch('/gastos/api/cuentas')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Error al cargar cuentas');
+        return res.json();
+      })
       .then(cuentas => {
         cuentasList.innerHTML = '';
-        if (cuentas.length === 0) {
+        if (!cuentas || cuentas.length === 0) {
           cuentasList.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px 0;">No hay cuentas creadas.</p>';
           return;
         }
@@ -184,8 +187,8 @@ document.addEventListener('DOMContentLoaded', function() {
           div.innerHTML = `
             <span class="cuenta-nombre">${c.nombre}</span>
             <div class="cuenta-actions">
-              <button class="btn-edit-cuenta" data-id="${c.id}">✏️</button>
-              <button class="btn-delete-cuenta" data-id="${c.id}">🗑️</button>
+              <button class="btn-edit-cuenta" data-id="${c.id}" title="Editar nombre">✏️</button>
+              <button class="btn-delete-cuenta" data-id="${c.id}" title="Eliminar cuenta">🗑️</button>
             </div>
           `;
           cuentasList.appendChild(div);
@@ -233,6 +236,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
           });
         });
+      })
+      .catch(err => {
+        alert('Error al cargar cuentas: ' + err.message);
       });
   }
 
