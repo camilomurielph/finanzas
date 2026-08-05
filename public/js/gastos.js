@@ -5,20 +5,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ===== Elementos =====
   const modalGasto = document.getElementById('modal-gasto');
-  const modalTipo = document.getElementById('modal-tipo');
+  const modalCuentas = document.getElementById('modal-cuentas');
   const modalDividir = document.getElementById('modal-dividir');
-  const menuContextual = document.getElementById('menu-contextual');
 
   const formGasto = document.getElementById('form-gasto');
-  const formTipo = document.getElementById('form-tipo');
   const gastoIdInput = document.getElementById('gasto-id');
   const modalGastoTitle = document.getElementById('modal-gasto-title');
 
   const btnAgregarGasto = document.getElementById('btn-agregar-gasto');
-  const btnAgregarTipo = document.getElementById('btn-agregar-tipo');
+  const btnGestionCuentas = document.getElementById('btn-gestion-cuentas');
   const btnAgregarCuota = document.getElementById('btn-agregar-cuota');
   const btnGuardarCuotas = document.getElementById('btn-guardar-cuotas');
   const cuotasContainer = document.getElementById('cuotas-container');
+  
+  const cuentasList = document.getElementById('cuentas-list');
+  const formNuevaCuenta = document.getElementById('form-nueva-cuenta');
+  const nuevaCuentaNombre = document.getElementById('nueva-cuenta-nombre');
 
   // ===== Funciones auxiliares =====
   function showModal(modal) {
@@ -30,8 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     modal.style.display = 'none';
   }
   function closeAllModals() {
-    [modalGasto, modalTipo, modalDividir].forEach(hideModal);
-    menuContextual.classList.add('hidden');
+    [modalGasto, modalCuentas, modalDividir].forEach(hideModal);
   }
 
   // Cerrar modales al hacer clic en la 'X' o fuera del contenido
@@ -44,62 +45,67 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // ===== Menú contextual (tres puntos) - CORREGIDO =====
+  // ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) =====
+  function cerrarTodosMenus() {
+    document.querySelectorAll('.gasto-actions.open').forEach(container => {
+      container.classList.remove('open');
+    });
+  }
+
   document.querySelectorAll('.menu-tres-puntos').forEach(el => {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
       e.preventDefault();
-      currentGastoId = this.dataset.id;
-      const archivado = this.dataset.archivado === '1';
-
-      // Posicionar el menú
-      const rect = this.getBoundingClientRect();
-      menuContextual.style.top = rect.bottom + window.scrollY + 'px';
-      menuContextual.style.left = rect.left + window.scrollX - 100 + 'px';
-      
-      // Cambiar el texto de la opción según archivado
-      const opcionArchivar = document.querySelector('#menu-contextual [data-action="archivar"]');
-      if (opcionArchivar) {
-        opcionArchivar.textContent = archivado ? '📂 Desarchivar' : '📁 Archivar';
-        opcionArchivar.dataset.archivado = archivado ? '1' : '0';
+      const gastoId = this.dataset.id;
+      const actionsContainer = document.getElementById(`acciones-${gastoId}`);
+      if (actionsContainer) {
+        // Cerrar otros menús abiertos
+        document.querySelectorAll('.gasto-actions.open').forEach(container => {
+          if (container.id !== `acciones-${gastoId}`) {
+            container.classList.remove('open');
+          }
+        });
+        // Toggle del actual
+        actionsContainer.classList.toggle('open');
       }
-
-      menuContextual.classList.remove('hidden');
     });
   });
 
-  // Ocultar menú al hacer clic fuera
+  // Cerrar menús al hacer clic fuera
   document.addEventListener('click', function(e) {
-    if (!e.target.closest('.menu-contextual') && !e.target.closest('.menu-tres-puntos')) {
-      menuContextual.classList.add('hidden');
+    if (!e.target.closest('.gasto-item')) {
+      cerrarTodosMenus();
     }
   });
 
-  // Acciones del menú contextual
-  document.querySelectorAll('#menu-contextual ul li').forEach(item => {
-    item.addEventListener('click', function(e) {
+  // Acciones de los botones dentro del menú
+  document.querySelectorAll('.gasto-actions .action-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
       e.stopPropagation();
       const action = this.dataset.action;
-      menuContextual.classList.add('hidden');
-      if (!currentGastoId) return;
+      const id = this.dataset.id;
+      const archivado = this.dataset.archivado === '1';
+
+      // Cerrar el menú
+      const actionsContainer = this.closest('.gasto-actions');
+      if (actionsContainer) actionsContainer.classList.remove('open');
 
       switch (action) {
         case 'editar':
-          editarGasto(currentGastoId);
+          editarGasto(id);
           break;
         case 'dividir':
-          abrirDividir(currentGastoId);
+          abrirDividir(id);
           break;
         case 'archivar':
-          const archivado = this.dataset.archivado === '1';
           if (archivado) {
-            desarchivarGasto(currentGastoId);
+            desarchivarGasto(id);
           } else {
-            archivarGasto(currentGastoId);
+            archivarGasto(id);
           }
           break;
         case 'borrar':
-          borrarGasto(currentGastoId);
+          borrarGasto(id);
           break;
       }
     });
@@ -162,13 +168,83 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(err => alert('Error al cargar datos: ' + err.message));
   }
 
-  // ===== Tipos de gasto (cuentas) =====
-  btnAgregarTipo.addEventListener('click', function() {
-    showModal(modalTipo);
+  // ===== GESTIÓN DE CUENTAS =====
+  function cargarCuentas() {
+    fetch('/gastos/api/cuentas')
+      .then(res => res.json())
+      .then(cuentas => {
+        cuentasList.innerHTML = '';
+        if (cuentas.length === 0) {
+          cuentasList.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px 0;">No hay cuentas creadas.</p>';
+          return;
+        }
+        cuentas.forEach(c => {
+          const div = document.createElement('div');
+          div.className = 'cuenta-item-modal';
+          div.innerHTML = `
+            <span class="cuenta-nombre">${c.nombre}</span>
+            <div class="cuenta-actions">
+              <button class="btn-edit-cuenta" data-id="${c.id}">✏️</button>
+              <button class="btn-delete-cuenta" data-id="${c.id}">🗑️</button>
+            </div>
+          `;
+          cuentasList.appendChild(div);
+        });
+        // Eventos para editar y borrar
+        document.querySelectorAll('.btn-edit-cuenta').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.dataset.id;
+            const nombreActual = this.closest('.cuenta-item-modal').querySelector('.cuenta-nombre').textContent;
+            const nuevoNombre = prompt('Editar nombre de la cuenta:', nombreActual);
+            if (nuevoNombre && nuevoNombre.trim() !== '') {
+              fetch(`/gastos/tipos/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre: nuevoNombre.trim() })
+              })
+              .then(res => res.json())
+              .then(result => {
+                if (result.success) {
+                  location.reload();
+                } else {
+                  alert('Error: ' + result.error);
+                }
+              });
+            }
+          });
+        });
+        document.querySelectorAll('.btn-delete-cuenta').forEach(btn => {
+          btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.dataset.id;
+            if (confirm('¿Eliminar esta cuenta? Se perderán todos los gastos asociados.')) {
+              fetch(`/gastos/tipos/${id}`, {
+                method: 'DELETE'
+              })
+              .then(res => res.json())
+              .then(result => {
+                if (result.success) {
+                  location.reload();
+                } else {
+                  alert('Error: ' + result.error);
+                }
+              });
+            }
+          });
+        });
+      });
+  }
+
+  btnGestionCuentas.addEventListener('click', function() {
+    cargarCuentas();
+    showModal(modalCuentas);
   });
-  formTipo.addEventListener('submit', function(e) {
+
+  formNuevaCuenta.addEventListener('submit', function(e) {
     e.preventDefault();
-    const nombre = document.getElementById('tipo-nombre').value;
+    const nombre = nuevaCuentaNombre.value.trim();
+    if (!nombre) return alert('Ingresa un nombre');
     fetch('/gastos/tipos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -181,8 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         alert('Error: ' + result.error);
       }
-    })
-    .catch(err => alert('Error de red'));
+    });
   });
 
   // ===== Dividir en cuotas =====
@@ -245,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(err => alert('Error de red'));
   });
 
-  // ===== Archivar y Desarchivar =====
+  // ===== Archivar, Desarchivar y Borrar =====
   function archivarGasto(id) {
     if (!confirm('¿Archivar este gasto?')) return;
     fetch(`/gastos/archivar/${id}`, { method: 'PUT' })
@@ -276,15 +351,13 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 
-  // ===== Checkbox de gasto (pagado) - CORREGIDO (no navega al detalle) =====
+  // ===== Checkbox de gasto =====
   document.querySelectorAll('.gasto-pagado').forEach(cb => {
-    // Detener clic para que no navegue al detalle
     cb.addEventListener('click', function(e) {
       e.stopPropagation();
     });
-    
     cb.addEventListener('change', function(e) {
-      e.stopPropagation(); // Evita navegación
+      e.stopPropagation();
       const gastoId = this.dataset.id;
       const pagado = this.checked;
       fetch(`/gastos/gasto/${gastoId}/pago`, {
@@ -292,10 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pagado })
       })
-      .then(res => {
-        if (!res.ok) throw new Error('Error en la respuesta');
-        return res.json();
-      })
+      .then(res => res.json())
       .then(result => {
         if (!result.success) {
           alert('Error: ' + result.error);
@@ -309,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // ===== Checkbox de cuotas (pagado) =====
+  // ===== Checkbox de cuotas =====
   document.querySelectorAll('.cuota-pagado').forEach(cb => {
     cb.addEventListener('change', function(e) {
       e.stopPropagation();
@@ -328,7 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
           alert('Error al actualizar pago');
           this.checked = !pagado;
         } else {
-          // Mostrar input de fecha si está pagado
           const fechaSpan = cuotaItem.querySelector('.fecha-pago');
           if (pagado) {
             if (!fechaSpan || fechaSpan.tagName !== 'INPUT') {
@@ -361,7 +430,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // ===== Función para actualizar fecha de cuota =====
   function actualizarFechaCuota(cuotaId, fecha) {
     if (!fecha) return;
     const cb = document.querySelector(`.cuota-pagado[data-id="${cuotaId}"]`);
@@ -380,7 +448,6 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(err => alert('Error de red'));
   }
 
-  // Eventos para inputs de fecha ya existentes
   document.querySelectorAll('.fecha-pago-input').forEach(input => {
     input.addEventListener('change', function(e) {
       e.stopPropagation();
@@ -389,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // ===== Filtro por cuenta (botones) =====
+  // ===== Filtro por cuenta =====
   document.querySelectorAll('.cuenta-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       const cuenta = this.dataset.cuenta;
@@ -407,4 +474,9 @@ document.addEventListener('DOMContentLoaded', function() {
       archivadosContent.style.display = isOpen ? 'block' : 'none';
     });
   }
+
+  // ===== Cerrar menús al cambiar de cuenta =====
+  document.querySelectorAll('.cuenta-btn').forEach(btn => {
+    btn.addEventListener('click', cerrarTodosMenus);
+  });
 });
