@@ -1,0 +1,61 @@
+<%- include('../partials/header', { title: 'Suscripciones', active: 'suscripciones' }) %>
+
+<div class="toolbar">
+  <h1>Mis suscripciones</h1>
+  <div>
+    <button class="btn-primary" id="btn-agregar-suscripcion">➕ Nueva suscripción</button>
+  </div>
+</div>
+
+<!-- Resumen total -->
+<div class="resumen-total">
+  <span class="total-label">Total mensual:</span>
+  <span class="total-valor">$<%= totalMensual.toLocaleString() %></span>
+</div>
+
+<!-- Modal para agregar/editar suscripción -->
+<div id="modal-suscripcion" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2 id="modal-suscripcion-title">Agregar suscripción</h2>
+    <form id="form-suscripcion">
+      <input type="hidden" id="suscripcion-id" value="">
+      <label>Nombre <input type="text" id="nombre" required placeholder="Ej: Netflix"></label>
+      <label>Valor mensual (COP) <input type="number" step="0.01" id="valor" required></label>
+      <label>Día de pago <input type="number" id="dia_pago" required min="1" max="31" placeholder="1-31"></label>
+      <button type="submit" class="btn-primary">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Listado de suscripciones -->
+<div id="suscripciones-list">
+  <% if (suscripciones.length === 0) { %>
+    <p class="empty">No tienes suscripciones registradas.</p>
+  <% } else { %>
+    <% suscripciones.forEach(s => { %>
+      <div class="suscripcion-item" data-id="<%= s.id %>">
+        <div class="suscripcion-header">
+          <div class="suscripcion-info">
+            <strong><%= s.nombre %></strong>
+            <span class="dia-pago">📅 Día <%= s.dia_pago %></span>
+          </div>
+          <div class="suscripcion-valor">
+            $<%= s.valor.toLocaleString() %>
+            <span class="menu-tres-puntos" data-id="<%= s.id %>">⋮</span>
+          </div>
+        </div>
+        
+        <!-- Menú de acciones desplegable -->
+        <div class="suscripcion-actions" id="acciones-<%= s.id %>">
+          <div class="action-buttons">
+            <button class="action-btn primary" data-action="editar" data-id="<%= s.id %>">✏️ Editar</button>
+            <button class="action-btn danger" data-action="borrar" data-id="<%= s.id %>">🗑️ Borrar</button>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>
