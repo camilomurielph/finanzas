@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || 'Finanzas' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>💰 Finanzas</h2>
+      </div>
+      <nav>
+        <ul>
+          <li><a href="/gastos" class="<%= active === 'gastos' ? 'active' : '' %>">📊 Gastos</a></li>
+          <!-- Aquí se agregarán más herramientas -->
+          <li><a href="/logout">🚪 Cerrar sesión</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-user"><%= user ? user.email : '' %></div>
+    </aside>
+    <main class="main-content">
