@@ -79,7 +79,7 @@
   </ul>
 </div>
 
-<!-- Listado de gastos -->
+<!-- Listado de gastos activos -->
 <div id="gastos-list">
   <% if (gastos.length === 0) { %>
     <p class="empty">No hay gastos registrados en esta cuenta.</p>
@@ -95,7 +95,7 @@
           </div>
           <div class="gasto-valor">
             $<%= g.valor_total.toLocaleString() %>
-            <span class="menu-tres-puntos" data-id="<%= g.id %>">⋮</span>
+            <span class="menu-tres-puntos" data-id="<%= g.id %>" data-archivado="0">⋮</span>
           </div>
         </div>
         <% if (g.cuotas && g.cuotas.length) { %>
@@ -127,7 +127,7 @@
   </div>
   <div class="archivados-content" id="archivados-content" style="display: none;">
     <% if (archivados.length === 0) { %>
-      <p class="empty">No hay gastos archivados.</p>
+      <p class="empty">No hay gastos archivados en esta cuenta.</p>
     <% } else { %>
       <% archivados.forEach(g => { %>
         <div class="gasto-item archivado" data-id="<%= g.id %>">
@@ -139,8 +139,7 @@
             </div>
             <div class="gasto-valor">
               $<%= g.valor_total.toLocaleString() %>
-              <!-- Opciones para archivados (restaurar, borrar) -->
-              <span class="menu-tres-puntos" data-id="<%= g.id %>">⋮</span>
+              <span class="menu-tres-puntos" data-id="<%= g.id %>" data-archivado="1">⋮</span>
             </div>
           </div>
           <% if (g.cuotas && g.cuotas.length) { %>
