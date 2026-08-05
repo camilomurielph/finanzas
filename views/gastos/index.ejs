@@ -3,18 +3,28 @@
 <div class="toolbar">
   <h1>Mis gastos</h1>
   <div>
-    <button class="btn-primary" id="btn-agregar-tipo">➕ Nuevo tipo</button>
+    <button class="btn-primary" id="btn-agregar-tipo">➕ Nueva cuenta/tarjeta</button>
     <button class="btn-primary" id="btn-agregar-gasto">➕ Nuevo gasto</button>
   </div>
 </div>
 
-<!-- Modal para tipo de gasto -->
+<!-- Botones de cuentas (tipos de gasto) -->
+<div class="cuentas-container">
+  <div class="cuentas-buttons">
+    <button class="cuenta-btn <%= !cuentaSeleccionada ? 'active' : '' %>" data-cuenta="">📋 Todas</button>
+    <% tipos.forEach(t => { %>
+      <button class="cuenta-btn <%= cuentaSeleccionada == t.id ? 'active' : '' %>" data-cuenta="<%= t.id %>">💳 <%= t.nombre %></button>
+    <% }) %>
+  </div>
+</div>
+
+<!-- Modal para tipo de gasto (cuenta) -->
 <div id="modal-tipo" class="modal hidden">
   <div class="modal-content">
     <span class="close">&times;</span>
-    <h2>Nuevo tipo de gasto</h2>
+    <h2>Nueva cuenta/tarjeta</h2>
     <form id="form-tipo">
-      <label>Nombre <input type="text" id="tipo-nombre" required></label>
+      <label>Nombre <input type="text" id="tipo-nombre" required placeholder="Ej: Tarjeta de crédito"></label>
       <button type="submit" class="btn-primary">Guardar</button>
     </form>
   </div>
@@ -72,12 +82,13 @@
 <!-- Listado de gastos -->
 <div id="gastos-list">
   <% if (gastos.length === 0) { %>
-    <p class="empty">No hay gastos registrados.</p>
+    <p class="empty">No hay gastos registrados en esta cuenta.</p>
   <% } else { %>
     <% gastos.forEach(g => { %>
       <div class="gasto-item" data-id="<%= g.id %>">
-        <div class="gasto-header" onclick="window.location='/gastos/detalle/<%= g.id %>'">
-          <div class="gasto-info">
+        <div class="gasto-header">
+          <div class="gasto-info" onclick="window.location='/gastos/detalle/<%= g.id %>'">
+            <input type="checkbox" class="gasto-pagado" <%= g.pagado ? 'checked' : '' %> data-id="<%= g.id %>">
             <strong><%= g.nombre %></strong>
             <span class="tipo"><%= g.tipo_nombre %></span>
             <span class="fecha"><%= new Date(g.fecha).toLocaleDateString() %></span>
@@ -91,10 +102,14 @@
           <div class="cuotas-container">
             <% g.cuotas.forEach(c => { %>
               <div class="cuota-item" data-id="<%= c.id %>">
-                <input type="checkbox" <%= c.pagado ? 'checked' : '' %>>
+                <input type="checkbox" class="cuota-pagado" <%= c.pagado ? 'checked' : '' %> data-id="<%= c.id %>">
                 <span><%= c.nombre %></span>
                 <span>$<%= c.valor.toLocaleString() %></span>
-                <span class="fecha-pago"><%= c.fecha_pago ? new Date(c.fecha_pago).toLocaleDateString() : '' %></span>
+                <% if (c.pagado) { %>
+                  <input type="date" class="fecha-pago-input" value="<%= c.fecha_pago || '' %>" data-id="<%= c.id %>">
+                <% } else { %>
+                  <span class="fecha-pago"></span>
+                <% } %>
               </div>
             <% }) %>
           </div>
@@ -102,6 +117,47 @@
       </div>
     <% }) %>
   <% } %>
+</div>
+
+<!-- Sección de archivados (desplegable) -->
+<div class="archivados-section">
+  <div class="archivados-toggle" id="archivados-toggle">
+    <span>📁 Archivados (<%= archivados.length %>)</span>
+    <span class="arrow">▶</span>
+  </div>
+  <div class="archivados-content" id="archivados-content" style="display: none;">
+    <% if (archivados.length === 0) { %>
+      <p class="empty">No hay gastos archivados.</p>
+    <% } else { %>
+      <% archivados.forEach(g => { %>
+        <div class="gasto-item archivado" data-id="<%= g.id %>">
+          <div class="gasto-header">
+            <div class="gasto-info" onclick="window.location='/gastos/detalle/<%= g.id %>'">
+              <strong><%= g.nombre %></strong>
+              <span class="tipo"><%= g.tipo_nombre %></span>
+              <span class="fecha"><%= new Date(g.fecha).toLocaleDateString() %></span>
+            </div>
+            <div class="gasto-valor">
+              $<%= g.valor_total.toLocaleString() %>
+              <!-- Opciones para archivados (restaurar, borrar) -->
+              <span class="menu-tres-puntos" data-id="<%= g.id %>">⋮</span>
+            </div>
+          </div>
+          <% if (g.cuotas && g.cuotas.length) { %>
+            <div class="cuotas-container">
+              <% g.cuotas.forEach(c => { %>
+                <div class="cuota-item">
+                  <span><%= c.nombre %></span>
+                  <span>$<%= c.valor.toLocaleString() %></span>
+                  <span class="fecha-pago"><%= c.fecha_pago ? new Date(c.fecha_pago).toLocaleDateString() : '' %></span>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
 </div>
 
 <%- include('../partials/footer') %>
