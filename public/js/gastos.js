@@ -44,27 +44,26 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // ===== Menú contextual (tres puntos) - Corregido para no navegar =====
-  document.addEventListener('click', function(e) {
-    const target = e.target.closest('.menu-tres-puntos');
-    if (target) {
-      e.stopPropagation(); // Evita que el click llegue al header
-      e.preventDefault();
-      currentGastoId = target.dataset.id;
-      const rect = target.getBoundingClientRect();
+  // ===== Menú contextual (tres puntos) - CORREGIDO =====
+  // Asignar evento a cada elemento de tres puntos
+  document.querySelectorAll('.menu-tres-puntos').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      e.preventDefault(); // Evita cualquier navegación
+      currentGastoId = this.dataset.id;
+      const rect = this.getBoundingClientRect();
+      // Posicionar el menú debajo del icono
       menuContextual.style.top = rect.bottom + window.scrollY + 'px';
       menuContextual.style.left = rect.left + window.scrollX - 100 + 'px';
       menuContextual.classList.remove('hidden');
-    } else {
-      menuContextual.classList.add('hidden');
-    }
+    });
   });
 
-  // También evitar navegación al hacer clic en el área del menú (dentro de gasto-header)
-  document.querySelectorAll('.gasto-header .menu-tres-puntos').forEach(el => {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-    });
+  // Ocultar menú al hacer clic fuera
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.menu-contextual') && !e.target.closest('.menu-tres-puntos')) {
+      menuContextual.classList.add('hidden');
+    }
   });
 
   // Acciones del menú contextual
@@ -253,10 +252,10 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 
-  // ===== Checkbox de gasto (pagado) =====
+  // ===== Checkbox de gasto (pagado) - CORREGIDO =====
   document.querySelectorAll('.gasto-pagado').forEach(cb => {
     cb.addEventListener('change', function(e) {
-      e.stopPropagation(); // Evita navegación al header
+      e.stopPropagation(); // Evita navegación
       const gastoId = this.dataset.id;
       const pagado = this.checked;
       fetch(`/gastos/gasto/${gastoId}/pago`, {
@@ -264,14 +263,20 @@ document.addEventListener('DOMContentLoaded', function() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pagado })
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Error en la respuesta');
+        return res.json();
+      })
       .then(result => {
         if (!result.success) {
-          alert('Error al actualizar pago');
+          alert('Error: ' + result.error);
           this.checked = !pagado;
         }
       })
-      .catch(err => alert('Error de red'));
+      .catch(err => {
+        alert('Error al actualizar pago: ' + err.message);
+        this.checked = !pagado;
+      });
     });
   });
 
@@ -298,17 +303,14 @@ document.addEventListener('DOMContentLoaded', function() {
           const fechaSpan = cuotaItem.querySelector('.fecha-pago');
           if (pagado) {
             if (!fechaSpan || fechaSpan.tagName !== 'INPUT') {
-              // Reemplazar span por input
               const input = document.createElement('input');
               input.type = 'date';
               input.className = 'fecha-pago-input';
               input.value = fecha_pago;
               input.dataset.id = cuotaId;
-              // Reemplazar
               const old = cuotaItem.querySelector('.fecha-pago');
               if (old) old.replaceWith(input);
               else cuotaItem.appendChild(input);
-              // Evento para cambiar fecha
               input.addEventListener('change', function(e) {
                 e.stopPropagation();
                 actualizarFechaCuota(cuotaId, this.value);
@@ -317,7 +319,6 @@ document.addEventListener('DOMContentLoaded', function() {
               fechaSpan.value = fecha_pago;
             }
           } else {
-            // Si se desmarca, quitar input y poner span vacío
             const input = cuotaItem.querySelector('.fecha-pago-input');
             if (input) {
               const span = document.createElement('span');
@@ -334,7 +335,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // ===== Función para actualizar fecha de cuota =====
   function actualizarFechaCuota(cuotaId, fecha) {
     if (!fecha) return;
-    // Solo actualizar si la cuota está pagada (usamos el checkbox)
     const cb = document.querySelector(`.cuota-pagado[data-id="${cuotaId}"]`);
     if (!cb || !cb.checked) return;
     fetch(`/gastos/cuota/${cuotaId}/pago`, {
@@ -351,7 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
     .catch(err => alert('Error de red'));
   }
 
-  // Agregar eventos a los inputs de fecha ya existentes (para cuotas ya pagadas)
+  // Eventos para inputs de fecha ya existentes
   document.querySelectorAll('.fecha-pago-input').forEach(input => {
     input.addEventListener('change', function(e) {
       e.stopPropagation();
@@ -364,7 +364,6 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.cuenta-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       const cuenta = this.dataset.cuenta;
-      // Redirigir con query param
       const url = cuenta ? `/gastos?cuenta=${cuenta}` : '/gastos';
       window.location.href = url;
     });
