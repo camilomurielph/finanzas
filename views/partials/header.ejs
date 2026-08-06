@@ -42,6 +42,11 @@
     <i class="fas fa-coins"></i> Salario
   </a>
 </li>
+<li>
+  <a href="/deudas" class="<%= typeof active !== 'undefined' && active === 'deudas' ? 'active' : '' %>">
+    <i class="fas fa-credit-card"></i> Deudas
+  </a>
+</li>
           <!-- Aquí se agregarán más herramientas en el futuro -->
           <% if (user) { %>
             <li>
