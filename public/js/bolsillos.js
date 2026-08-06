@@ -1,20 +1,11 @@
 console.log('bolsillos.js cargado');
 
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM listo');
+  console.log('DOM listo - bolsillos');
 
   // ===== Variables =====
   let bolsilloId = null;
   const bolsilloIdFromUrl = window.location.pathname.split('/').pop();
-
-  // ===== Elementos comunes =====
-  const modalBolsillo = document.getElementById('modal-bolsillo');
-  const formBolsillo = document.getElementById('form-bolsillo');
-  const nombreBolsilloInput = document.getElementById('nombre-bolsillo');
-  const btnAgregarBolsillo = document.getElementById('btn-agregar-bolsillo');
-
-  console.log('btnAgregarBolsillo encontrado?', btnAgregarBolsillo);
-  console.log('URL actual:', window.location.pathname);
 
   // ===== Funciones auxiliares de modales =====
   function showModal(modal) {
@@ -47,19 +38,22 @@ document.addEventListener('DOMContentLoaded', function() {
   // 1. PÁGINA PRINCIPAL (Index)
   // =============================================
 
-  // Detectar si estamos en la página de índice (exactamente /bolsillos o /bolsillos/)
-  const isIndexPage = window.location.pathname === '/bolsillos' || window.location.pathname === '/bolsillos/';
-  console.log('¿Es página de índice?', isIndexPage);
+  if (window.location.pathname === '/bolsillos' || window.location.pathname === '/bolsillos/') {
+    console.log('Página principal de bolsillos');
 
-  if (isIndexPage) {
-    console.log('Configurando página de índice de bolsillos');
+    const grid = document.getElementById('bolsillos-grid');
+    const btnAgregarBolsillo = document.getElementById('btn-agregar-bolsillo');
+    const modalBolsillo = document.getElementById('modal-bolsillo');
+    const formBolsillo = document.getElementById('form-bolsillo');
+    const nombreBolsilloInput = document.getElementById('nombre-bolsillo');
+
+    console.log('btnAgregarBolsillo:', btnAgregarBolsillo);
+    console.log('modalBolsillo:', modalBolsillo);
 
     // Drag & Drop
-    let draggedItem = null;
-    const grid = document.getElementById('bolsillos-grid');
-
     if (grid) {
-      console.log('Grid encontrado, configurando drag & drop');
+      let draggedItem = null;
+
       grid.addEventListener('dragstart', function(e) {
         const card = e.target.closest('.bolsillo-card');
         if (card) {
@@ -130,40 +124,25 @@ document.addEventListener('DOMContentLoaded', function() {
         draggedItem.style.opacity = '1';
         draggedItem = null;
       });
-    } else {
-      console.warn('Grid no encontrado');
     }
 
-    // ===== AGREGAR BOLSILLO - CORREGIDO =====
+    // === Agregar bolsillo ===
     if (btnAgregarBolsillo) {
-      console.log('Asignando evento click al botón de agregar bolsillo');
       btnAgregarBolsillo.addEventListener('click', function(e) {
         e.preventDefault();
         console.log('Click en Nuevo bolsillo');
-        if (formBolsillo) {
-          formBolsillo.reset();
-        }
-        if (modalBolsillo) {
-          showModal(modalBolsillo);
-        } else {
-          console.error('Modal de bolsillo no encontrado');
-        }
+        if (formBolsillo) formBolsillo.reset();
+        showModal(modalBolsillo);
       });
     } else {
-      console.error('Botón #btn-agregar-bolsillo no encontrado en el DOM');
+      console.error('btnAgregarBolsillo no encontrado');
     }
 
-    // ===== FORMULARIO DE NUEVO BOLSILLO =====
     if (formBolsillo) {
-      console.log('Asignando evento submit al formulario de bolsillo');
       formBolsillo.addEventListener('submit', function(e) {
         e.preventDefault();
         const nombre = nombreBolsilloInput ? nombreBolsilloInput.value.trim() : '';
-        console.log('Nombre ingresado:', nombre);
-        if (!nombre) {
-          alert('Ingresa un nombre');
-          return;
-        }
+        if (!nombre) return alert('Ingresa un nombre');
 
         fetch('/bolsillos', {
           method: 'POST',
@@ -172,20 +151,14 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(res => res.json())
         .then(result => {
-          console.log('Respuesta del servidor:', result);
           if (result.success) {
             location.reload();
           } else {
             alert('Error: ' + result.error);
           }
         })
-        .catch(err => {
-          console.error('Error de red:', err);
-          alert('Error de red: ' + err.message);
-        });
+        .catch(err => alert('Error de red: ' + err.message));
       });
-    } else {
-      console.error('Formulario #form-bolsillo no encontrado');
     }
   }
 
@@ -194,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // =============================================
 
   if (window.location.pathname.includes('/bolsillos/') && bolsilloIdFromUrl && !isNaN(bolsilloIdFromUrl)) {
-    console.log('Página de detalle, ID:', bolsilloIdFromUrl);
+    console.log('Página detalle de bolsillo');
     bolsilloId = parseInt(bolsilloIdFromUrl);
 
     const btnIngreso = document.getElementById('btn-ingreso');
