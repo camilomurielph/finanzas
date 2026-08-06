@@ -9,7 +9,6 @@ function auth(req, res, next) {
   next();
 }
 
-// ===== Página principal del reporte =====
 router.get('/', auth, (req, res) => {
   res.render('reporte/index', {
     title: 'Reporte Financiero',
@@ -17,7 +16,6 @@ router.get('/', auth, (req, res) => {
   });
 });
 
-// ===== Generar PDF =====
 router.get('/pdf', auth, async (req, res) => {
   try {
     const data = ReporteHelper.getResumen(req.session.user.id);
@@ -27,14 +25,17 @@ router.get('/pdf', auth, async (req, res) => {
     const templatePath = path.join(__dirname, '../views/reporte/template.ejs');
     const html = await ejs.renderFile(templatePath, data);
 
-    // Lanzar Puppeteer con opciones específicas
+    // Lanzar Puppeteer usando el Chrome del sistema
     const browser = await puppeteer.launch({
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--single-process',
+        '--no-zygote'
       ],
       headless: 'new'
     });
