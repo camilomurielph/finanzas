@@ -1,6 +1,6 @@
 FROM node:18-slim
 
-# Instalar dependencias necesarias para Chromium
+# Instalar dependencias del sistema y Chrome
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -38,15 +38,24 @@ RUN apt-get update && apt-get install -y \
     libxss1 \
     libxtst6 \
     xdg-utils \
+    --no-install-recommends \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Instalar Google Chrome estable
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update && apt-get install -y google-chrome-stable --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Establecer variable de entorno para que Puppeteer use Chrome del sistema
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
-
-# Fuerza la descarga de Chromium
-RUN npx puppeteer browsers install chrome
-
 COPY . .
 EXPOSE 3000
 CMD ["node", "server.js"]
