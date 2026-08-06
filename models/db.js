@@ -54,7 +54,6 @@ db.exec(`
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
 
-  -- NUEVAS TABLAS: BOLSILLOS Y MOVIMIENTOS
   CREATE TABLE IF NOT EXISTS bolsillos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER NOT NULL,
@@ -65,21 +64,44 @@ db.exec(`
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
 
-  CREATE TABLE IF NOT EXISTS movimientos (
+  -- NUEVA TABLA: SUB-BOLSILLOS (CATEGORÍAS)
+  CREATE TABLE IF NOT EXISTS sub_bolsillos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bolsillo_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    saldo REAL NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (bolsillo_id) REFERENCES bolsillos(id) ON DELETE CASCADE
+  );
+
+  -- MODIFICAR MOVIMIENTOS: agregar sub_bolsillo_id
+  CREATE TABLE IF NOT EXISTS movimientos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bolsillo_id INTEGER,
+    sub_bolsillo_id INTEGER,
     tipo TEXT NOT NULL CHECK (tipo IN ('ingreso', 'egreso')),
     monto REAL NOT NULL,
     descripcion TEXT,
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (bolsillo_id) REFERENCES bolsillos(id) ON DELETE CASCADE
+    FOREIGN KEY (bolsillo_id) REFERENCES bolsillos(id) ON DELETE CASCADE,
+    FOREIGN KEY (sub_bolsillo_id) REFERENCES sub_bolsillos(id) ON DELETE CASCADE
   );
 `);
 
-// Migración para gastos (ya existente)
+// Migraciones
 try {
-  const columnInfo = db.prepare("PRAGMA table_info(gastos)").all();
-  const hasPagado = columnInfo.some(col => col.name === 'pagado');
+  // Verificar si la columna sub_bolsillo_id existe en movimientos
+  const columnInfo = db.prepare("PRAGMA table_info(movimientos)").all();
+  const hasSubBolsilloId = columnInfo.some(col => col.name === 'sub_bolsillo_id');
+  if (!hasSubBolsilloId) {
+    db.exec('ALTER TABLE movimientos ADD COLUMN sub_bolsillo_id INTEGER;');
+    db.exec('ALTER TABLE movimientos ADD FOREIGN KEY (sub_bolsillo_id) REFERENCES sub_bolsillos(id) ON DELETE CASCADE;');
+    console.log('Migración: columna sub_bolsillo_id agregada a movimientos');
+  }
+
+  // Migración para gastos (ya existente)
+  const columnInfoGastos = db.prepare("PRAGMA table_info(gastos)").all();
+  const hasPagado = columnInfoGastos.some(col => col.name === 'pagado');
   if (!hasPagado) {
     db.exec('ALTER TABLE gastos ADD COLUMN pagado BOOLEAN DEFAULT 0;');
     console.log('Migración: columna pagado agregada a gastos');
