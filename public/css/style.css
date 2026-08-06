@@ -1100,3 +1100,177 @@ a:hover {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* ===== BOLSILLOS ===== */
+.bolsillos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .bolsillos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.bolsillo-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: grab;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+  user-select: none;
+}
+.bolsillo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+.bolsillo-card:active {
+  cursor: grabbing;
+}
+.bolsillo-card.drag-over {
+  border: 2px dashed var(--accent);
+  transform: scale(1.02);
+}
+.bolsillo-card .bolsillo-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bolsillo-card h3 {
+  font-size: 1rem;
+  color: #fff;
+  margin: 0;
+}
+.bolsillo-card .bolsillo-saldo {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+}
+.bolsillo-card .drag-handle {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: grab;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.bolsillo-card .drag-handle:hover {
+  opacity: 1;
+}
+
+/* ===== DETALLE DE BOLSILLO ===== */
+.detalle-bolsillo {
+  max-width: 700px;
+  margin: 0 auto;
+}
+.detalle-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.detalle-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+}
+
+.bolsillo-resumen {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-color);
+}
+.bolsillo-resumen .saldo-actual {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.bolsillo-resumen .label {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+.bolsillo-resumen .valor {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.bolsillo-acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+.bolsillo-acciones .btn-primary,
+.bolsillo-acciones .btn-secondary {
+  flex: 1;
+  min-width: 100px;
+  justify-content: center;
+}
+
+.movimientos-titulo {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+.movimientos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.movimiento-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border-left: 4px solid var(--text-muted);
+  transition: background 0.2s;
+}
+.movimiento-item:hover {
+  background: var(--bg-hover);
+}
+.movimiento-item.ingreso {
+  border-left-color: var(--success);
+}
+.movimiento-item.egreso {
+  border-left-color: var(--danger);
+}
+.movimiento-fecha {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.movimiento-monto {
+  font-weight: 600;
+  font-size: 1rem;
+}
+.movimiento-monto.ingreso {
+  color: var(--success);
+}
+.movimiento-monto.egreso {
+  color: var(--danger);
+}
+.movimiento-descripcion {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
