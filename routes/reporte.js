@@ -20,20 +20,25 @@ router.get('/', auth, (req, res) => {
 // ===== Generar PDF =====
 router.get('/pdf', auth, async (req, res) => {
   try {
-    // 1. Obtener datos
     const data = ReporteHelper.getResumen(req.session.user.id);
     data.usuario = req.session.user.email;
     data.fechaGeneracion = new Date().toLocaleDateString('es-CO');
 
-    // 2. Renderizar HTML con EJS
     const templatePath = path.join(__dirname, '../views/reporte/template.ejs');
     const html = await ejs.renderFile(templatePath, data);
 
-    // 3. Generar PDF con Puppeteer
+    // Lanzar Puppeteer con opciones específicas
     const browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu'
+      ],
       headless: 'new'
     });
+
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
 
@@ -50,7 +55,6 @@ router.get('/pdf', auth, async (req, res) => {
 
     await browser.close();
 
-    // 4. Descargar PDF
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=reporte-financiero-${Date.now()}.pdf`);
     res.send(pdfBuffer);
