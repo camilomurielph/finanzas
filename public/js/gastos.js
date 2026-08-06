@@ -1,9 +1,20 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // ===== DETECTAR SI ESTAMOS EN LA PÁGINA DE GASTOS =====
+  const path = window.location.pathname;
+  const isGastosPage = path === '/gastos' || path === '/gastos/' || path.includes('/gastos/detalle/');
+
+  if (!isGastosPage) {
+    console.log('gastos.js: No estamos en la página de gastos, saliendo.');
+    return; // Salir si no estamos en gastos
+  }
+
+  console.log('gastos.js: Inicializando en página de gastos');
+
   // ===== Variables globales =====
   let currentGastoId = null;
   let editing = false;
 
-  // ===== Elementos =====
+  // ===== Elementos (con comprobación de existencia) =====
   const modalGasto = document.getElementById('modal-gasto');
   const modalCuentas = document.getElementById('modal-cuentas');
   const modalDividir = document.getElementById('modal-dividir');
@@ -24,12 +35,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ===== Funciones auxiliares =====
   function showModal(modal) {
-    modal.classList.add('visible');
-    modal.style.display = 'flex';
+    if (modal) {
+      modal.classList.add('visible');
+      modal.style.display = 'flex';
+    }
   }
   function hideModal(modal) {
-    modal.classList.remove('visible');
-    modal.style.display = 'none';
+    if (modal) {
+      modal.classList.remove('visible');
+      modal.style.display = 'none';
+    }
   }
   function closeAllModals() {
     [modalGasto, modalCuentas, modalDividir].forEach(hideModal);
@@ -52,10 +67,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Asignar eventos a los 3 puntos (SIEMPRE que existan)
   document.querySelectorAll('.menu-tres-puntos').forEach(el => {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
       e.preventDefault();
+      console.log('Click en 3 puntos, ID:', this.dataset.id);
       const gastoId = this.dataset.id;
       const actionsContainer = document.getElementById(`acciones-${gastoId}`);
       if (actionsContainer) {
@@ -67,6 +84,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         // Toggle del actual
         actionsContainer.classList.toggle('open');
+        console.log('Menú toggled:', actionsContainer.classList.contains('open'));
+      } else {
+        console.warn('No se encontró contenedor de acciones para ID:', gastoId);
       }
     });
   });
@@ -111,65 +131,116 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // ===== Agregar / Editar gasto =====
-  btnAgregarGasto.addEventListener('click', function() {
-    editing = false;
-    gastoIdInput.value = '';
-    modalGastoTitle.textContent = 'Agregar gasto';
-    formGasto.reset();
-    showModal(modalGasto);
-  });
+  // =============================================
+  // El resto del código solo se ejecuta si estamos en el listado (no en detalle)
+  // =============================================
 
-  formGasto.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const data = {
-      tipo_gasto_id: document.getElementById('tipo_gasto_id').value,
-      nombre: document.getElementById('nombre').value,
-      fecha: document.getElementById('fecha').value,
-      valor_total: document.getElementById('valor_total').value
-    };
-    const id = gastoIdInput.value;
-    const url = id ? `/gastos/editar/${id}` : '/gastos/agregar';
-    const method = id ? 'PUT' : 'POST';
+  const isDetalle = path.includes('/gastos/detalle/');
 
-    fetch(url, {
-      method: method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    })
-    .then(res => res.json())
-    .then(result => {
-      if (result.success) {
-        location.reload();
-      } else {
-        alert('Error: ' + result.error);
-      }
-    })
-    .catch(err => alert('Error de red'));
-  });
+  if (!isDetalle) {
+    console.log('gastos.js: Configurando eventos del listado');
 
-  // ===== Editar gasto (usando la API) =====
-  function editarGasto(id) {
-    fetch(`/gastos/api/${id}`)
-      .then(res => {
-        if (!res.ok) throw new Error('No se pudo obtener el gasto');
-        return res.json();
-      })
-      .then(gasto => {
-        editing = true;
-        gastoIdInput.value = gasto.id;
-        modalGastoTitle.textContent = 'Editar gasto';
-        document.getElementById('tipo_gasto_id').value = gasto.tipo_gasto_id;
-        document.getElementById('nombre').value = gasto.nombre;
-        document.getElementById('fecha').value = gasto.fecha;
-        document.getElementById('valor_total').value = gasto.valor_total;
+    // ===== Agregar / Editar gasto =====
+    if (btnAgregarGasto) {
+      btnAgregarGasto.addEventListener('click', function() {
+        editing = false;
+        gastoIdInput.value = '';
+        modalGastoTitle.textContent = 'Agregar gasto';
+        formGasto.reset();
         showModal(modalGasto);
-      })
-      .catch(err => alert('Error al cargar datos: ' + err.message));
+      });
+    }
+
+    if (formGasto) {
+      formGasto.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const data = {
+          tipo_gasto_id: document.getElementById('tipo_gasto_id').value,
+          nombre: document.getElementById('nombre').value,
+          fecha: document.getElementById('fecha').value,
+          valor_total: document.getElementById('valor_total').value
+        };
+        const id = gastoIdInput.value;
+        const url = id ? `/gastos/editar/${id}` : '/gastos/agregar';
+        const method = id ? 'PUT' : 'POST';
+
+        fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            location.reload();
+          } else {
+            alert('Error: ' + result.error);
+          }
+        })
+        .catch(err => alert('Error de red'));
+      });
+    }
+
+    // ===== GESTIÓN DE CUENTAS =====
+    if (btnGestionCuentas) {
+      btnGestionCuentas.addEventListener('click', function() {
+        cargarCuentas();
+        showModal(modalCuentas);
+      });
+    }
+
+    if (formNuevaCuenta) {
+      formNuevaCuenta.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const nombre = nuevaCuentaNombre.value.trim();
+        if (!nombre) return alert('Ingresa un nombre');
+        fetch('/gastos/tipos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre })
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            location.reload();
+          } else {
+            alert('Error: ' + result.error);
+          }
+        });
+      });
+    }
+
+    // ===== Filtro por cuenta =====
+    document.querySelectorAll('.cuenta-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const cuenta = this.dataset.cuenta;
+        const url = cuenta ? `/gastos?cuenta=${cuenta}` : '/gastos';
+        window.location.href = url;
+      });
+    });
+
+    // ===== Toggle de archivados =====
+    const archivadosToggle = document.getElementById('archivados-toggle');
+    const archivadosContent = document.getElementById('archivados-content');
+    if (archivadosToggle) {
+      archivadosToggle.addEventListener('click', function() {
+        const isOpen = this.classList.toggle('open');
+        archivadosContent.style.display = isOpen ? 'block' : 'none';
+      });
+    }
+
+    // ===== Cerrar menús al cambiar de cuenta =====
+    document.querySelectorAll('.cuenta-btn').forEach(btn => {
+      btn.addEventListener('click', cerrarTodosMenus);
+    });
   }
 
-  // ===== GESTIÓN DE CUENTAS (CORREGIDO) =====
+  // =============================================
+  // Funciones compartidas (editar, dividir, etc.)
+  // =============================================
+
   function cargarCuentas() {
+    if (!cuentasList) return;
     fetch('/gastos/api/cuentas')
       .then(res => {
         if (!res.ok) throw new Error('Error al cargar cuentas');
@@ -242,31 +313,25 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 
-  btnGestionCuentas.addEventListener('click', function() {
-    cargarCuentas();
-    showModal(modalCuentas);
-  });
+  function editarGasto(id) {
+    fetch(`/gastos/api/${id}`)
+      .then(res => {
+        if (!res.ok) throw new Error('No se pudo obtener el gasto');
+        return res.json();
+      })
+      .then(gasto => {
+        editing = true;
+        gastoIdInput.value = gasto.id;
+        modalGastoTitle.textContent = 'Editar gasto';
+        document.getElementById('tipo_gasto_id').value = gasto.tipo_gasto_id;
+        document.getElementById('nombre').value = gasto.nombre;
+        document.getElementById('fecha').value = gasto.fecha;
+        document.getElementById('valor_total').value = gasto.valor_total;
+        showModal(modalGasto);
+      })
+      .catch(err => alert('Error al cargar datos: ' + err.message));
+  }
 
-  formNuevaCuenta.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const nombre = nuevaCuentaNombre.value.trim();
-    if (!nombre) return alert('Ingresa un nombre');
-    fetch('/gastos/tipos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre })
-    })
-    .then(res => res.json())
-    .then(result => {
-      if (result.success) {
-        location.reload();
-      } else {
-        alert('Error: ' + result.error);
-      }
-    });
-  });
-
-  // ===== Dividir en cuotas =====
   function abrirDividir(id) {
     currentGastoId = id;
     cuotasContainer.innerHTML = '';
@@ -292,39 +357,43 @@ document.addEventListener('DOMContentLoaded', function() {
     cuotasContainer.appendChild(div);
   }
 
-  btnAgregarCuota.addEventListener('click', function() {
-    agregarFilaCuota();
-  });
-
-  btnGuardarCuotas.addEventListener('click', function() {
-    const cuotas = [];
-    const filas = cuotasContainer.querySelectorAll('.cuota-input');
-    filas.forEach(fila => {
-      const nombre = fila.querySelector('.cuota-nombre').value.trim();
-      const valor = fila.querySelector('.cuota-valor').value.trim();
-      if (nombre && valor) {
-        cuotas.push({ nombre, valor: parseFloat(valor) });
-      }
+  if (btnAgregarCuota) {
+    btnAgregarCuota.addEventListener('click', function() {
+      agregarFilaCuota();
     });
-    if (cuotas.length === 0) {
-      alert('Agrega al menos una cuota con nombre y valor');
-      return;
-    }
-    fetch(`/gastos/dividir/${currentGastoId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cuotas })
-    })
-    .then(res => res.json())
-    .then(result => {
-      if (result.success) {
-        location.reload();
-      } else {
-        alert('Error: ' + result.error);
+  }
+
+  if (btnGuardarCuotas) {
+    btnGuardarCuotas.addEventListener('click', function() {
+      const cuotas = [];
+      const filas = cuotasContainer.querySelectorAll('.cuota-input');
+      filas.forEach(fila => {
+        const nombre = fila.querySelector('.cuota-nombre').value.trim();
+        const valor = fila.querySelector('.cuota-valor').value.trim();
+        if (nombre && valor) {
+          cuotas.push({ nombre, valor: parseFloat(valor) });
+        }
+      });
+      if (cuotas.length === 0) {
+        alert('Agrega al menos una cuota con nombre y valor');
+        return;
       }
-    })
-    .catch(err => alert('Error de red'));
-  });
+      fetch(`/gastos/dividir/${currentGastoId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cuotas })
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          location.reload();
+        } else {
+          alert('Error: ' + result.error);
+        }
+      })
+      .catch(err => alert('Error de red'));
+    });
+  }
 
   // ===== Archivar, Desarchivar y Borrar =====
   function archivarGasto(id) {
@@ -460,29 +529,5 @@ document.addEventListener('DOMContentLoaded', function() {
       const cuotaId = this.dataset.id;
       actualizarFechaCuota(cuotaId, this.value);
     });
-  });
-
-  // ===== Filtro por cuenta =====
-  document.querySelectorAll('.cuenta-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const cuenta = this.dataset.cuenta;
-      const url = cuenta ? `/gastos?cuenta=${cuenta}` : '/gastos';
-      window.location.href = url;
-    });
-  });
-
-  // ===== Toggle de archivados =====
-  const archivadosToggle = document.getElementById('archivados-toggle');
-  const archivadosContent = document.getElementById('archivados-content');
-  if (archivadosToggle) {
-    archivadosToggle.addEventListener('click', function() {
-      const isOpen = this.classList.toggle('open');
-      archivadosContent.style.display = isOpen ? 'block' : 'none';
-    });
-  }
-
-  // ===== Cerrar menús al cambiar de cuenta =====
-  document.querySelectorAll('.cuenta-btn').forEach(btn => {
-    btn.addEventListener('click', cerrarTodosMenus);
   });
 });
