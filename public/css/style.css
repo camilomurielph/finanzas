@@ -1354,3 +1354,103 @@ a:hover {
   border-radius: 12px;
   margin-left: 8px;
 }
+
+/* ===== SALARIO ===== */
+.salario-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.resumen-item {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+.resumen-item .label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.resumen-item .valor {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.resumen-item .valor.disponible {
+  color: var(--accent);
+}
+.resumen-item .valor.ahorro {
+  color: var(--success);
+}
+
+.salario-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.salario-acciones .btn-primary,
+.salario-acciones .btn-secondary {
+  flex: 1;
+  min-width: 120px;
+  justify-content: center;
+}
+.ahorro-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 2;
+}
+.ahorro-buttons .btn-secondary {
+  flex: 1;
+  min-width: 100px;
+}
+
+.gastos-list h3 {
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+.gastos-list .gasto-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  border-left: 3px solid var(--danger);
+}
+.gastos-list .gasto-item .gasto-nombre {
+  font-weight: 500;
+}
+.gastos-list .gasto-item .gasto-valor {
+  color: var(--danger);
+  font-weight: 600;
+}
+.gastos-list .gasto-item .btn-eliminar-gasto {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all var(--transition);
+}
+.gastos-list .gasto-item .btn-eliminar-gasto:hover {
+  background: var(--bg-hover);
+  color: var(--danger);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-muted);
+}
+.empty-state p {
+  margin: 8px 0;
+}
