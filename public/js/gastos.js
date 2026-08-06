@@ -61,12 +61,27 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // ============================================================
+  // ===== NAVEGACIÓN AL DETALLE (desde .gasto-header) =====
+  // ============================================================
+  document.querySelectorAll('.gasto-header').forEach(header => {
+    header.addEventListener('click', function(e) {
+      // Si el clic fue en el checkbox o en los 3 puntos, no navegar
+      if (e.target.closest('.gasto-pagado') || e.target.closest('.menu-tres-puntos')) {
+        return;
+      }
+      const id = this.dataset.id;
+      if (id) {
+        window.location.href = `/gastos/detalle/${id}`;
+      }
+    });
+  });
+
+  // ============================================================
   // ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) =====
   // ============================================================
   
   function cerrarMenu(container) {
     if (!container) return;
-    console.log('🔄 cerrando menú:', container.id);
     container.classList.remove('open');
     container.style.maxHeight = '0px';
     container.style.opacity = '0';
@@ -83,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function abrirMenu(container) {
     if (!container) return;
-    console.log('🔄 abriendo menú:', container.id);
     container.classList.add('open');
     container.style.maxHeight = '300px';
     container.style.opacity = '1';
@@ -107,42 +121,30 @@ document.addEventListener('DOMContentLoaded', function() {
   // Asignar eventos a los 3 puntos
   document.querySelectorAll('.menu-tres-puntos').forEach(el => {
     el.addEventListener('click', function(e) {
-      e.stopPropagation();
+      e.stopPropagation(); // Evita que el clic llegue al .gasto-header
       e.preventDefault();
       const gastoId = this.dataset.id;
-      console.log('🔹 Click en 3 puntos, ID:', gastoId);
       const actionsContainer = document.getElementById(`acciones-${gastoId}`);
       
       if (!actionsContainer) {
-        console.warn('❌ No se encontró contenedor de acciones para ID:', gastoId);
+        console.warn('No se encontró contenedor de acciones para ID:', gastoId);
         return;
       }
-
-      console.log('🔹 actionsContainer encontrado:', actionsContainer.id);
-      console.log('🔹 Clase "open" antes de toggle:', actionsContainer.classList.contains('open'));
 
       // Cerrar otros menús abiertos
       document.querySelectorAll('.gasto-actions.open').forEach(container => {
         if (container.id !== `acciones-${gastoId}`) {
-          console.log('🔹 Cerrando otro menú:', container.id);
           cerrarMenu(container);
         }
       });
 
       // Toggle del actual
       const isOpen = actionsContainer.classList.contains('open');
-      console.log('🔹 ¿Está abierto?', isOpen);
-      
       if (isOpen) {
-        console.log('🔹 Cerrando menú actual');
         cerrarMenu(actionsContainer);
       } else {
-        console.log('🔹 Abriendo menú actual');
         abrirMenu(actionsContainer);
       }
-
-      console.log('🔹 Clase "open" después de toggle:', actionsContainer.classList.contains('open'));
-      console.log('🔹 ------------------------------------');
     });
   });
 
