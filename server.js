@@ -28,7 +28,8 @@ app.use('/', require('./routes/auth'));
 app.use('/gastos', require('./routes/gastos'));
 app.use('/suscripciones', require('./routes/subscriptions'));
 app.use('/bolsillos', require('./routes/bolsillos'));
-app.use('/salario', require('./routes/salario')); // NUEVO
+app.use('/salario', require('./routes/salario'));
+app.use('/deudas', require('./routes/deudas')); // NUEVO
 
 app.get('/', (req, res) => {
   if (req.session.user) return res.redirect('/gastos');
