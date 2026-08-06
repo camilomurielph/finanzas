@@ -4,6 +4,9 @@
   <div class="detalle-header">
     <a href="/deudas" class="btn-back">← Volver a deudas</a>
     <h2><%= deuda.nombre %></h2>
+    <% if (deuda.archivada === 0) { %>
+      <button class="btn-eliminar-deuda" data-id="<%= deuda.id %>" style="margin-left:auto;">🗑️</button>
+    <% } %>
   </div>
 
   <div class="deuda-resumen">
@@ -28,16 +31,21 @@
       <span class="valor">$<%= (deuda.valor_total - deuda.pagado_total).toLocaleString() %></span>
     </div>
     <div class="resumen-item">
-      <span class="label">Fecha de pago</span>
-      <span class="valor"><%= new Date(deuda.fecha_pago).toLocaleDateString() %></span>
+      <span class="label">Día de pago</span>
+      <span class="valor"><%= deuda.dia_pago %></span>
     </div>
   </div>
 
-  <!-- Acciones -->
-  <div class="deuda-acciones">
-    <button class="btn-primary" id="btn-pago-minimo">💰 Pago mínimo</button>
-    <button class="btn-secondary" id="btn-abono">➕ Abono</button>
-  </div>
+  <!-- Acciones (solo si no está archivada) -->
+  <% if (deuda.archivada === 0) { %>
+    <div class="deuda-acciones">
+      <button class="btn-primary" id="btn-pago-minimo">💰 Pago mínimo</button>
+      <button class="btn-secondary" id="btn-abono">➕ Abono</button>
+      <% if (deuda.activa === 0) { %>
+        <button class="btn-secondary" id="btn-archivar">📁 Archivar</button>
+      <% } %>
+    </div>
+  <% } %>
 
   <!-- Modal para abono -->
   <div id="modal-abono" class="modal hidden">
@@ -62,6 +70,7 @@
           <span class="pago-fecha"><%= new Date(p.fecha_pago).toLocaleDateString() %> <%= new Date(p.fecha_pago).toLocaleTimeString() %></span>
           <span class="pago-monto">$<%= p.monto.toLocaleString() %></span>
           <span class="pago-tipo"><%= p.tipo === 'minimo' ? 'Mínimo' : p.tipo === 'abono' ? 'Abono' : 'Total' %></span>
+          <button class="btn-eliminar-pago" data-id="<%= p.id %>" title="Eliminar este pago">✕</button>
         </div>
       <% }) %>
     <% } %>
