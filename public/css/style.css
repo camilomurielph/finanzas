@@ -1691,3 +1691,28 @@ a:hover {
   margin: 20px 0 12px;
   font-weight: 500;
 }
+
+/* ===== REPORTE ===== */
+.reporte-info {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 24px;
+  border: 1px solid var(--border-color);
+}
+.reporte-info p {
+  margin: 10px 0;
+  color: var(--text-secondary);
+}
+.reporte-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+.reporte-info ul li {
+  padding: 6px 0;
+  color: var(--text-secondary);
+}
+.reporte-info ul li::before {
+  content: "• ";
+  color: var(--accent);
+}
