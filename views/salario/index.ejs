@@ -1,0 +1,102 @@
+<%- include('../partials/header', { title: 'Simulador de Salario', active: 'salario' }) %>
+
+<div class="toolbar">
+  <h1>💰 Simulador de Salario</h1>
+  <% if (!simulacro) { %>
+    <div>
+      <button class="btn-primary" id="btn-iniciar-simulacro">🚀 Iniciar Simulacro</button>
+    </div>
+  <% } else { %>
+    <div>
+      <button class="btn-secondary" id="btn-reiniciar">🔄 Reiniciar</button>
+    </div>
+  <% } %>
+</div>
+
+<!-- Modal para iniciar simulacro -->
+<div id="modal-iniciar" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Iniciar Simulacro</h2>
+    <form id="form-iniciar">
+      <label>Monto del sueldo (COP) <input type="number" step="0.01" id="salario-inicial" required></label>
+      <button type="submit" class="btn-primary">Comenzar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para añadir gasto -->
+<div id="modal-gasto" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Añadir gasto</h2>
+    <form id="form-gasto">
+      <label>Nombre <input type="text" id="nombre-gasto" required></label>
+      <label>Valor (COP) <input type="number" step="0.01" id="valor-gasto" required></label>
+      <button type="submit" class="btn-primary">Añadir</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para ahorro personalizado -->
+<div id="modal-ahorro-otro" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Ahorrar monto personalizado</h2>
+    <form id="form-ahorro-otro">
+      <label>Monto a ahorrar (COP) <input type="number" step="0.01" id="monto-ahorro-otro" required></label>
+      <button type="submit" class="btn-primary">Ahorrar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Contenido del simulacro -->
+<% if (simulacro) { %>
+  <div class="salario-resumen">
+    <div class="resumen-item">
+      <span class="label">💰 Salario inicial</span>
+      <span class="valor">$<%= simulacro.salario_inicial.toLocaleString() %></span>
+    </div>
+    <div class="resumen-item">
+      <span class="label">📊 Disponible</span>
+      <span class="valor disponible">$<%= simulacro.saldo_disponible.toLocaleString() %></span>
+    </div>
+    <div class="resumen-item">
+      <span class="label">🏦 Ahorro</span>
+      <span class="valor ahorro">$<%= simulacro.ahorro.toLocaleString() %></span>
+    </div>
+  </div>
+
+  <!-- Acciones -->
+  <div class="salario-acciones">
+    <button class="btn-primary" id="btn-agregar-gasto">➕ Añadir gasto</button>
+    <div class="ahorro-buttons">
+      <button class="btn-secondary" id="btn-ahorro-1-10">📊 Ahorro 1/10</button>
+      <button class="btn-secondary" id="btn-ahorro-50-50">📊 Ahorro 50/50</button>
+      <button class="btn-secondary" id="btn-ahorro-otro">📊 Ahorro (Otro)</button>
+    </div>
+  </div>
+
+  <!-- Lista de gastos -->
+  <div class="gastos-list">
+    <h3>📋 Gastos registrados</h3>
+    <% if (gastos.length === 0) { %>
+      <p class="empty">No hay gastos registrados.</p>
+    <% } else { %>
+      <% gastos.forEach(g => { %>
+        <div class="gasto-item" data-id="<%= g.id %>">
+          <span class="gasto-nombre"><%= g.nombre %></span>
+          <span class="gasto-valor">-$<%= g.valor.toLocaleString() %></span>
+          <button class="btn-eliminar-gasto" data-id="<%= g.id %>">✕</button>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+<% } else { %>
+  <div class="empty-state">
+    <p>No hay un simulacro activo.</p>
+    <p>Haz clic en "Iniciar Simulacro" para comenzar.</p>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>
