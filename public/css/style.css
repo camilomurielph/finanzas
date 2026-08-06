@@ -1454,3 +1454,153 @@ a:hover {
 .empty-state p {
   margin: 8px 0;
 }
+/* ===== DEUDAS ===== */
+.deudas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+@media (max-width: 768px) {
+  .deudas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.deuda-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.deuda-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.deuda-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.deuda-cuota {
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.deuda-card h3 {
+  font-size: 1.1rem;
+  margin: 0 0 8px 0;
+}
+.deuda-montos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+.deuda-montos .deuda-total {
+  font-weight: 600;
+}
+.deuda-montos .deuda-pagado {
+  color: var(--success);
+}
+.deuda-montos .deuda-minima {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* DETALLE DE DEUDA */
+.detalle-deuda {
+  max-width: 700px;
+  margin: 0 auto;
+}
+.detalle-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.detalle-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.deuda-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.deuda-resumen .resumen-item {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+.deuda-resumen .resumen-item .label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.deuda-resumen .resumen-item .valor {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.deuda-acciones {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+.deuda-acciones .btn-primary,
+.deuda-acciones .btn-secondary {
+  flex: 1;
+  justify-content: center;
+}
+
+.pagos-titulo {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.pagos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pago-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border-left: 4px solid var(--text-muted);
+}
+.pago-item.minimo {
+  border-left-color: var(--accent);
+}
+.pago-item.abono {
+  border-left-color: var(--success);
+}
+.pago-item.total {
+  border-left-color: var(--danger);
+}
+.pago-fecha {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.pago-monto {
+  font-weight: 600;
+}
+.pago-tipo {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--bg-primary);
+  padding: 2px 10px;
+  border-radius: 12px;
+}
