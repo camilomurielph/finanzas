@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', function() {
     header.addEventListener('click', function(e) {
       // Si el clic fue en el checkbox o en los 3 puntos, no navegar
       if (e.target.closest('.gasto-pagado') || e.target.closest('.menu-tres-puntos')) {
+        e.preventDefault();
+        e.stopPropagation();
         return;
       }
       const id = this.dataset.id;
@@ -82,7 +84,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   function cerrarMenu(container) {
     if (!container) return;
+    console.log('🔄 cerrando menú:', container.id);
     container.classList.remove('open');
+    container.dataset.open = 'false';
     container.style.maxHeight = '0px';
     container.style.opacity = '0';
     container.style.padding = '0px 14px';
@@ -98,7 +102,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function abrirMenu(container) {
     if (!container) return;
+    console.log('🔄 abriendo menú:', container.id);
     container.classList.add('open');
+    container.dataset.open = 'true';
     container.style.maxHeight = '300px';
     container.style.opacity = '1';
     container.style.padding = '10px 14px';
@@ -113,43 +119,65 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function cerrarTodosMenus() {
-    document.querySelectorAll('.gasto-actions.open').forEach(container => {
-      cerrarMenu(container);
+    document.querySelectorAll('.gasto-actions').forEach(container => {
+      if (container.dataset.open === 'true') {
+        cerrarMenu(container);
+      }
     });
   }
 
   // Asignar eventos a los 3 puntos
   document.querySelectorAll('.menu-tres-puntos').forEach(el => {
     el.addEventListener('click', function(e) {
-      e.stopPropagation(); // Evita que el clic llegue al .gasto-header
+      // Detener propagación inmediatamente
+      e.stopPropagation();
       e.preventDefault();
+      
       const gastoId = this.dataset.id;
+      console.log('🔹 Click en 3 puntos, ID:', gastoId);
       const actionsContainer = document.getElementById(`acciones-${gastoId}`);
       
       if (!actionsContainer) {
-        console.warn('No se encontró contenedor de acciones para ID:', gastoId);
+        console.warn('❌ No se encontró contenedor de acciones para ID:', gastoId);
         return;
       }
 
+      console.log('🔹 actionsContainer encontrado:', actionsContainer.id);
+      console.log('🔹 Estado actual (data-open):', actionsContainer.dataset.open);
+
       // Cerrar otros menús abiertos
-      document.querySelectorAll('.gasto-actions.open').forEach(container => {
-        if (container.id !== `acciones-${gastoId}`) {
+      document.querySelectorAll('.gasto-actions').forEach(container => {
+        if (container.id !== `acciones-${gastoId}` && container.dataset.open === 'true') {
+          console.log('🔹 Cerrando otro menú:', container.id);
           cerrarMenu(container);
         }
       });
 
-      // Toggle del actual
-      const isOpen = actionsContainer.classList.contains('open');
+      // Toggle del actual basado en data-open
+      const isOpen = actionsContainer.dataset.open === 'true';
+      console.log('🔹 ¿Está abierto?', isOpen);
+      
       if (isOpen) {
+        console.log('🔹 Cerrando menú actual');
         cerrarMenu(actionsContainer);
       } else {
+        console.log('🔹 Abriendo menú actual');
         abrirMenu(actionsContainer);
       }
+
+      console.log('🔹 Estado después de toggle (data-open):', actionsContainer.dataset.open);
+      console.log('🔹 Clase "open" después de toggle:', actionsContainer.classList.contains('open'));
+      console.log('🔹 ------------------------------------');
     });
   });
 
-  // Cerrar menús al hacer clic fuera
+  // Cerrar menús al hacer clic fuera, pero NO cuando se hace clic en los 3 puntos
   document.addEventListener('click', function(e) {
+    // Si el clic fue en los 3 puntos o en el menú, no cerrar
+    if (e.target.closest('.menu-tres-puntos') || e.target.closest('.gasto-actions')) {
+      return;
+    }
+    // Si el clic fue fuera de cualquier gasto-item, cerrar todos
     if (!e.target.closest('.gasto-item')) {
       cerrarTodosMenus();
     }
