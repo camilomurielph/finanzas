@@ -1604,3 +1604,90 @@ a:hover {
   padding: 2px 10px;
   border-radius: 12px;
 }
+
+/* ===== DEUDAS - MEJORAS ===== */
+.deuda-card {
+  position: relative;
+}
+.deuda-card .deuda-borrar {
+  margin-top: 8px;
+  text-align: right;
+}
+.deuda-card .btn-eliminar-deuda {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all var(--transition);
+}
+.deuda-card .btn-eliminar-deuda:hover {
+  background: var(--bg-hover);
+  color: var(--danger);
+}
+.deuda-card.archivada {
+  opacity: 0.8;
+}
+.deuda-card.archivada .deuda-cuota {
+  background: var(--success);
+}
+.deuda-acciones-archivadas {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+.deuda-acciones-archivadas button {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all var(--transition);
+}
+.deuda-acciones-archivadas button:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+.deuda-acciones-archivadas .btn-desarchivar:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.deuda-acciones-archivadas .btn-eliminar-deuda:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.deuda-dia {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* Pago con botón eliminar */
+.pago-item {
+  position: relative;
+}
+.pago-item .btn-eliminar-pago {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all var(--transition);
+  font-size: 0.8rem;
+}
+.pago-item .btn-eliminar-pago:hover {
+  background: var(--bg-hover);
+  color: var(--danger);
+}
+
+.seccion-titulo {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  margin: 20px 0 12px;
+  font-weight: 500;
+}
