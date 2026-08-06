@@ -6,19 +6,52 @@
     <h2><%= bolsillo.nombre %></h2>
   </div>
 
+  <!-- Resumen del bolsillo -->
   <div class="bolsillo-resumen">
     <div class="saldo-actual">
-      <span class="label">Saldo actual</span>
+      <span class="label">Saldo total</span>
       <span class="valor">$<%= bolsillo.saldo.toLocaleString() %></span>
     </div>
   </div>
 
-  <div class="bolsillo-acciones">
-    <button class="btn-primary" id="btn-ingreso">➕ Añadir</button>
-    <button class="btn-secondary" id="btn-egreso">➖ Retirar</button>
-    <button class="btn-secondary" id="btn-editar-bolsillo">✏️ Editar</button>
-  </div>
+  <!-- Acciones del bolsillo (solo si NO tiene sub-bolsillos) -->
+  <% if (!tieneSub) { %>
+    <div class="bolsillo-acciones">
+      <button class="btn-primary" id="btn-ingreso">➕ Añadir</button>
+      <button class="btn-secondary" id="btn-egreso">➖ Retirar</button>
+      <button class="btn-secondary" id="btn-editar-bolsillo">✏️ Editar</button>
+      <button class="btn-secondary" id="btn-dividir-bolsillo">📂 Dividir en categorías</button>
+    </div>
+  <% } else { %>
+    <!-- Acciones para bolsillo con sub-bolsillos -->
+    <div class="bolsillo-acciones">
+      <button class="btn-primary" id="btn-agregar-sub">➕ Agregar categoría</button>
+      <button class="btn-secondary" id="btn-editar-bolsillo">✏️ Editar nombre</button>
+    </div>
 
+    <!-- Listado de sub-bolsillos -->
+    <div class="sub-bolsillos-container">
+      <h3>📂 Categorías</h3>
+      <div class="sub-bolsillos-grid">
+        <% subBolsillos.forEach(sub => { %>
+          <div class="sub-bolsillo-card" data-id="<%= sub.id %>">
+            <div class="sub-bolsillo-header">
+              <span class="sub-nombre"><%= sub.nombre %></span>
+              <span class="sub-saldo">$<%= sub.saldo.toLocaleString() %></span>
+            </div>
+            <div class="sub-acciones">
+              <button class="btn-ingreso-sub" data-id="<%= sub.id %>">➕</button>
+              <button class="btn-egreso-sub" data-id="<%= sub.id %>">➖</button>
+              <button class="btn-editar-sub" data-id="<%= sub.id %>">✏️</button>
+              <button class="btn-eliminar-sub" data-id="<%= sub.id %>">🗑️</button>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Movimientos -->
   <h3 class="movimientos-titulo">📋 Movimientos</h3>
   <div class="movimientos-list">
     <% if (movimientos.length === 0) { %>
@@ -33,12 +66,16 @@
           <% if (m.descripcion) { %>
             <span class="movimiento-descripcion"><%= m.descripcion %></span>
           <% } %>
+          <% if (m.sub_bolsillo_nombre) { %>
+            <span class="movimiento-categoria">📂 <%= m.sub_bolsillo_nombre %></span>
+          <% } %>
         </div>
       <% }) %>
     <% } %>
   </div>
 </div>
 
+<!-- MODALES EXISTENTES (ingreso, egreso, editar) -->
 <!-- Modal para ingreso -->
 <div id="modal-ingreso" class="modal hidden">
   <div class="modal-content">
@@ -65,7 +102,7 @@
   </div>
 </div>
 
-<!-- Modal para editar nombre -->
+<!-- Modal para editar nombre del bolsillo -->
 <div id="modal-editar-bolsillo" class="modal hidden">
   <div class="modal-content">
     <span class="close">&times;</span>
@@ -73,6 +110,74 @@
     <form id="form-editar-bolsillo">
       <label>Nuevo nombre <input type="text" id="nombre-editar" required value="<%= bolsillo.nombre %>"></label>
       <button type="submit" class="btn-primary">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para dividir en categorías (crear primera categoría) -->
+<div id="modal-dividir" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Dividir en categorías</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 16px;">
+      Crea tu primera categoría para empezar a organizar este bolsillo.
+    </p>
+    <form id="form-dividir">
+      <label>Nombre de la categoría <input type="text" id="nombre-categoria" required placeholder="Ej: Arriendo"></label>
+      <button type="submit" class="btn-primary">Crear categoría</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para agregar sub-bolsillo -->
+<div id="modal-agregar-sub" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Agregar categoría</h2>
+    <form id="form-agregar-sub">
+      <label>Nombre <input type="text" id="nombre-sub" required placeholder="Ej: Servicios"></label>
+      <button type="submit" class="btn-primary">Agregar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para editar sub-bolsillo -->
+<div id="modal-editar-sub" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Editar categoría</h2>
+    <form id="form-editar-sub">
+      <input type="hidden" id="sub-id-editar">
+      <label>Nuevo nombre <input type="text" id="nombre-sub-editar" required></label>
+      <button type="submit" class="btn-primary">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para ingreso a sub-bolsillo -->
+<div id="modal-ingreso-sub" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Añadir dinero a categoría</h2>
+    <form id="form-ingreso-sub">
+      <input type="hidden" id="sub-id-ingreso">
+      <label>Monto (COP) <input type="number" step="0.01" id="monto-ingreso-sub" required></label>
+      <label>Descripción (opcional) <input type="text" id="desc-ingreso-sub" placeholder="Ej: Depósito"></label>
+      <button type="submit" class="btn-primary">Añadir</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para egreso de sub-bolsillo -->
+<div id="modal-egreso-sub" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Retirar dinero de categoría</h2>
+    <form id="form-egreso-sub">
+      <input type="hidden" id="sub-id-egreso">
+      <label>Monto (COP) <input type="number" step="0.01" id="monto-egreso-sub" required></label>
+      <label>Descripción (opcional) <input type="text" id="desc-egreso-sub" placeholder="Ej: Pago"></label>
+      <button type="submit" class="btn-primary">Retirar</button>
     </form>
   </div>
 </div>
