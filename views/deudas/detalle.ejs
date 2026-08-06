@@ -1,0 +1,71 @@
+<%- include('../partials/header', { title: deuda.nombre, active: 'deudas' }) %>
+
+<div class="detalle-deuda">
+  <div class="detalle-header">
+    <a href="/deudas" class="btn-back">← Volver a deudas</a>
+    <h2><%= deuda.nombre %></h2>
+  </div>
+
+  <div class="deuda-resumen">
+    <div class="resumen-item">
+      <span class="label">Cuota</span>
+      <span class="valor"><%= deuda.cuota_actual %>/<%= deuda.numero_cuotas %></span>
+    </div>
+    <div class="resumen-item">
+      <span class="label">Cuota mínima</span>
+      <span class="valor">$<%= deuda.cuota_minima.toLocaleString() %></span>
+    </div>
+    <div class="resumen-item">
+      <span class="label">Total</span>
+      <span class="valor">$<%= deuda.valor_total.toLocaleString() %></span>
+    </div>
+    <div class="resumen-item">
+      <span class="label">Pagado</span>
+      <span class="valor">$<%= deuda.pagado_total.toLocaleString() %></span>
+    </div>
+    <div class="resumen-item">
+      <span class="label">Restante</span>
+      <span class="valor">$<%= (deuda.valor_total - deuda.pagado_total).toLocaleString() %></span>
+    </div>
+    <div class="resumen-item">
+      <span class="label">Fecha de pago</span>
+      <span class="valor"><%= new Date(deuda.fecha_pago).toLocaleDateString() %></span>
+    </div>
+  </div>
+
+  <!-- Acciones -->
+  <div class="deuda-acciones">
+    <button class="btn-primary" id="btn-pago-minimo">💰 Pago mínimo</button>
+    <button class="btn-secondary" id="btn-abono">➕ Abono</button>
+  </div>
+
+  <!-- Modal para abono -->
+  <div id="modal-abono" class="modal hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Abono a la deuda</h2>
+      <form id="form-abono">
+        <label>Monto (COP) <input type="number" step="0.01" id="monto-abono" required></label>
+        <button type="submit" class="btn-primary">Aplicar abono</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Historial de pagos -->
+  <h3 class="pagos-titulo">📋 Historial de pagos</h3>
+  <div class="pagos-list">
+    <% if (pagos.length === 0) { %>
+      <p class="empty">No hay pagos registrados.</p>
+    <% } else { %>
+      <% pagos.forEach(p => { %>
+        <div class="pago-item <%= p.tipo %>">
+          <span class="pago-fecha"><%= new Date(p.fecha_pago).toLocaleDateString() %> <%= new Date(p.fecha_pago).toLocaleTimeString() %></span>
+          <span class="pago-monto">$<%= p.monto.toLocaleString() %></span>
+          <span class="pago-tipo"><%= p.tipo === 'minimo' ? 'Mínimo' : p.tipo === 'abono' ? 'Abono' : 'Total' %></span>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
