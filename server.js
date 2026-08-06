@@ -31,6 +31,7 @@ app.use((req, res, next) => {
 app.use('/', require('./routes/auth'));
 app.use('/gastos', require('./routes/gastos'));
 app.use('/suscripciones', require('./routes/subscriptions'));
+app.use('/bolsillos', require('./routes/bolsillos')); // <-- NUEVA LÍNEA
 
 // Redirección raíz
 app.get('/', (req, res) => {
