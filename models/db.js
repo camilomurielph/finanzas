@@ -84,13 +84,34 @@ db.exec(`
     FOREIGN KEY (bolsillo_id) REFERENCES bolsillos(id) ON DELETE CASCADE,
     FOREIGN KEY (sub_bolsillo_id) REFERENCES sub_bolsillos(id) ON DELETE CASCADE
   );
+
+  -- NUEVAS TABLAS PARA SALARIO
+  CREATE TABLE IF NOT EXISTS simulacros (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    salario_inicial REAL NOT NULL,
+    saldo_disponible REAL NOT NULL,
+    ahorro REAL NOT NULL DEFAULT 0,
+    activo BOOLEAN DEFAULT 1,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS gastos_simulacro (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    simulacro_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    valor REAL NOT NULL,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (simulacro_id) REFERENCES simulacros(id) ON DELETE CASCADE
+  );
 `);
 
 // ================================================
-// MIGRACIONES
+// MIGRACIONES EXISTENTES
 // ================================================
 
-// 1. Migración para gastos (columna pagado)
+// Migración para gastos (columna pagado)
 try {
   const columnInfo = db.prepare("PRAGMA table_info(gastos)").all();
   const hasPagado = columnInfo.some(col => col.name === 'pagado');
@@ -102,24 +123,19 @@ try {
   console.error('Error en migración de gastos:', err.message);
 }
 
-// 2. Migración para movimientos (bolsillo_id permitir NULL)
+// Migración para movimientos (bolsillo_id permitir NULL)
 try {
   const tableInfo = db.prepare("PRAGMA table_info(movimientos)").all();
   const bolsilloCol = tableInfo.find(col => col.name === 'bolsillo_id');
   
-  // Verificar si bolsillo_id tiene NOT NULL
   if (bolsilloCol && bolsilloCol.notnull === 1) {
-    // Verificar si ya existe sub_bolsillo_id
     const hasSubCol = tableInfo.some(col => col.name === 'sub_bolsillo_id');
     
     if (!hasSubCol) {
-      // Si no existe sub_bolsillo_id, agregarlo primero
       db.exec('ALTER TABLE movimientos ADD COLUMN sub_bolsillo_id INTEGER;');
     }
     
-    // Recrear tabla sin NOT NULL en bolsillo_id
     db.exec(`
-      -- Crear tabla temporal
       CREATE TABLE movimientos_temp (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         bolsillo_id INTEGER,
@@ -132,17 +148,12 @@ try {
         FOREIGN KEY (sub_bolsillo_id) REFERENCES sub_bolsillos(id) ON DELETE CASCADE
       );
 
-      -- Copiar datos
       INSERT INTO movimientos_temp (id, bolsillo_id, sub_bolsillo_id, tipo, monto, descripcion, fecha)
       SELECT id, bolsillo_id, NULL, tipo, monto, descripcion, fecha FROM movimientos;
 
-      -- Eliminar tabla antigua
       DROP TABLE movimientos;
-
-      -- Renombrar
       ALTER TABLE movimientos_temp RENAME TO movimientos;
 
-      -- Crear índices
       CREATE INDEX idx_movimientos_bolsillo ON movimientos(bolsillo_id);
       CREATE INDEX idx_movimientos_sub ON movimientos(sub_bolsillo_id);
     `);
