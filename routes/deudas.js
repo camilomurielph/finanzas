@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const Deuda = require('../models/Deuda');
 const PagoDeuda = require('../models/PagoDeuda');
+const db = require('../models/db'); // <- ¡IMPORTANTE! Agregar esta línea
 
 function auth(req, res, next) {
   if (!req.session.user) return res.redirect('/login');
@@ -113,12 +114,12 @@ router.post('/:id/abono', auth, (req, res) => {
   }
 });
 
-// ===== ELIMINAR PAGO (nuevo) =====
+// ===== ELIMINAR PAGO (CORREGIDO) =====
 router.delete('/pago/:id', auth, (req, res) => {
   try {
-    // Primero, obtener el pago y verificar que pertenece a una deuda del usuario
+    // Obtener el pago y verificar que pertenece a una deuda del usuario
     const pago = db.prepare(`
-      SELECT p.*, d.usuario_id, d.pagado_total, d.activa
+      SELECT p.*, d.usuario_id, d.pagado_total, d.activa, d.valor_total, d.cuota_actual
       FROM pagos_deuda p
       JOIN deudas d ON p.deuda_id = d.id
       WHERE p.id = ? AND d.usuario_id = ?
@@ -129,15 +130,22 @@ router.delete('/pago/:id', auth, (req, res) => {
     // Restaurar el monto al pagado_total de la deuda
     Deuda.restarPagadoTotal(pago.deuda_id, req.session.user.id, pago.monto);
 
-    // Si la deuda estaba marcada como pagada, reactivar
+    // Si la deuda estaba marcada como pagada, reactivar y recalcular cuota actual
     if (pago.activa === 0) {
-      // Reactivar y ajustar cuota_actual
+      // Reactivar y ajustar cuota_actual (restar 1)
+      const nuevaCuota = Math.max(1, pago.cuota_actual - 1);
+      Deuda.updateCuotaActual(pago.deuda_id, req.session.user.id, nuevaCuota);
+      
       const stmt = db.prepare(`
         UPDATE deudas
         SET activa = 1, archivada = 0
         WHERE id = ? AND usuario_id = ?
       `);
       stmt.run(pago.deuda_id, req.session.user.id);
+    } else {
+      // Si no estaba pagada, solo restar 1 a la cuota actual
+      const nuevaCuota = Math.max(1, pago.cuota_actual - 1);
+      Deuda.updateCuotaActual(pago.deuda_id, req.session.user.id, nuevaCuota);
     }
 
     // Eliminar el pago
@@ -145,6 +153,7 @@ router.delete('/pago/:id', auth, (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -166,7 +175,7 @@ router.delete('/:id', auth, (req, res) => {
   }
 });
 
-// ===== ARCHIVAR DEUDA (cuando está pagada) =====
+// ===== ARCHIVAR DEUDA =====
 router.put('/:id/archivar', auth, (req, res) => {
   try {
     const deuda = Deuda.findById(req.params.id, req.session.user.id);
