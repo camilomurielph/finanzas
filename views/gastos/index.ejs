@@ -79,7 +79,7 @@
   <% } else { %>
     <% gastos.forEach(g => { %>
       <div class="gasto-item" data-id="<%= g.id %>">
-        <div class="gasto-header" onclick="window.location='/gastos/detalle/<%= g.id %>'">
+        <div class="gasto-header" data-id="<%= g.id %>">
           <div class="gasto-info">
             <input type="checkbox" class="gasto-pagado" <%= g.pagado ? 'checked' : '' %> data-id="<%= g.id %>">
             <strong><%= g.nombre %></strong>
@@ -136,7 +136,7 @@
     <% } else { %>
       <% archivados.forEach(g => { %>
         <div class="gasto-item archivado" data-id="<%= g.id %>">
-          <div class="gasto-header" onclick="window.location='/gastos/detalle/<%= g.id %>'">
+          <div class="gasto-header" data-id="<%= g.id %>">
             <div class="gasto-info">
               <strong><%= g.nombre %></strong>
               <span class="tipo"><%= g.tipo_nombre %></span>
