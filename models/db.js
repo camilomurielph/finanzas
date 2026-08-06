@@ -85,7 +85,6 @@ db.exec(`
     FOREIGN KEY (sub_bolsillo_id) REFERENCES sub_bolsillos(id) ON DELETE CASCADE
   );
 
-  -- NUEVAS TABLAS PARA SALARIO
   CREATE TABLE IF NOT EXISTS simulacros (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER NOT NULL,
@@ -104,6 +103,31 @@ db.exec(`
     valor REAL NOT NULL,
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (simulacro_id) REFERENCES simulacros(id) ON DELETE CASCADE
+  );
+
+  -- NUEVAS TABLAS PARA DEUDAS
+  CREATE TABLE IF NOT EXISTS deudas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    valor_total REAL NOT NULL,
+    pagado_total REAL NOT NULL DEFAULT 0,
+    cuota_minima REAL NOT NULL,
+    numero_cuotas INTEGER NOT NULL CHECK (numero_cuotas >= 1),
+    cuota_actual INTEGER NOT NULL DEFAULT 1,
+    fecha_pago DATE NOT NULL,
+    activa BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS pagos_deuda (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    deuda_id INTEGER NOT NULL,
+    monto REAL NOT NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('minimo', 'abono', 'total')),
+    fecha_pago DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (deuda_id) REFERENCES deudas(id) ON DELETE CASCADE
   );
 `);
 
