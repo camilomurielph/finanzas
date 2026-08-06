@@ -44,7 +44,6 @@ db.exec(`
     FOREIGN KEY (gasto_id) REFERENCES gastos(id) ON DELETE CASCADE
   );
 
-  -- NUEVA TABLA: SUSCRIPCIONES
   CREATE TABLE IF NOT EXISTS suscripciones (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER NOT NULL,
@@ -53,6 +52,27 @@ db.exec(`
     dia_pago INTEGER NOT NULL CHECK (dia_pago >= 1 AND dia_pago <= 31),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+  );
+
+  -- NUEVAS TABLAS: BOLSILLOS Y MOVIMIENTOS
+  CREATE TABLE IF NOT EXISTS bolsillos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    saldo REAL NOT NULL DEFAULT 0,
+    orden INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS movimientos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bolsillo_id INTEGER NOT NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('ingreso', 'egreso')),
+    monto REAL NOT NULL,
+    descripcion TEXT,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (bolsillo_id) REFERENCES bolsillos(id) ON DELETE CASCADE
   );
 `);
 
