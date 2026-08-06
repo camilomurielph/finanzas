@@ -63,24 +63,52 @@ document.addEventListener('DOMContentLoaded', function() {
   // ============================================================
   // ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) =====
   // ============================================================
-  function cerrarTodosMenus() {
-    document.querySelectorAll('.gasto-actions.open').forEach(container => {
-      container.classList.remove('open');
-      // Restaurar estilos inline
-      container.style.maxHeight = '';
-      container.style.opacity = '';
-      container.style.padding = '';
-      container.style.display = '';
-      container.style.overflow = '';
-      // Restaurar visibilidad de botones
-      container.querySelectorAll('.action-btn').forEach(btn => {
-        btn.style.display = '';
-        btn.style.visibility = '';
-        btn.style.opacity = '';
-      });
+  
+  // Función para cerrar un menú específico
+  function cerrarMenu(container) {
+    if (!container) return;
+    container.classList.remove('open');
+    // Forzar estilos de cierre inline (garantiza que se oculte)
+    container.style.maxHeight = '0px';
+    container.style.opacity = '0';
+    container.style.padding = '0px 14px';
+    container.style.display = 'block';
+    container.style.overflow = 'hidden';
+    container.style.borderTopColor = 'transparent';
+    // Ocultar botones
+    container.querySelectorAll('.action-btn').forEach(btn => {
+      btn.style.display = 'none';
+      btn.style.visibility = 'hidden';
+      btn.style.opacity = '0';
     });
   }
 
+  // Función para abrir un menú específico
+  function abrirMenu(container) {
+    if (!container) return;
+    container.classList.add('open');
+    // Forzar estilos de apertura inline
+    container.style.maxHeight = '300px';
+    container.style.opacity = '1';
+    container.style.padding = '10px 14px';
+    container.style.display = 'block';
+    container.style.overflow = 'visible';
+    container.style.borderTopColor = 'var(--border-color)';
+    // Mostrar botones
+    container.querySelectorAll('.action-btn').forEach(btn => {
+      btn.style.display = 'inline-flex';
+      btn.style.visibility = 'visible';
+      btn.style.opacity = '1';
+    });
+  }
+
+  function cerrarTodosMenus() {
+    document.querySelectorAll('.gasto-actions.open').forEach(container => {
+      cerrarMenu(container);
+    });
+  }
+
+  // Asignar eventos a los 3 puntos
   document.querySelectorAll('.menu-tres-puntos').forEach(el => {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -92,54 +120,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Cerrar otros menús abiertos
         document.querySelectorAll('.gasto-actions.open').forEach(container => {
           if (container.id !== `acciones-${gastoId}`) {
-            container.classList.remove('open');
-            // Restaurar estilos inline
-            container.style.maxHeight = '';
-            container.style.opacity = '';
-            container.style.padding = '';
-            container.style.display = '';
-            container.style.overflow = '';
-            container.querySelectorAll('.action-btn').forEach(btn => {
-              btn.style.display = '';
-              btn.style.visibility = '';
-              btn.style.opacity = '';
-            });
+            cerrarMenu(container);
           }
         });
         
         // Toggle del actual
-        const isOpen = actionsContainer.classList.toggle('open');
-        
+        const isOpen = actionsContainer.classList.contains('open');
         if (isOpen) {
-          // ===== FORZAR ESTILOS INLINE =====
-          actionsContainer.style.maxHeight = '300px';
-          actionsContainer.style.opacity = '1';
-          actionsContainer.style.padding = '10px 14px';
-          actionsContainer.style.display = 'block';
-          actionsContainer.style.overflow = 'visible';
-          
-          // Asegurar que los botones sean visibles
-          const children = actionsContainer.querySelectorAll('.action-btn');
-          children.forEach(btn => {
-            btn.style.display = 'inline-flex';
-            btn.style.visibility = 'visible';
-            btn.style.opacity = '1';
-          });
-          
-          console.log('✅ Menú abierto (estilos inline forzados)');
-        } else {
-          // Restaurar estilos inline
-          actionsContainer.style.maxHeight = '';
-          actionsContainer.style.opacity = '';
-          actionsContainer.style.padding = '';
-          actionsContainer.style.display = '';
-          actionsContainer.style.overflow = '';
-          actionsContainer.querySelectorAll('.action-btn').forEach(btn => {
-            btn.style.display = '';
-            btn.style.visibility = '';
-            btn.style.opacity = '';
-          });
+          cerrarMenu(actionsContainer);
           console.log('Menú cerrado');
+        } else {
+          abrirMenu(actionsContainer);
+          console.log('Menú abierto');
         }
       } else {
         console.warn('No se encontró contenedor de acciones para ID:', gastoId);
@@ -165,18 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Cerrar el menú
       const actionsContainer = this.closest('.gasto-actions');
       if (actionsContainer) {
-        actionsContainer.classList.remove('open');
-        // Restaurar estilos inline
-        actionsContainer.style.maxHeight = '';
-        actionsContainer.style.opacity = '';
-        actionsContainer.style.padding = '';
-        actionsContainer.style.display = '';
-        actionsContainer.style.overflow = '';
-        actionsContainer.querySelectorAll('.action-btn').forEach(b => {
-          b.style.display = '';
-          b.style.visibility = '';
-          b.style.opacity = '';
-        });
+        cerrarMenu(actionsContainer);
       }
 
       switch (action) {
