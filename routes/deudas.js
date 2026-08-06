@@ -2,23 +2,24 @@ const router = require('express').Router();
 const Deuda = require('../models/Deuda');
 const PagoDeuda = require('../models/PagoDeuda');
 
-// Middleware de autenticación
 function auth(req, res, next) {
   if (!req.session.user) return res.redirect('/login');
   next();
 }
 
-// ===== Página principal de deudas =====
+// ===== Página principal =====
 router.get('/', auth, (req, res) => {
-  const deudas = Deuda.findAllByUser(req.session.user.id);
+  const deudas = Deuda.findActiveByUser(req.session.user.id);
+  const archivadas = Deuda.findArchivedByUser(req.session.user.id);
   res.render('deudas/index', {
     title: 'Deudas',
     deudas,
+    archivadas,
     active: 'deudas'
   });
 });
 
-// ===== Obtener una deuda en JSON (para editar) =====
+// ===== Obtener una deuda en JSON =====
 router.get('/api/:id', auth, (req, res) => {
   const deuda = Deuda.findById(req.params.id, req.session.user.id);
   if (!deuda) return res.status(404).json({ error: 'Deuda no encontrada' });
@@ -27,8 +28,8 @@ router.get('/api/:id', auth, (req, res) => {
 
 // ===== Crear nueva deuda =====
 router.post('/', auth, (req, res) => {
-  const { nombre, valor_total, cuota_minima, numero_cuotas, fecha_pago } = req.body;
-  if (!nombre || !valor_total || !cuota_minima || !numero_cuotas || !fecha_pago) {
+  const { nombre, valor_total, cuota_minima, numero_cuotas, dia_pago } = req.body;
+  if (!nombre || !valor_total || !cuota_minima || !numero_cuotas || !dia_pago) {
     return res.status(400).json({ error: 'Faltan datos' });
   }
   try {
@@ -38,7 +39,7 @@ router.post('/', auth, (req, res) => {
       parseFloat(valor_total),
       parseFloat(cuota_minima),
       parseInt(numero_cuotas),
-      fecha_pago
+      parseInt(dia_pago)
     );
     res.json({ success: true, id });
   } catch (err) {
@@ -52,6 +53,7 @@ router.post('/:id/pago-minimo', auth, (req, res) => {
     const deuda = Deuda.findById(req.params.id, req.session.user.id);
     if (!deuda) return res.status(404).json({ error: 'Deuda no encontrada' });
     if (deuda.activa === 0) return res.status(400).json({ error: 'Esta deuda ya está pagada' });
+    if (deuda.archivada === 1) return res.status(400).json({ error: 'Esta deuda está archivada' });
 
     const monto = deuda.cuota_minima;
     const saldoRestante = deuda.valor_total - deuda.pagado_total;
@@ -63,15 +65,12 @@ router.post('/:id/pago-minimo', auth, (req, res) => {
     let montoPagar = monto;
     if (monto > saldoRestante) montoPagar = saldoRestante;
 
-    // Registrar pago
     PagoDeuda.create(deuda.id, montoPagar, 'minimo');
-    // Actualizar pagado_total
     Deuda.updatePagadoTotal(deuda.id, req.session.user.id, montoPagar);
-    // Actualizar cuota_actual
+    
     const nuevaCuota = deuda.cuota_actual + 1;
     Deuda.updateCuotaActual(deuda.id, req.session.user.id, nuevaCuota);
 
-    // Si ya se pagó todo, marcar como pagada
     if (deuda.pagado_total + montoPagar >= deuda.valor_total) {
       Deuda.marcarPagada(deuda.id, req.session.user.id);
     }
@@ -92,6 +91,7 @@ router.post('/:id/abono', auth, (req, res) => {
     const deuda = Deuda.findById(req.params.id, req.session.user.id);
     if (!deuda) return res.status(404).json({ error: 'Deuda no encontrada' });
     if (deuda.activa === 0) return res.status(400).json({ error: 'Esta deuda ya está pagada' });
+    if (deuda.archivada === 1) return res.status(400).json({ error: 'Esta deuda está archivada' });
 
     const montoNum = parseFloat(monto);
     const saldoRestante = deuda.valor_total - deuda.pagado_total;
@@ -100,12 +100,9 @@ router.post('/:id/abono', auth, (req, res) => {
       return res.status(400).json({ error: 'El abono supera el saldo restante' });
     }
 
-    // Registrar pago
     PagoDeuda.create(deuda.id, montoNum, 'abono');
-    // Actualizar pagado_total
     Deuda.updatePagadoTotal(deuda.id, req.session.user.id, montoNum);
 
-    // Si ya se pagó todo, marcar como pagada
     if (deuda.pagado_total + montoNum >= deuda.valor_total) {
       Deuda.marcarPagada(deuda.id, req.session.user.id);
     }
@@ -116,17 +113,90 @@ router.post('/:id/abono', auth, (req, res) => {
   }
 });
 
-// ===== Eliminar deuda =====
-router.delete('/:id', auth, (req, res) => {
+// ===== ELIMINAR PAGO (nuevo) =====
+router.delete('/pago/:id', auth, (req, res) => {
   try {
-    Deuda.delete(req.params.id, req.session.user.id);
+    // Primero, obtener el pago y verificar que pertenece a una deuda del usuario
+    const pago = db.prepare(`
+      SELECT p.*, d.usuario_id, d.pagado_total, d.activa
+      FROM pagos_deuda p
+      JOIN deudas d ON p.deuda_id = d.id
+      WHERE p.id = ? AND d.usuario_id = ?
+    `).get(req.params.id, req.session.user.id);
+
+    if (!pago) return res.status(404).json({ error: 'Pago no encontrado' });
+
+    // Restaurar el monto al pagado_total de la deuda
+    Deuda.restarPagadoTotal(pago.deuda_id, req.session.user.id, pago.monto);
+
+    // Si la deuda estaba marcada como pagada, reactivar
+    if (pago.activa === 0) {
+      // Reactivar y ajustar cuota_actual
+      const stmt = db.prepare(`
+        UPDATE deudas
+        SET activa = 1, archivada = 0
+        WHERE id = ? AND usuario_id = ?
+      `);
+      stmt.run(pago.deuda_id, req.session.user.id);
+    }
+
+    // Eliminar el pago
+    PagoDeuda.delete(req.params.id, pago.deuda_id);
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ===== Vista detalle de una deuda =====
+// ===== ELIMINAR DEUDA =====
+router.delete('/:id', auth, (req, res) => {
+  try {
+    const deuda = Deuda.findById(req.params.id, req.session.user.id);
+    if (!deuda) return res.status(404).json({ error: 'Deuda no encontrada' });
+
+    // Eliminar todos los pagos asociados
+    PagoDeuda.deleteAllByDeuda(deuda.id);
+    // Eliminar la deuda
+    Deuda.delete(deuda.id, req.session.user.id);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== ARCHIVAR DEUDA (cuando está pagada) =====
+router.put('/:id/archivar', auth, (req, res) => {
+  try {
+    const deuda = Deuda.findById(req.params.id, req.session.user.id);
+    if (!deuda) return res.status(404).json({ error: 'Deuda no encontrada' });
+    if (deuda.activa !== 0) {
+      return res.status(400).json({ error: 'Solo se pueden archivar deudas pagadas' });
+    }
+    Deuda.archivar(deuda.id, req.session.user.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== DESARCHIVAR DEUDA =====
+router.put('/:id/desarchivar', auth, (req, res) => {
+  try {
+    const deuda = Deuda.findById(req.params.id, req.session.user.id);
+    if (!deuda) return res.status(404).json({ error: 'Deuda no encontrada' });
+    if (deuda.archivada !== 1) {
+      return res.status(400).json({ error: 'La deuda no está archivada' });
+    }
+    Deuda.desarchivar(deuda.id, req.session.user.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== Vista detalle =====
 router.get('/:id', auth, (req, res) => {
   const deuda = Deuda.findById(req.params.id, req.session.user.id);
   if (!deuda) return res.status(404).send('Deuda no encontrada');
