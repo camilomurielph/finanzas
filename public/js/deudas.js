@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // ===== Elementos comunes =====
   const modalDeuda = document.getElementById('modal-deuda');
   const formDeuda = document.getElementById('form-deuda');
-
   const btnAgregarDeuda = document.getElementById('btn-agregar-deuda');
 
   // ===== Funciones auxiliares =====
@@ -137,11 +136,17 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // =============================================
-  // 2. PÁGINA DETALLE
+  // 2. PÁGINA DETALLE (CORREGIDO)
   // =============================================
 
-  if (window.location.pathname.includes('/deudas/') && !window.location.pathname.includes('/deudas/')) {
+  // Detectar si estamos en una ruta como /deudas/123
+  const pathSegments = window.location.pathname.split('/').filter(Boolean);
+  // pathSegments = ['deudas', '123'] si es detalle
+  const isDetalle = pathSegments.length === 2 && pathSegments[0] === 'deudas' && !isNaN(pathSegments[1]);
+
+  if (isDetalle) {
     console.log('Página detalle de deuda');
+    const deudaId = pathSegments[1];
 
     const btnPagoMinimo = document.getElementById('btn-pago-minimo');
     const btnAbono = document.getElementById('btn-abono');
@@ -149,13 +154,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalAbono = document.getElementById('modal-abono');
     const formAbono = document.getElementById('form-abono');
 
-    // Obtener ID de la deuda desde la URL
-    const deudaId = window.location.pathname.split('/').pop();
+    console.log('btnPagoMinimo:', btnPagoMinimo);
+    console.log('btnAbono:', btnAbono);
 
     // Pago mínimo
     if (btnPagoMinimo) {
       btnPagoMinimo.addEventListener('click', function(e) {
         e.preventDefault();
+        console.log('Click en Pago mínimo');
         if (!confirm('¿Registrar pago mínimo?')) return;
 
         fetch(`/deudas/${deudaId}/pago-minimo`, {
@@ -172,15 +178,20 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(err => alert('Error de red: ' + err.message));
       });
+    } else {
+      console.error('btnPagoMinimo no encontrado');
     }
 
     // Abono
     if (btnAbono && modalAbono) {
       btnAbono.addEventListener('click', function(e) {
         e.preventDefault();
+        console.log('Click en Abono');
         if (formAbono) formAbono.reset();
         showModal(modalAbono);
       });
+    } else {
+      console.error('btnAbono o modalAbono no encontrado');
     }
 
     if (formAbono) {
