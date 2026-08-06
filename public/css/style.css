@@ -694,7 +694,7 @@ a:hover {
 }
 
 /* ========================================================
-   ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) =====
+   ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) - GASTOS =====
    ======================================================== */
 .gasto-actions {
   max-height: 0;
@@ -707,11 +707,11 @@ a:hover {
 }
 
 .gasto-actions.open {
-  max-height: 300px; /* Suficiente para varios botones */
+  max-height: 300px;
   opacity: 1;
   padding: 10px 14px;
   border-top-color: var(--border-color);
-  overflow: visible; /* Para que no se corten los botones si exceden */
+  overflow: visible;
 }
 
 .gasto-actions .action-buttons {
@@ -833,7 +833,7 @@ a:hover {
 }
 
 /* ========================================================
-   ===== SUSCRIPCIONES =====
+   ===== SUSCRIPCIONES - MENÚ DE OPCIONES (ESTILO GASTOS) =====
    ======================================================== */
 .resumen-total {
   background: var(--bg-card);
@@ -899,22 +899,59 @@ a:hover {
 .suscripcion-actions {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.3s ease;
+  transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.3s ease, border-color 0.3s ease;
   opacity: 0;
   padding: 0 14px;
   background: rgba(0, 0, 0, 0.2);
   border-top: 1px solid transparent;
 }
 .suscripcion-actions.open {
-  max-height: 200px;
+  max-height: 300px;
   opacity: 1;
   padding: 10px 14px;
   border-top-color: var(--border-color);
+  overflow: visible;
 }
 .suscripcion-actions .action-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+.suscripcion-actions .action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  touch-action: manipulation;
+  min-height: 36px;
+}
+.suscripcion-actions .action-btn:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+.suscripcion-actions .action-btn.danger {
+  color: var(--danger);
+}
+.suscripcion-actions .action-btn.danger:hover {
+  background: rgba(255, 107, 107, 0.15);
+  border-color: var(--danger);
+}
+.suscripcion-actions .action-btn.primary {
+  color: var(--accent);
+}
+.suscripcion-actions .action-btn.primary:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent);
+}
+.suscripcion-actions .action-btn:active {
+  transform: scale(0.95);
 }
 
 /* ========================================================
@@ -1576,7 +1613,8 @@ a:hover {
     font-size: 0.75rem;
     padding: 6px 14px;
   }
-  .gasto-actions .action-btn {
+  .gasto-actions .action-btn,
+  .suscripcion-actions .action-btn {
     font-size: 0.75rem;
     padding: 4px 10px;
     min-height: 32px;
