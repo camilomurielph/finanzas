@@ -60,26 +60,26 @@ router.get('/pdf', auth, async (req, res) => {
 
         // ===== GASTOS =====
         { text: 'Gastos', style: 'sectionTitle' },
-        this.buildTablaGastos(data.detalles.gastos.recientes),
+        buildTablaGastos(data.detalles.gastos.recientes), // <-- CORREGIDO (sin this)
 
         { text: 'Gastos por Categoría', style: 'subSectionTitle' },
-        this.buildTablaCategorias(data.detalles.gastos.porCategoria),
+        buildTablaCategorias(data.detalles.gastos.porCategoria), // <-- CORREGIDO
 
         // ===== SUSCRIPCIONES =====
         { text: 'Suscripciones', style: 'sectionTitle' },
-        this.buildTablaSuscripciones(data.detalles.suscripciones),
+        buildTablaSuscripciones(data.detalles.suscripciones), // <-- CORREGIDO
 
         // ===== BOLSILLOS =====
         { text: 'Bolsillos', style: 'sectionTitle' },
-        this.buildTablaBolsillos(data.detalles.bolsillos),
+        buildTablaBolsillos(data.detalles.bolsillos), // <-- CORREGIDO
 
         // ===== DEUDAS =====
         { text: 'Deudas Activas', style: 'sectionTitle' },
-        this.buildTablaDeudas(data.detalles.deudas),
+        buildTablaDeudas(data.detalles.deudas), // <-- CORREGIDO
 
         // ===== SALARIO =====
         { text: 'Simulador de Salario', style: 'sectionTitle' },
-        this.buildSeccionSalario(data.detalles.salario.simulacro, data.detalles.salario.gastos),
+        buildSeccionSalario(data.detalles.salario.simulacro, data.detalles.salario.gastos), // <-- CORREGIDO
 
         // Pie de página
         { text: `📊 Reporte generado automáticamente - Finanzas App`, style: 'footer' },
@@ -160,7 +160,7 @@ router.get('/pdf', auth, async (req, res) => {
 });
 
 // ================================================
-// FUNCIONES AYUDA PARA CONSTRUIR TABLAS
+// FUNCIONES AYUDA PARA CONSTRUIR TABLAS (SIN this)
 // ================================================
 
 function buildTablaGastos(gastos) {
