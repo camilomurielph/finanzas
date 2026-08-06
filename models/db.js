@@ -105,7 +105,7 @@ db.exec(`
     FOREIGN KEY (simulacro_id) REFERENCES simulacros(id) ON DELETE CASCADE
   );
 
-  -- NUEVAS TABLAS PARA DEUDAS
+  -- TABLAS DE DEUDAS (ACTUALIZADAS)
   CREATE TABLE IF NOT EXISTS deudas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER NOT NULL,
@@ -115,8 +115,9 @@ db.exec(`
     cuota_minima REAL NOT NULL,
     numero_cuotas INTEGER NOT NULL CHECK (numero_cuotas >= 1),
     cuota_actual INTEGER NOT NULL DEFAULT 1,
-    fecha_pago DATE NOT NULL,
+    dia_pago INTEGER NOT NULL CHECK (dia_pago >= 1 AND dia_pago <= 31),
     activa BOOLEAN DEFAULT 1,
+    archivada BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
@@ -132,10 +133,10 @@ db.exec(`
 `);
 
 // ================================================
-// MIGRACIONES EXISTENTES
+// MIGRACIONES
 // ================================================
 
-// Migración para gastos (columna pagado)
+// 1. Migración para gastos (columna pagado)
 try {
   const columnInfo = db.prepare("PRAGMA table_info(gastos)").all();
   const hasPagado = columnInfo.some(col => col.name === 'pagado');
@@ -147,7 +148,7 @@ try {
   console.error('Error en migración de gastos:', err.message);
 }
 
-// Migración para movimientos (bolsillo_id permitir NULL)
+// 2. Migración para movimientos (bolsillo_id permitir NULL)
 try {
   const tableInfo = db.prepare("PRAGMA table_info(movimientos)").all();
   const bolsilloCol = tableInfo.find(col => col.name === 'bolsillo_id');
@@ -185,6 +186,64 @@ try {
   }
 } catch (err) {
   console.error('Error en migración de movimientos:', err.message);
+}
+
+// 3. Migración para deudas: convertir fecha_pago a dia_pago
+try {
+  const deudaInfo = db.prepare("PRAGMA table_info(deudas)").all();
+  const hasFechaPago = deudaInfo.some(col => col.name === 'fecha_pago');
+  const hasDiaPago = deudaInfo.some(col => col.name === 'dia_pago');
+  
+  // Si existe fecha_pago pero no dia_pago, migrar
+  if (hasFechaPago && !hasDiaPago) {
+    // Agregar columna dia_pago
+    db.exec('ALTER TABLE deudas ADD COLUMN dia_pago INTEGER CHECK (dia_pago >= 1 AND dia_pago <= 31);');
+    
+    // Extraer el día de fecha_pago (formato YYYY-MM-DD)
+    const deudas = db.prepare('SELECT id, fecha_pago FROM deudas WHERE fecha_pago IS NOT NULL').all();
+    const updateStmt = db.prepare('UPDATE deudas SET dia_pago = ? WHERE id = ?');
+    deudas.forEach(d => {
+      if (d.fecha_pago) {
+        const day = new Date(d.fecha_pago).getDate();
+        updateStmt.run(day, d.id);
+      }
+    });
+    
+    // Eliminar columna fecha_pago
+    // SQLite no permite DROP COLUMN directamente, así que recreamos la tabla
+    db.exec(`
+      CREATE TABLE deudas_temp (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        usuario_id INTEGER NOT NULL,
+        nombre TEXT NOT NULL,
+        valor_total REAL NOT NULL,
+        pagado_total REAL NOT NULL DEFAULT 0,
+        cuota_minima REAL NOT NULL,
+        numero_cuotas INTEGER NOT NULL CHECK (numero_cuotas >= 1),
+        cuota_actual INTEGER NOT NULL DEFAULT 1,
+        dia_pago INTEGER NOT NULL CHECK (dia_pago >= 1 AND dia_pago <= 31),
+        activa BOOLEAN DEFAULT 1,
+        archivada BOOLEAN DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+      );
+
+      INSERT INTO deudas_temp (id, usuario_id, nombre, valor_total, pagado_total, cuota_minima, numero_cuotas, cuota_actual, dia_pago, activa, archivada, created_at)
+      SELECT id, usuario_id, nombre, valor_total, pagado_total, cuota_minima, numero_cuotas, cuota_actual, dia_pago, activa, 0, created_at FROM deudas;
+
+      DROP TABLE deudas;
+      ALTER TABLE deudas_temp RENAME TO deudas;
+    `);
+    console.log('Migración: deudas actualizada con dia_pago y archivada');
+  }
+  
+  // Si no existe archivada, agregarla
+  if (!deudaInfo.some(col => col.name === 'archivada')) {
+    db.exec('ALTER TABLE deudas ADD COLUMN archivada BOOLEAN DEFAULT 0;');
+    console.log('Migración: columna archivada agregada a deudas');
+  }
+} catch (err) {
+  console.error('Error en migración de deudas:', err.message);
 }
 
 module.exports = db;
