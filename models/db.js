@@ -64,7 +64,6 @@ db.exec(`
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
 
-  -- NUEVA TABLA: SUB-BOLSILLOS (CATEGORÍAS)
   CREATE TABLE IF NOT EXISTS sub_bolsillos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bolsillo_id INTEGER NOT NULL,
@@ -74,7 +73,6 @@ db.exec(`
     FOREIGN KEY (bolsillo_id) REFERENCES bolsillos(id) ON DELETE CASCADE
   );
 
-  -- MODIFICAR MOVIMIENTOS: agregar sub_bolsillo_id
   CREATE TABLE IF NOT EXISTS movimientos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bolsillo_id INTEGER,
@@ -88,26 +86,70 @@ db.exec(`
   );
 `);
 
-// Migraciones
-try {
-  // Verificar si la columna sub_bolsillo_id existe en movimientos
-  const columnInfo = db.prepare("PRAGMA table_info(movimientos)").all();
-  const hasSubBolsilloId = columnInfo.some(col => col.name === 'sub_bolsillo_id');
-  if (!hasSubBolsilloId) {
-    db.exec('ALTER TABLE movimientos ADD COLUMN sub_bolsillo_id INTEGER;');
-    db.exec('ALTER TABLE movimientos ADD FOREIGN KEY (sub_bolsillo_id) REFERENCES sub_bolsillos(id) ON DELETE CASCADE;');
-    console.log('Migración: columna sub_bolsillo_id agregada a movimientos');
-  }
+// ================================================
+// MIGRACIONES
+// ================================================
 
-  // Migración para gastos (ya existente)
-  const columnInfoGastos = db.prepare("PRAGMA table_info(gastos)").all();
-  const hasPagado = columnInfoGastos.some(col => col.name === 'pagado');
+// 1. Migración para gastos (columna pagado)
+try {
+  const columnInfo = db.prepare("PRAGMA table_info(gastos)").all();
+  const hasPagado = columnInfo.some(col => col.name === 'pagado');
   if (!hasPagado) {
     db.exec('ALTER TABLE gastos ADD COLUMN pagado BOOLEAN DEFAULT 0;');
     console.log('Migración: columna pagado agregada a gastos');
   }
 } catch (err) {
-  console.error('Error en migración:', err.message);
+  console.error('Error en migración de gastos:', err.message);
+}
+
+// 2. Migración para movimientos (bolsillo_id permitir NULL)
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(movimientos)").all();
+  const bolsilloCol = tableInfo.find(col => col.name === 'bolsillo_id');
+  
+  // Verificar si bolsillo_id tiene NOT NULL
+  if (bolsilloCol && bolsilloCol.notnull === 1) {
+    // Verificar si ya existe sub_bolsillo_id
+    const hasSubCol = tableInfo.some(col => col.name === 'sub_bolsillo_id');
+    
+    if (!hasSubCol) {
+      // Si no existe sub_bolsillo_id, agregarlo primero
+      db.exec('ALTER TABLE movimientos ADD COLUMN sub_bolsillo_id INTEGER;');
+    }
+    
+    // Recrear tabla sin NOT NULL en bolsillo_id
+    db.exec(`
+      -- Crear tabla temporal
+      CREATE TABLE movimientos_temp (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bolsillo_id INTEGER,
+        sub_bolsillo_id INTEGER,
+        tipo TEXT NOT NULL CHECK (tipo IN ('ingreso', 'egreso')),
+        monto REAL NOT NULL,
+        descripcion TEXT,
+        fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (bolsillo_id) REFERENCES bolsillos(id) ON DELETE CASCADE,
+        FOREIGN KEY (sub_bolsillo_id) REFERENCES sub_bolsillos(id) ON DELETE CASCADE
+      );
+
+      -- Copiar datos
+      INSERT INTO movimientos_temp (id, bolsillo_id, sub_bolsillo_id, tipo, monto, descripcion, fecha)
+      SELECT id, bolsillo_id, NULL, tipo, monto, descripcion, fecha FROM movimientos;
+
+      -- Eliminar tabla antigua
+      DROP TABLE movimientos;
+
+      -- Renombrar
+      ALTER TABLE movimientos_temp RENAME TO movimientos;
+
+      -- Crear índices
+      CREATE INDEX idx_movimientos_bolsillo ON movimientos(bolsillo_id);
+      CREATE INDEX idx_movimientos_sub ON movimientos(sub_bolsillo_id);
+    `);
+    console.log('Migración: movimientos.bolsillo_id ahora permite NULL');
+  }
+} catch (err) {
+  console.error('Error en migración de movimientos:', err.message);
 }
 
 module.exports = db;
