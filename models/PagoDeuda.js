@@ -18,11 +18,25 @@ module.exports = {
     return stmt.all(deuda_id);
   },
 
+  findById(id, deuda_id) {
+    const stmt = db.prepare(`
+      SELECT * FROM pagos_deuda
+      WHERE id = ? AND deuda_id = ?
+    `);
+    return stmt.get(id, deuda_id);
+  },
+
   delete(id, deuda_id) {
     const stmt = db.prepare(`
       DELETE FROM pagos_deuda
       WHERE id = ? AND deuda_id = ?
     `);
     return stmt.run(id, deuda_id);
+  },
+
+  // Eliminar todos los pagos de una deuda (al eliminar la deuda)
+  deleteAllByDeuda(deuda_id) {
+    const stmt = db.prepare('DELETE FROM pagos_deuda WHERE deuda_id = ?');
+    return stmt.run(deuda_id);
   }
 };
