@@ -3,11 +3,15 @@ const db = require('./db');
 module.exports = {
   // Crear movimiento (para bolsillo o sub-bolsillo)
   create(bolsillo_id, sub_bolsillo_id, tipo, monto, descripcion = null) {
+    // Validar que al menos uno de los IDs tenga valor
+    if (!bolsillo_id && !sub_bolsillo_id) {
+      throw new Error('Debe proporcionar bolsillo_id o sub_bolsillo_id');
+    }
+
     const stmt = db.prepare(`
       INSERT INTO movimientos (bolsillo_id, sub_bolsillo_id, tipo, monto, descripcion)
       VALUES (?, ?, ?, ?, ?)
     `);
-    // Solo uno de los dos IDs debe ser no-nulo
     return stmt.run(bolsillo_id || null, sub_bolsillo_id || null, tipo, monto, descripcion);
   },
 
@@ -38,7 +42,12 @@ module.exports = {
   },
 
   deleteAllByBolsillo(bolsillo_id) {
-    const stmt = db.prepare('DELETE FROM movimientos WHERE bolsillo_id = ? OR sub_bolsillo_id IN (SELECT id FROM sub_bolsillos WHERE bolsillo_id = ?)');
+    const stmt = db.prepare(`
+      DELETE FROM movimientos 
+      WHERE bolsillo_id = ? OR sub_bolsillo_id IN (
+        SELECT id FROM sub_bolsillos WHERE bolsillo_id = ?
+      )
+    `);
     return stmt.run(bolsillo_id, bolsillo_id);
   },
 
