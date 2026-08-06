@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let bolsilloId = null;
   const bolsilloIdFromUrl = window.location.pathname.split('/').pop();
 
-  // ===== Funciones auxiliares de modales =====
+  // ===== Funciones auxiliares =====
   function showModal(modal) {
     if (modal) {
       modal.classList.add('visible');
@@ -47,9 +47,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const formBolsillo = document.getElementById('form-bolsillo');
     const nombreBolsilloInput = document.getElementById('nombre-bolsillo');
 
-    console.log('btnAgregarBolsillo:', btnAgregarBolsillo);
-    console.log('modalBolsillo:', modalBolsillo);
-
     // Drag & Drop
     if (grid) {
       let draggedItem = null;
@@ -88,9 +85,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const targetCard = e.target.closest('.bolsillo-card');
         if (!targetCard || !draggedItem || targetCard === draggedItem) return;
 
-        const dragId = draggedItem.dataset.id;
-        const targetId = targetCard.dataset.id;
-
         const cards = Array.from(grid.querySelectorAll('.bolsillo-card'));
         const dragIndex = cards.indexOf(draggedItem);
         const targetIndex = cards.indexOf(targetCard);
@@ -126,16 +120,13 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    // === Agregar bolsillo ===
+    // Agregar bolsillo
     if (btnAgregarBolsillo) {
       btnAgregarBolsillo.addEventListener('click', function(e) {
         e.preventDefault();
-        console.log('Click en Nuevo bolsillo');
         if (formBolsillo) formBolsillo.reset();
         showModal(modalBolsillo);
       });
-    } else {
-      console.error('btnAgregarBolsillo no encontrado');
     }
 
     if (formBolsillo) {
@@ -163,92 +154,19 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // =============================================
-  // 2. PÁGINA DETALLE (detalle)
+  // 2. PÁGINA DETALLE (con sub-bolsillos)
   // =============================================
 
   if (window.location.pathname.includes('/bolsillos/') && bolsilloIdFromUrl && !isNaN(bolsilloIdFromUrl)) {
     console.log('Página detalle de bolsillo');
     bolsilloId = parseInt(bolsilloIdFromUrl);
 
-    const btnIngreso = document.getElementById('btn-ingreso');
-    const btnEgreso = document.getElementById('btn-egreso');
+    // Elementos comunes
     const btnEditar = document.getElementById('btn-editar-bolsillo');
-
-    const modalIngreso = document.getElementById('modal-ingreso');
-    const modalEgreso = document.getElementById('modal-egreso');
     const modalEditar = document.getElementById('modal-editar-bolsillo');
-
-    const formIngreso = document.getElementById('form-ingreso');
-    const formEgreso = document.getElementById('form-egreso');
     const formEditar = document.getElementById('form-editar-bolsillo');
 
-    // === Añadir dinero ===
-    if (btnIngreso && modalIngreso) {
-      btnIngreso.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (formIngreso) formIngreso.reset();
-        showModal(modalIngreso);
-      });
-    }
-
-    if (formIngreso) {
-      formIngreso.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const monto = document.getElementById('monto-ingreso').value;
-        const descripcion = document.getElementById('desc-ingreso').value.trim();
-        if (!monto || parseFloat(monto) <= 0) return alert('Ingresa un monto válido');
-
-        fetch(`/bolsillos/${bolsilloId}/ingreso`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ monto: parseFloat(monto), descripcion })
-        })
-        .then(res => res.json())
-        .then(result => {
-          if (result.success) {
-            location.reload();
-          } else {
-            alert('Error: ' + result.error);
-          }
-        })
-        .catch(err => alert('Error de red: ' + err.message));
-      });
-    }
-
-    // === Retirar dinero ===
-    if (btnEgreso && modalEgreso) {
-      btnEgreso.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (formEgreso) formEgreso.reset();
-        showModal(modalEgreso);
-      });
-    }
-
-    if (formEgreso) {
-      formEgreso.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const monto = document.getElementById('monto-egreso').value;
-        const descripcion = document.getElementById('desc-egreso').value.trim();
-        if (!monto || parseFloat(monto) <= 0) return alert('Ingresa un monto válido');
-
-        fetch(`/bolsillos/${bolsilloId}/egreso`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ monto: parseFloat(monto), descripcion })
-        })
-        .then(res => res.json())
-        .then(result => {
-          if (result.success) {
-            location.reload();
-          } else {
-            alert('Error: ' + result.error);
-          }
-        })
-        .catch(err => alert('Error de red: ' + err.message));
-      });
-    }
-
-    // === Editar nombre ===
+    // === EDITAR NOMBRE DEL BOLSILLO ===
     if (btnEditar && modalEditar) {
       btnEditar.addEventListener('click', function(e) {
         e.preventDefault();
@@ -278,6 +196,302 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         })
         .catch(err => alert('Error de red: ' + err.message));
+      });
+    }
+
+    // === VERIFICAR SI TIENE SUB-BOLSILLOS ===
+    const tieneSub = document.querySelector('.sub-bolsillos-container') !== null;
+
+    if (!tieneSub) {
+      // === MODO SIN SUB-BOLSILLOS (funcionalidad original) ===
+      console.log('Bolsillo sin categorías');
+
+      const btnIngreso = document.getElementById('btn-ingreso');
+      const btnEgreso = document.getElementById('btn-egreso');
+      const btnDividir = document.getElementById('btn-dividir-bolsillo');
+
+      const modalIngreso = document.getElementById('modal-ingreso');
+      const modalEgreso = document.getElementById('modal-egreso');
+      const modalDividir = document.getElementById('modal-dividir');
+
+      const formIngreso = document.getElementById('form-ingreso');
+      const formEgreso = document.getElementById('form-egreso');
+      const formDividir = document.getElementById('form-dividir');
+
+      // Añadir dinero
+      if (btnIngreso && modalIngreso) {
+        btnIngreso.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (formIngreso) formIngreso.reset();
+          showModal(modalIngreso);
+        });
+      }
+
+      if (formIngreso) {
+        formIngreso.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const monto = document.getElementById('monto-ingreso').value;
+          const descripcion = document.getElementById('desc-ingreso').value.trim();
+          if (!monto || parseFloat(monto) <= 0) return alert('Ingresa un monto válido');
+
+          fetch(`/bolsillos/${bolsilloId}/ingreso`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ monto: parseFloat(monto), descripcion })
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              location.reload();
+            } else {
+              alert('Error: ' + result.error);
+            }
+          })
+          .catch(err => alert('Error de red: ' + err.message));
+        });
+      }
+
+      // Retirar dinero
+      if (btnEgreso && modalEgreso) {
+        btnEgreso.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (formEgreso) formEgreso.reset();
+          showModal(modalEgreso);
+        });
+      }
+
+      if (formEgreso) {
+        formEgreso.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const monto = document.getElementById('monto-egreso').value;
+          const descripcion = document.getElementById('desc-egreso').value.trim();
+          if (!monto || parseFloat(monto) <= 0) return alert('Ingresa un monto válido');
+
+          fetch(`/bolsillos/${bolsilloId}/egreso`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ monto: parseFloat(monto), descripcion })
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              location.reload();
+            } else {
+              alert('Error: ' + result.error);
+            }
+          })
+          .catch(err => alert('Error de red: ' + err.message));
+        });
+      }
+
+      // Dividir en categorías
+      if (btnDividir && modalDividir) {
+        btnDividir.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (formDividir) formDividir.reset();
+          showModal(modalDividir);
+        });
+      }
+
+      if (formDividir) {
+        formDividir.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const nombre = document.getElementById('nombre-categoria').value.trim();
+          if (!nombre) return alert('Ingresa un nombre');
+
+          fetch(`/bolsillos/${bolsilloId}/sub`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre })
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              location.reload();
+            } else {
+              alert('Error: ' + result.error);
+            }
+          })
+          .catch(err => alert('Error de red: ' + err.message));
+        });
+      }
+    } else {
+      // === MODO CON SUB-BOLSILLOS ===
+      console.log('Bolsillo con categorías');
+
+      const btnAgregarSub = document.getElementById('btn-agregar-sub');
+      const modalAgregarSub = document.getElementById('modal-agregar-sub');
+      const formAgregarSub = document.getElementById('form-agregar-sub');
+
+      // Modales para sub-bolsillos
+      const modalIngresoSub = document.getElementById('modal-ingreso-sub');
+      const modalEgresoSub = document.getElementById('modal-egreso-sub');
+      const modalEditarSub = document.getElementById('modal-editar-sub');
+
+      const formIngresoSub = document.getElementById('form-ingreso-sub');
+      const formEgresoSub = document.getElementById('form-egreso-sub');
+      const formEditarSub = document.getElementById('form-editar-sub');
+
+      // === Agregar sub-bolsillo ===
+      if (btnAgregarSub && modalAgregarSub) {
+        btnAgregarSub.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (formAgregarSub) formAgregarSub.reset();
+          showModal(modalAgregarSub);
+        });
+      }
+
+      if (formAgregarSub) {
+        formAgregarSub.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const nombre = document.getElementById('nombre-sub').value.trim();
+          if (!nombre) return alert('Ingresa un nombre');
+
+          fetch(`/bolsillos/${bolsilloId}/sub`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre })
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              location.reload();
+            } else {
+              alert('Error: ' + result.error);
+            }
+          })
+          .catch(err => alert('Error de red: ' + err.message));
+        });
+      }
+
+      // === Eventos dinámicos para sub-bolsillos ===
+      document.querySelectorAll('.btn-ingreso-sub').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const subId = this.dataset.id;
+          document.getElementById('sub-id-ingreso').value = subId;
+          if (formIngresoSub) formIngresoSub.reset();
+          showModal(modalIngresoSub);
+        });
+      });
+
+      if (formIngresoSub) {
+        formIngresoSub.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const subId = document.getElementById('sub-id-ingreso').value;
+          const monto = document.getElementById('monto-ingreso-sub').value;
+          const descripcion = document.getElementById('desc-ingreso-sub').value.trim();
+          if (!monto || parseFloat(monto) <= 0) return alert('Ingresa un monto válido');
+
+          fetch(`/bolsillos/sub/${subId}/ingreso`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ monto: parseFloat(monto), descripcion })
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              location.reload();
+            } else {
+              alert('Error: ' + result.error);
+            }
+          })
+          .catch(err => alert('Error de red: ' + err.message));
+        });
+      }
+
+      document.querySelectorAll('.btn-egreso-sub').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const subId = this.dataset.id;
+          document.getElementById('sub-id-egreso').value = subId;
+          if (formEgresoSub) formEgresoSub.reset();
+          showModal(modalEgresoSub);
+        });
+      });
+
+      if (formEgresoSub) {
+        formEgresoSub.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const subId = document.getElementById('sub-id-egreso').value;
+          const monto = document.getElementById('monto-egreso-sub').value;
+          const descripcion = document.getElementById('desc-egreso-sub').value.trim();
+          if (!monto || parseFloat(monto) <= 0) return alert('Ingresa un monto válido');
+
+          fetch(`/bolsillos/sub/${subId}/egreso`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ monto: parseFloat(monto), descripcion })
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              location.reload();
+            } else {
+              alert('Error: ' + result.error);
+            }
+          })
+          .catch(err => alert('Error de red: ' + err.message));
+        });
+      }
+
+      document.querySelectorAll('.btn-editar-sub').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const subId = this.dataset.id;
+          const subCard = this.closest('.sub-bolsillo-card');
+          const nombreActual = subCard.querySelector('.sub-nombre').textContent;
+          document.getElementById('sub-id-editar').value = subId;
+          document.getElementById('nombre-sub-editar').value = nombreActual;
+          showModal(modalEditarSub);
+        });
+      });
+
+      if (formEditarSub) {
+        formEditarSub.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const subId = document.getElementById('sub-id-editar').value;
+          const nombre = document.getElementById('nombre-sub-editar').value.trim();
+          if (!nombre) return alert('Ingresa un nombre');
+
+          fetch(`/bolsillos/sub/${subId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre })
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              location.reload();
+            } else {
+              alert('Error: ' + result.error);
+            }
+          })
+          .catch(err => alert('Error de red: ' + err.message));
+        });
+      }
+
+      document.querySelectorAll('.btn-eliminar-sub').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const subId = this.dataset.id;
+          const subCard = this.closest('.sub-bolsillo-card');
+          const nombre = subCard.querySelector('.sub-nombre').textContent;
+          if (!confirm(`¿Eliminar la categoría "${nombre}"? El saldo se transferirá al bolsillo principal.`)) return;
+
+          fetch(`/bolsillos/sub/${subId}`, {
+            method: 'DELETE'
+          })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              location.reload();
+            } else {
+              alert('Error: ' + result.error);
+            }
+          })
+          .catch(err => alert('Error de red: ' + err.message));
+        });
       });
     }
   }
