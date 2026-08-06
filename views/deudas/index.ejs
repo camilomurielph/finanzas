@@ -17,16 +17,17 @@
       <label>Valor total (COP) <input type="number" step="0.01" id="valor-total" required></label>
       <label>Cuota mínima (COP) <input type="number" step="0.01" id="cuota-minima" required></label>
       <label>Número de cuotas <input type="number" id="numero-cuotas" required min="1"></label>
-      <label>Fecha de pago <input type="date" id="fecha-pago" required></label>
+      <label>Día de pago (1-31) <input type="number" id="dia-pago" required min="1" max="31"></label>
       <button type="submit" class="btn-primary">Crear deuda</button>
     </form>
   </div>
 </div>
 
-<!-- Grid de deudas -->
+<!-- Deudas activas -->
+<h3 class="seccion-titulo">📋 Deudas activas</h3>
 <div class="deudas-grid">
   <% if (deudas.length === 0) { %>
-    <p class="empty" style="grid-column: 1 / -1;">No tienes deudas registradas.</p>
+    <p class="empty" style="grid-column: 1 / -1;">No tienes deudas activas.</p>
   <% } else { %>
     <% deudas.forEach(d => { %>
       <div class="deuda-card" onclick="window.location='/deudas/<%= d.id %>'">
@@ -38,10 +39,47 @@
           <span class="deuda-total">Total: $<%= d.valor_total.toLocaleString() %></span>
           <span class="deuda-pagado">Pagado: $<%= d.pagado_total.toLocaleString() %></span>
           <span class="deuda-minima">Cuota mínima: $<%= d.cuota_minima.toLocaleString() %></span>
+          <span class="deuda-dia">📅 Día <%= d.dia_pago %></span>
+        </div>
+        <div class="deuda-borrar">
+          <button class="btn-eliminar-deuda" data-id="<%= d.id %>">🗑️ Eliminar</button>
         </div>
       </div>
     <% }) %>
   <% } %>
+</div>
+
+<!-- Sección de archivados (desplegable) -->
+<div class="archivados-section">
+  <div class="archivados-toggle" id="archivados-toggle-deudas">
+    <span>📁 Deudas archivadas (<%= archivadas.length %>)</span>
+    <span class="arrow">▶</span>
+  </div>
+  <div class="archivados-content" id="archivados-content-deudas" style="display: none;">
+    <% if (archivadas.length === 0) { %>
+      <p class="empty">No hay deudas archivadas.</p>
+    <% } else { %>
+      <div class="deudas-grid">
+        <% archivadas.forEach(d => { %>
+          <div class="deuda-card archivada" onclick="window.location='/deudas/<%= d.id %>'">
+            <div class="deuda-header">
+              <span class="deuda-cuota">✅ Pagada</span>
+            </div>
+            <h3><%= d.nombre %></h3>
+            <div class="deuda-montos">
+              <span class="deuda-total">Total: $<%= d.valor_total.toLocaleString() %></span>
+              <span class="deuda-pagado">Pagado: $<%= d.pagado_total.toLocaleString() %></span>
+              <span class="deuda-minima">Cuota mínima: $<%= d.cuota_minima.toLocaleString() %></span>
+            </div>
+            <div class="deuda-acciones-archivadas">
+              <button class="btn-desarchivar" data-id="<%= d.id %>">📂 Restaurar</button>
+              <button class="btn-eliminar-deuda" data-id="<%= d.id %>">🗑️ Eliminar</button>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
 </div>
 
 <%- include('../partials/footer') %>
