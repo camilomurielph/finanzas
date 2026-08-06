@@ -1274,3 +1274,83 @@ a:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* ===== SUB-BOLSILLOS (CATEGORÍAS) ===== */
+.sub-bolsillos-container {
+  margin: 20px 0;
+}
+.sub-bolsillos-container h3 {
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+.sub-bolsillos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+.sub-bolsillo-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  transition: all var(--transition);
+}
+.sub-bolsillo-card:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+.sub-bolsillo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.sub-bolsillo-header .sub-nombre {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.sub-bolsillo-header .sub-saldo {
+  font-weight: 600;
+  color: var(--accent);
+}
+.sub-acciones {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.sub-acciones button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all var(--transition);
+  font-size: 0.9rem;
+}
+.sub-acciones button:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+.sub-acciones .btn-ingreso-sub:hover {
+  color: var(--success);
+}
+.sub-acciones .btn-egreso-sub:hover {
+  color: var(--danger);
+}
+.sub-acciones .btn-editar-sub:hover {
+  color: var(--accent);
+}
+.sub-acciones .btn-eliminar-sub:hover {
+  color: var(--danger);
+}
+
+/* Movimientos con categoría */
+.movimiento-categoria {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
