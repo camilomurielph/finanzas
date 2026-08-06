@@ -1,0 +1,47 @@
+<%- include('../partials/header', { title: 'Bolsillos', active: 'bolsillos' }) %>
+
+<div class="toolbar">
+  <h1>Mis bolsillos</h1>
+  <div>
+    <button class="btn-primary" id="btn-agregar-bolsillo">➕ Nuevo bolsillo</button>
+  </div>
+</div>
+
+<!-- Total general -->
+<div class="resumen-total">
+  <span class="total-label">💰 Total en todos los bolsillos:</span>
+  <span class="total-valor">$<%= totalGeneral.toLocaleString() %></span>
+</div>
+
+<!-- Grid de bolsillos -->
+<div class="bolsillos-grid" id="bolsillos-grid">
+  <% if (bolsillos.length === 0) { %>
+    <p class="empty" style="grid-column: 1 / -1;">No tienes bolsillos creados. Crea uno para empezar.</p>
+  <% } else { %>
+    <% bolsillos.forEach(b => { %>
+      <div class="bolsillo-card" data-id="<%= b.id %>" draggable="true">
+        <div class="bolsillo-card-content" onclick="window.location='/bolsillos/<%= b.id %>'">
+          <h3><%= b.nombre %></h3>
+          <p class="bolsillo-saldo">$<%= b.saldo.toLocaleString() %></p>
+          <div class="bolsillo-actions">
+            <span class="drag-handle">⠿</span>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<!-- Modal para agregar bolsillo -->
+<div id="modal-bolsillo" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Nuevo bolsillo</h2>
+    <form id="form-bolsillo">
+      <label>Nombre <input type="text" id="nombre-bolsillo" required placeholder="Ej: Ahorros"></label>
+      <button type="submit" class="btn-primary">Crear</button>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
