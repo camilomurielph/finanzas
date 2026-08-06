@@ -64,18 +64,16 @@ document.addEventListener('DOMContentLoaded', function() {
   // ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) =====
   // ============================================================
   
-  // Función para cerrar un menú específico
   function cerrarMenu(container) {
     if (!container) return;
+    console.log('🔄 cerrando menú:', container.id);
     container.classList.remove('open');
-    // Forzar estilos de cierre inline (garantiza que se oculte)
     container.style.maxHeight = '0px';
     container.style.opacity = '0';
     container.style.padding = '0px 14px';
     container.style.display = 'block';
     container.style.overflow = 'hidden';
     container.style.borderTopColor = 'transparent';
-    // Ocultar botones
     container.querySelectorAll('.action-btn').forEach(btn => {
       btn.style.display = 'none';
       btn.style.visibility = 'hidden';
@@ -83,18 +81,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Función para abrir un menú específico
   function abrirMenu(container) {
     if (!container) return;
+    console.log('🔄 abriendo menú:', container.id);
     container.classList.add('open');
-    // Forzar estilos de apertura inline
     container.style.maxHeight = '300px';
     container.style.opacity = '1';
     container.style.padding = '10px 14px';
     container.style.display = 'block';
     container.style.overflow = 'visible';
     container.style.borderTopColor = 'var(--border-color)';
-    // Mostrar botones
     container.querySelectorAll('.action-btn').forEach(btn => {
       btn.style.display = 'inline-flex';
       btn.style.visibility = 'visible';
@@ -114,28 +110,39 @@ document.addEventListener('DOMContentLoaded', function() {
       e.stopPropagation();
       e.preventDefault();
       const gastoId = this.dataset.id;
+      console.log('🔹 Click en 3 puntos, ID:', gastoId);
       const actionsContainer = document.getElementById(`acciones-${gastoId}`);
       
-      if (actionsContainer) {
-        // Cerrar otros menús abiertos
-        document.querySelectorAll('.gasto-actions.open').forEach(container => {
-          if (container.id !== `acciones-${gastoId}`) {
-            cerrarMenu(container);
-          }
-        });
-        
-        // Toggle del actual
-        const isOpen = actionsContainer.classList.contains('open');
-        if (isOpen) {
-          cerrarMenu(actionsContainer);
-          console.log('Menú cerrado');
-        } else {
-          abrirMenu(actionsContainer);
-          console.log('Menú abierto');
-        }
-      } else {
-        console.warn('No se encontró contenedor de acciones para ID:', gastoId);
+      if (!actionsContainer) {
+        console.warn('❌ No se encontró contenedor de acciones para ID:', gastoId);
+        return;
       }
+
+      console.log('🔹 actionsContainer encontrado:', actionsContainer.id);
+      console.log('🔹 Clase "open" antes de toggle:', actionsContainer.classList.contains('open'));
+
+      // Cerrar otros menús abiertos
+      document.querySelectorAll('.gasto-actions.open').forEach(container => {
+        if (container.id !== `acciones-${gastoId}`) {
+          console.log('🔹 Cerrando otro menú:', container.id);
+          cerrarMenu(container);
+        }
+      });
+
+      // Toggle del actual
+      const isOpen = actionsContainer.classList.contains('open');
+      console.log('🔹 ¿Está abierto?', isOpen);
+      
+      if (isOpen) {
+        console.log('🔹 Cerrando menú actual');
+        cerrarMenu(actionsContainer);
+      } else {
+        console.log('🔹 Abriendo menú actual');
+        abrirMenu(actionsContainer);
+      }
+
+      console.log('🔹 Clase "open" después de toggle:', actionsContainer.classList.contains('open'));
+      console.log('🔹 ------------------------------------');
     });
   });
 
