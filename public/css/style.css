@@ -82,11 +82,9 @@ a:hover {
   box-shadow: var(--shadow);
   overflow-y: auto;
 }
-
 .sidebar.open {
   left: 0;
 }
-
 .sidebar-header {
   display: flex;
   justify-content: space-between;
@@ -115,7 +113,6 @@ a:hover {
   background: var(--bg-hover);
   color: #fff;
 }
-
 .sidebar nav {
   flex: 1;
   padding: 20px 12px;
@@ -153,7 +150,6 @@ a:hover {
 .sidebar nav ul li a.active i {
   color: #fff;
 }
-
 .sidebar-user {
   padding: 16px 20px;
   border-top: 1px solid var(--border-color);
@@ -182,7 +178,6 @@ a:hover {
   background: rgba(26, 26, 26, 0.92);
   margin-bottom: 20px;
 }
-
 .hamburger {
   display: flex;
   flex-direction: column;
@@ -215,7 +210,6 @@ a:hover {
 .hamburger.active span:nth-child(3) {
   transform: rotate(-45deg) translate(4px, -5px);
 }
-
 .page-title {
   font-size: 1.2rem;
   font-weight: 600;
@@ -340,7 +334,6 @@ a:hover {
   flex-direction: column;
   gap: 12px;
 }
-
 .gasto-item {
   background: var(--bg-card);
   border-radius: var(--radius);
@@ -354,7 +347,6 @@ a:hover {
 .gasto-item.archivado {
   opacity: 0.7;
 }
-
 .gasto-header {
   display: flex;
   justify-content: space-between;
@@ -367,7 +359,6 @@ a:hover {
 .gasto-header:hover {
   background: var(--bg-hover);
 }
-
 .gasto-info {
   display: flex;
   align-items: center;
@@ -403,7 +394,6 @@ a:hover {
   font-size: 0.75rem;
   white-space: nowrap;
 }
-
 .gasto-valor {
   display: flex;
   align-items: center;
@@ -546,7 +536,6 @@ a:hover {
     opacity: 1;
   }
 }
-
 .modal-content .close {
   float: right;
   font-size: 1.8rem;
@@ -618,39 +607,10 @@ a:hover {
   width: 100%;
 }
 
-/* ===== MENÚ CONTEXTUAL (tres puntos) ===== */
+/* ===== MENÚ CONTEXTUAL (tres puntos) - VERSIÓN ANTIGUA (YA NO SE USA) ===== */
+/* Se mantiene por compatibilidad pero se oculta */
 .menu-contextual {
-  position: fixed;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  padding: 6px 0;
-  z-index: 3000;
-  min-width: 180px;
-  box-shadow: var(--shadow);
-  animation: slideUp 0.2s ease;
-}
-.menu-contextual.hidden {
-  display: none;
-}
-.menu-contextual ul {
-  list-style: none;
-}
-.menu-contextual ul li {
-  padding: 12px 20px;
-  cursor: pointer;
-  transition: background var(--transition);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.95rem;
-}
-.menu-contextual ul li:hover {
-  background: var(--bg-hover);
-}
-.menu-contextual ul li:active {
-  background: var(--accent);
-  color: #fff;
+  display: none !important;
 }
 
 /* ===== AUTENTICACIÓN ===== */
@@ -733,7 +693,817 @@ a:hover {
   font-size: 1rem;
 }
 
-/* ===== RESPONSIVE AJUSTES ===== */
+/* ========================================================
+   ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) =====
+   ======================================================== */
+.gasto-actions {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.3s ease, border-color 0.3s ease;
+  opacity: 0;
+  padding: 0 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid transparent;
+}
+
+.gasto-actions.open {
+  max-height: 300px; /* Suficiente para varios botones */
+  opacity: 1;
+  padding: 10px 14px;
+  border-top-color: var(--border-color);
+  overflow: visible; /* Para que no se corten los botones si exceden */
+}
+
+.gasto-actions .action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gasto-actions .action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  touch-action: manipulation;
+  min-height: 36px;
+}
+
+.gasto-actions .action-btn:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+
+.gasto-actions .action-btn.danger {
+  color: var(--danger);
+}
+.gasto-actions .action-btn.danger:hover {
+  background: rgba(255, 107, 107, 0.15);
+  border-color: var(--danger);
+}
+
+.gasto-actions .action-btn.primary {
+  color: var(--accent);
+}
+.gasto-actions .action-btn.primary:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent);
+}
+
+.gasto-actions .action-btn:active {
+  transform: scale(0.95);
+}
+
+/* ========================================================
+   ===== MODAL DE GESTIÓN DE CUENTAS =====
+   ======================================================== */
+.cuentas-list {
+  margin: 16px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.cuenta-item-modal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-color);
+  transition: background var(--transition);
+}
+.cuenta-item-modal:hover {
+  background: var(--bg-hover);
+}
+.cuenta-item-modal .cuenta-nombre {
+  font-weight: 500;
+  flex: 1;
+  font-size: 0.95rem;
+}
+.cuenta-item-modal .cuenta-actions {
+  display: flex;
+  gap: 6px;
+}
+.cuenta-item-modal .cuenta-actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all var(--transition);
+  font-size: 0.9rem;
+  min-height: 32px;
+}
+.cuenta-item-modal .cuenta-actions button:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+.cuenta-item-modal .cuenta-actions .btn-edit-cuenta:hover {
+  color: var(--accent);
+}
+.cuenta-item-modal .cuenta-actions .btn-delete-cuenta:hover {
+  color: var(--danger);
+}
+
+#form-nueva-cuenta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 16px;
+}
+#form-nueva-cuenta input {
+  flex: 1;
+  min-height: 40px;
+}
+#form-nueva-cuenta .btn-primary {
+  flex: 0 0 auto;
+  padding: 8px 20px;
+  min-height: 40px;
+  width: auto;
+  margin-top: 0;
+}
+
+/* ========================================================
+   ===== SUSCRIPCIONES =====
+   ======================================================== */
+.resumen-total {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border-color);
+}
+.resumen-total .total-label {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+.resumen-total .total-valor {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.suscripcion-item {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: transform var(--transition);
+}
+.suscripcion-item:active {
+  transform: scale(0.99);
+}
+.suscripcion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  gap: 8px;
+}
+.suscripcion-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.suscripcion-info strong {
+  font-size: 0.95rem;
+}
+.suscripcion-info .dia-pago {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  background: var(--bg-primary);
+  padding: 2px 12px;
+  border-radius: 12px;
+}
+.suscripcion-valor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+.suscripcion-actions {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.3s ease;
+  opacity: 0;
+  padding: 0 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid transparent;
+}
+.suscripcion-actions.open {
+  max-height: 200px;
+  opacity: 1;
+  padding: 10px 14px;
+  border-top-color: var(--border-color);
+}
+.suscripcion-actions .action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ========================================================
+   ===== BOLSILLOS =====
+   ======================================================== */
+.bolsillos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+@media (max-width: 768px) {
+  .bolsillos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.bolsillo-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: grab;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+  user-select: none;
+}
+.bolsillo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+.bolsillo-card:active {
+  cursor: grabbing;
+}
+.bolsillo-card.drag-over {
+  border: 2px dashed var(--accent);
+  transform: scale(1.02);
+}
+.bolsillo-card .bolsillo-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bolsillo-card h3 {
+  font-size: 1rem;
+  color: #fff;
+  margin: 0;
+}
+.bolsillo-card .bolsillo-saldo {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+}
+.bolsillo-card .drag-handle {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: grab;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.bolsillo-card .drag-handle:hover {
+  opacity: 1;
+}
+
+/* DETALLE DE BOLSILLO */
+.detalle-bolsillo {
+  max-width: 700px;
+  margin: 0 auto;
+}
+.detalle-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.detalle-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+}
+.bolsillo-resumen {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-color);
+}
+.bolsillo-resumen .saldo-actual {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.bolsillo-resumen .label {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+.bolsillo-resumen .valor {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.bolsillo-acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+.bolsillo-acciones .btn-primary,
+.bolsillo-acciones .btn-secondary {
+  flex: 1;
+  min-width: 100px;
+  justify-content: center;
+}
+.movimientos-titulo {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+.movimientos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.movimiento-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border-left: 4px solid var(--text-muted);
+  transition: background 0.2s;
+}
+.movimiento-item:hover {
+  background: var(--bg-hover);
+}
+.movimiento-item.ingreso {
+  border-left-color: var(--success);
+}
+.movimiento-item.egreso {
+  border-left-color: var(--danger);
+}
+.movimiento-fecha {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.movimiento-monto {
+  font-weight: 600;
+  font-size: 1rem;
+}
+.movimiento-monto.ingreso {
+  color: var(--success);
+}
+.movimiento-monto.egreso {
+  color: var(--danger);
+}
+.movimiento-descripcion {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* SUB-BOLSILLOS */
+.sub-bolsillos-container {
+  margin: 20px 0;
+}
+.sub-bolsillos-container h3 {
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+.sub-bolsillos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+.sub-bolsillo-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  transition: all var(--transition);
+}
+.sub-bolsillo-card:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+.sub-bolsillo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.sub-bolsillo-header .sub-nombre {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.sub-bolsillo-header .sub-saldo {
+  font-weight: 600;
+  color: var(--accent);
+}
+.sub-acciones {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.sub-acciones button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all var(--transition);
+  font-size: 0.9rem;
+}
+.sub-acciones button:hover {
+  background: var(--bg-hover);
+  color: #fff;
+}
+.sub-acciones .btn-ingreso-sub:hover {
+  color: var(--success);
+}
+.sub-acciones .btn-egreso-sub:hover {
+  color: var(--danger);
+}
+.sub-acciones .btn-editar-sub:hover {
+  color: var(--accent);
+}
+.sub-acciones .btn-eliminar-sub:hover {
+  color: var(--danger);
+}
+.movimiento-categoria {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+
+/* ========================================================
+   ===== SALARIO =====
+   ======================================================== */
+.salario-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.resumen-item {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+.resumen-item .label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.resumen-item .valor {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.resumen-item .valor.disponible {
+  color: var(--accent);
+}
+.resumen-item .valor.ahorro {
+  color: var(--success);
+}
+.salario-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.salario-acciones .btn-primary,
+.salario-acciones .btn-secondary {
+  flex: 1;
+  min-width: 120px;
+  justify-content: center;
+}
+.ahorro-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 2;
+}
+.ahorro-buttons .btn-secondary {
+  flex: 1;
+  min-width: 100px;
+}
+.gastos-list h3 {
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+.gastos-list .gasto-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  border-left: 3px solid var(--danger);
+}
+.gastos-list .gasto-item .gasto-nombre {
+  font-weight: 500;
+}
+.gastos-list .gasto-item .gasto-valor {
+  color: var(--danger);
+  font-weight: 600;
+}
+.gastos-list .gasto-item .btn-eliminar-gasto {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all var(--transition);
+}
+.gastos-list .gasto-item .btn-eliminar-gasto:hover {
+  background: var(--bg-hover);
+  color: var(--danger);
+}
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--text-muted);
+}
+.empty-state p {
+  margin: 8px 0;
+}
+
+/* ========================================================
+   ===== DEUDAS =====
+   ======================================================== */
+.deudas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+@media (max-width: 768px) {
+  .deudas-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.deuda-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.deuda-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.deuda-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+.deuda-cuota {
+  background: var(--accent);
+  color: #fff;
+  padding: 2px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.deuda-card h3 {
+  font-size: 1.1rem;
+  margin: 0 0 8px 0;
+}
+.deuda-montos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+.deuda-montos .deuda-total {
+  font-weight: 600;
+}
+.deuda-montos .deuda-pagado {
+  color: var(--success);
+}
+.deuda-montos .deuda-minima {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.deuda-card.archivada {
+  opacity: 0.8;
+}
+.deuda-card.archivada .deuda-cuota {
+  background: var(--success);
+}
+.deuda-acciones-archivadas {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+.deuda-acciones-archivadas button {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all var(--transition);
+}
+.deuda-acciones-archivadas button:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+.deuda-acciones-archivadas .btn-desarchivar:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.deuda-acciones-archivadas .btn-eliminar-deuda:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.deuda-dia {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.seccion-titulo {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  margin: 20px 0 12px;
+  font-weight: 500;
+}
+
+/* DETALLE DE DEUDA */
+.detalle-deuda {
+  max-width: 700px;
+  margin: 0 auto;
+}
+.detalle-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.detalle-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+.deuda-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.deuda-resumen .resumen-item {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+.deuda-resumen .resumen-item .label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.deuda-resumen .resumen-item .valor {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.deuda-acciones {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+.deuda-acciones .btn-primary,
+.deuda-acciones .btn-secondary {
+  flex: 1;
+  justify-content: center;
+}
+.pagos-titulo {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.pagos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pago-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border-left: 4px solid var(--text-muted);
+}
+.pago-item.minimo {
+  border-left-color: var(--accent);
+}
+.pago-item.abono {
+  border-left-color: var(--success);
+}
+.pago-item.total {
+  border-left-color: var(--danger);
+}
+.pago-fecha {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.pago-monto {
+  font-weight: 600;
+}
+.pago-tipo {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--bg-primary);
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+.pago-item .btn-eliminar-pago {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all var(--transition);
+  font-size: 0.8rem;
+}
+.pago-item .btn-eliminar-pago:hover {
+  background: var(--bg-hover);
+  color: var(--danger);
+}
+
+/* ========================================================
+   ===== REPORTE =====
+   ======================================================== */
+.reporte-info {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 24px;
+  border: 1px solid var(--border-color);
+}
+.reporte-info p {
+  margin: 10px 0;
+  color: var(--text-secondary);
+}
+.reporte-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+.reporte-info ul li {
+  padding: 6px 0;
+  color: var(--text-secondary);
+}
+.reporte-info ul li::before {
+  content: "• ";
+  color: var(--accent);
+}
+
+/* ========================================================
+   ===== RESPONSIVE AJUSTES =====
+   ======================================================== */
 @media (min-width: 768px) {
   .hamburger, .close-menu, .overlay {
     display: none;
@@ -806,119 +1576,6 @@ a:hover {
     font-size: 0.75rem;
     padding: 6px 14px;
   }
-}
-
-/* ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) ===== */
-.gasto-actions {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
-  opacity: 0;
-  padding: 0 14px;
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid transparent;
-}
-.gasto-actions.open {
-  max-height: 200px;
-  opacity: 1;
-  padding: 10px 14px;
-  border-top-color: var(--border-color);
-}
-.gasto-actions .action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.gasto-actions .action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all var(--transition);
-  touch-action: manipulation;
-  min-height: 36px;
-}
-.gasto-actions .action-btn:hover {
-  background: var(--bg-hover);
-  color: #fff;
-}
-.gasto-actions .action-btn.danger {
-  color: var(--danger);
-}
-.gasto-actions .action-btn.danger:hover {
-  background: rgba(255, 107, 107, 0.15);
-  border-color: var(--danger);
-}
-.gasto-actions .action-btn.primary {
-  color: var(--accent);
-}
-.gasto-actions .action-btn.primary:hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: var(--accent);
-}
-.gasto-actions .action-btn:active {
-  transform: scale(0.95);
-}
-
-/* ===== MODAL DE GESTIÓN DE CUENTAS ===== */
-.cuentas-list {
-  margin: 16px 0;
-  max-height: 300px;
-  overflow-y: auto;
-}
-.cuenta-item-modal {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  background: var(--bg-primary);
-  border-radius: 8px;
-  margin-bottom: 8px;
-  border: 1px solid var(--border-color);
-  transition: background var(--transition);
-}
-.cuenta-item-modal:hover {
-  background: var(--bg-hover);
-}
-.cuenta-item-modal .cuenta-nombre {
-  font-weight: 500;
-  flex: 1;
-  font-size: 0.95rem;
-}
-.cuenta-item-modal .cuenta-actions {
-  display: flex;
-  gap: 6px;
-}
-.cuenta-item-modal .cuenta-actions button {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all var(--transition);
-  font-size: 0.9rem;
-  min-height: 32px;
-}
-.cuenta-item-modal .cuenta-actions button:hover {
-  background: var(--bg-hover);
-  color: #fff;
-}
-.cuenta-item-modal .cuenta-actions .btn-edit-cuenta:hover {
-  color: var(--accent);
-}
-.cuenta-item-modal .cuenta-actions .btn-delete-cuenta:hover {
-  color: var(--danger);
-}
-
-/* Ajustes para el modal de cuentas en móvil */
-@media (max-width: 480px) {
   .gasto-actions .action-btn {
     font-size: 0.75rem;
     padding: 4px 10px;
@@ -930,789 +1587,8 @@ a:hover {
   .cuenta-item-modal .cuenta-nombre {
     font-size: 0.85rem;
   }
-}
-
-/* ===== MODAL DE GESTIÓN DE CUENTAS (MEJORAS) ===== */
-.cuentas-list {
-  margin: 16px 0;
-  max-height: 300px;
-  overflow-y: auto;
-}
-.cuenta-item-modal {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  background: var(--bg-primary);
-  border-radius: 8px;
-  margin-bottom: 8px;
-  border: 1px solid var(--border-color);
-  transition: background var(--transition);
-}
-.cuenta-item-modal:hover {
-  background: var(--bg-hover);
-}
-.cuenta-item-modal .cuenta-nombre {
-  font-weight: 500;
-  flex: 1;
-  font-size: 0.95rem;
-}
-.cuenta-item-modal .cuenta-actions {
-  display: flex;
-  gap: 6px;
-}
-.cuenta-item-modal .cuenta-actions button {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all var(--transition);
-  font-size: 0.9rem;
-  min-height: 32px;
-}
-.cuenta-item-modal .cuenta-actions button:hover {
-  background: var(--bg-hover);
-  color: #fff;
-}
-.cuenta-item-modal .cuenta-actions .btn-edit-cuenta:hover {
-  color: var(--accent);
-}
-.cuenta-item-modal .cuenta-actions .btn-delete-cuenta:hover {
-  color: var(--danger);
-}
-
-/* Botón "Agregar" en el modal de cuentas (más pequeño) */
-#form-nueva-cuenta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 16px;
-}
-#form-nueva-cuenta input {
-  flex: 1;
-  min-height: 40px;
-}
-#form-nueva-cuenta .btn-primary {
-  flex: 0 0 auto;
-  padding: 8px 20px;
-  min-height: 40px;
-  width: auto;
-  margin-top: 0;
-}
-
-/* Ajustes en móvil */
-@media (max-width: 480px) {
-  .cuenta-item-modal {
-    padding: 8px 10px;
-  }
-  .cuenta-item-modal .cuenta-nombre {
-    font-size: 0.85rem;
-  }
   #form-nueva-cuenta .btn-primary {
     padding: 6px 14px;
     font-size: 0.85rem;
   }
-}
-/* ===== SUSCRIPCIONES ===== */
-.resumen-total {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 16px 20px;
-  margin-bottom: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid var(--border-color);
-}
-.resumen-total .total-label {
-  font-size: 1rem;
-  color: var(--text-secondary);
-}
-.resumen-total .total-valor {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.suscripcion-item {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  overflow: hidden;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: transform var(--transition);
-}
-.suscripcion-item:active {
-  transform: scale(0.99);
-}
-
-.suscripcion-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 14px;
-  gap: 8px;
-}
-.suscripcion-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-}
-.suscripcion-info strong {
-  font-size: 0.95rem;
-}
-.suscripcion-info .dia-pago {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  background: var(--bg-primary);
-  padding: 2px 12px;
-  border-radius: 12px;
-}
-.suscripcion-valor {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
-
-.suscripcion-actions {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
-  opacity: 0;
-  padding: 0 14px;
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid transparent;
-}
-.suscripcion-actions.open {
-  max-height: 200px;
-  opacity: 1;
-  padding: 10px 14px;
-  border-top-color: var(--border-color);
-}
-.suscripcion-actions .action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* ===== BOLSILLOS ===== */
-.bolsillos-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-top: 16px;
-}
-
-@media (max-width: 768px) {
-  .bolsillos-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.bolsillo-card {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 16px;
-  cursor: grab;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  position: relative;
-  user-select: none;
-}
-.bolsillo-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-.bolsillo-card:active {
-  cursor: grabbing;
-}
-.bolsillo-card.drag-over {
-  border: 2px dashed var(--accent);
-  transform: scale(1.02);
-}
-.bolsillo-card .bolsillo-card-content {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.bolsillo-card h3 {
-  font-size: 1rem;
-  color: #fff;
-  margin: 0;
-}
-.bolsillo-card .bolsillo-saldo {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--accent);
-  margin: 0;
-}
-.bolsillo-card .drag-handle {
-  position: absolute;
-  bottom: 8px;
-  right: 12px;
-  color: var(--text-muted);
-  font-size: 1.2rem;
-  cursor: grab;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-.bolsillo-card .drag-handle:hover {
-  opacity: 1;
-}
-
-/* ===== DETALLE DE BOLSILLO ===== */
-.detalle-bolsillo {
-  max-width: 700px;
-  margin: 0 auto;
-}
-.detalle-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-.detalle-header h2 {
-  margin: 0;
-  font-size: 1.6rem;
-}
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--accent);
-}
-
-.bolsillo-resumen {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 24px;
-  border: 1px solid var(--border-color);
-}
-.bolsillo-resumen .saldo-actual {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.bolsillo-resumen .label {
-  font-size: 1rem;
-  color: var(--text-secondary);
-}
-.bolsillo-resumen .valor {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.bolsillo-acciones {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 30px;
-}
-.bolsillo-acciones .btn-primary,
-.bolsillo-acciones .btn-secondary {
-  flex: 1;
-  min-width: 100px;
-  justify-content: center;
-}
-
-.movimientos-titulo {
-  font-size: 1.2rem;
-  margin-bottom: 12px;
-  color: var(--text-secondary);
-}
-.movimientos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.movimiento-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: var(--bg-card);
-  border-radius: 8px;
-  border-left: 4px solid var(--text-muted);
-  transition: background 0.2s;
-}
-.movimiento-item:hover {
-  background: var(--bg-hover);
-}
-.movimiento-item.ingreso {
-  border-left-color: var(--success);
-}
-.movimiento-item.egreso {
-  border-left-color: var(--danger);
-}
-.movimiento-fecha {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-.movimiento-monto {
-  font-weight: 600;
-  font-size: 1rem;
-}
-.movimiento-monto.ingreso {
-  color: var(--success);
-}
-.movimiento-monto.egreso {
-  color: var(--danger);
-}
-.movimiento-descripcion {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* ===== SUB-BOLSILLOS (CATEGORÍAS) ===== */
-.sub-bolsillos-container {
-  margin: 20px 0;
-}
-.sub-bolsillos-container h3 {
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-  font-size: 1.1rem;
-}
-.sub-bolsillos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 12px;
-}
-.sub-bolsillo-card {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 12px 16px;
-  border: 1px solid var(--border-color);
-  transition: all var(--transition);
-}
-.sub-bolsillo-card:hover {
-  background: var(--bg-hover);
-  border-color: var(--accent);
-}
-.sub-bolsillo-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.sub-bolsillo-header .sub-nombre {
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-.sub-bolsillo-header .sub-saldo {
-  font-weight: 600;
-  color: var(--accent);
-}
-.sub-acciones {
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
-}
-.sub-acciones button {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all var(--transition);
-  font-size: 0.9rem;
-}
-.sub-acciones button:hover {
-  background: var(--bg-hover);
-  color: #fff;
-}
-.sub-acciones .btn-ingreso-sub:hover {
-  color: var(--success);
-}
-.sub-acciones .btn-egreso-sub:hover {
-  color: var(--danger);
-}
-.sub-acciones .btn-editar-sub:hover {
-  color: var(--accent);
-}
-.sub-acciones .btn-eliminar-sub:hover {
-  color: var(--danger);
-}
-
-/* Movimientos con categoría */
-.movimiento-categoria {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  background: var(--bg-secondary);
-  padding: 2px 8px;
-  border-radius: 12px;
-  margin-left: 8px;
-}
-
-/* ===== SALARIO ===== */
-.salario-resumen {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.resumen-item {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 16px 20px;
-  border: 1px solid var(--border-color);
-  text-align: center;
-}
-.resumen-item .label {
-  display: block;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-.resumen-item .valor {
-  font-size: 1.6rem;
-  font-weight: 700;
-}
-.resumen-item .valor.disponible {
-  color: var(--accent);
-}
-.resumen-item .valor.ahorro {
-  color: var(--success);
-}
-
-.salario-acciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 24px;
-}
-.salario-acciones .btn-primary,
-.salario-acciones .btn-secondary {
-  flex: 1;
-  min-width: 120px;
-  justify-content: center;
-}
-.ahorro-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  flex: 2;
-}
-.ahorro-buttons .btn-secondary {
-  flex: 1;
-  min-width: 100px;
-}
-
-.gastos-list h3 {
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-  font-size: 1.1rem;
-}
-.gastos-list .gasto-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: var(--bg-card);
-  border-radius: 8px;
-  margin-bottom: 6px;
-  border-left: 3px solid var(--danger);
-}
-.gastos-list .gasto-item .gasto-nombre {
-  font-weight: 500;
-}
-.gastos-list .gasto-item .gasto-valor {
-  color: var(--danger);
-  font-weight: 600;
-}
-.gastos-list .gasto-item .btn-eliminar-gasto {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 1.1rem;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all var(--transition);
-}
-.gastos-list .gasto-item .btn-eliminar-gasto:hover {
-  background: var(--bg-hover);
-  color: var(--danger);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px 0;
-  color: var(--text-muted);
-}
-.empty-state p {
-  margin: 8px 0;
-}
-/* ===== DEUDAS ===== */
-.deudas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
-}
-@media (max-width: 768px) {
-  .deudas-grid {
-    grid-template-columns: 1fr;
-  }
-}
-.deuda-card {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 16px;
-  cursor: pointer;
-  transition: all var(--transition);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-.deuda-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-}
-.deuda-header {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 8px;
-}
-.deuda-cuota {
-  background: var(--accent);
-  color: #fff;
-  padding: 2px 12px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-.deuda-card h3 {
-  font-size: 1.1rem;
-  margin: 0 0 8px 0;
-}
-.deuda-montos {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.9rem;
-}
-.deuda-montos .deuda-total {
-  font-weight: 600;
-}
-.deuda-montos .deuda-pagado {
-  color: var(--success);
-}
-.deuda-montos .deuda-minima {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-/* DETALLE DE DEUDA */
-.detalle-deuda {
-  max-width: 700px;
-  margin: 0 auto;
-}
-.detalle-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-.detalle-header h2 {
-  margin: 0;
-  font-size: 1.6rem;
-}
-
-.deuda-resumen {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
-}
-.deuda-resumen .resumen-item {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 12px 16px;
-  text-align: center;
-  border: 1px solid var(--border-color);
-}
-.deuda-resumen .resumen-item .label {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-.deuda-resumen .resumen-item .valor {
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.deuda-acciones {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 30px;
-}
-.deuda-acciones .btn-primary,
-.deuda-acciones .btn-secondary {
-  flex: 1;
-  justify-content: center;
-}
-
-.pagos-titulo {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-}
-.pagos-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.pago-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: var(--bg-card);
-  border-radius: 8px;
-  border-left: 4px solid var(--text-muted);
-}
-.pago-item.minimo {
-  border-left-color: var(--accent);
-}
-.pago-item.abono {
-  border-left-color: var(--success);
-}
-.pago-item.total {
-  border-left-color: var(--danger);
-}
-.pago-fecha {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-.pago-monto {
-  font-weight: 600;
-}
-.pago-tipo {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  background: var(--bg-primary);
-  padding: 2px 10px;
-  border-radius: 12px;
-}
-
-/* ===== DEUDAS - MEJORAS ===== */
-.deuda-card {
-  position: relative;
-}
-.deuda-card .deuda-borrar {
-  margin-top: 8px;
-  text-align: right;
-}
-.deuda-card .btn-eliminar-deuda {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 0.8rem;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all var(--transition);
-}
-.deuda-card .btn-eliminar-deuda:hover {
-  background: var(--bg-hover);
-  color: var(--danger);
-}
-.deuda-card.archivada {
-  opacity: 0.8;
-}
-.deuda-card.archivada .deuda-cuota {
-  background: var(--success);
-}
-.deuda-acciones-archivadas {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  justify-content: flex-end;
-}
-.deuda-acciones-archivadas button {
-  background: none;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  padding: 4px 12px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: all var(--transition);
-}
-.deuda-acciones-archivadas button:hover {
-  background: var(--bg-hover);
-  border-color: var(--accent);
-}
-.deuda-acciones-archivadas .btn-desarchivar:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.deuda-acciones-archivadas .btn-eliminar-deuda:hover {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-.deuda-dia {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
-/* Pago con botón eliminar */
-.pago-item {
-  position: relative;
-}
-.pago-item .btn-eliminar-pago {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 2px 8px;
-  border-radius: 4px;
-  transition: all var(--transition);
-  font-size: 0.8rem;
-}
-.pago-item .btn-eliminar-pago:hover {
-  background: var(--bg-hover);
-  color: var(--danger);
-}
-
-.seccion-titulo {
-  color: var(--text-secondary);
-  font-size: 1.2rem;
-  margin: 20px 0 12px;
-  font-weight: 500;
-}
-
-/* ===== REPORTE ===== */
-.reporte-info {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 24px;
-  border: 1px solid var(--border-color);
-}
-.reporte-info p {
-  margin: 10px 0;
-  color: var(--text-secondary);
-}
-.reporte-info ul {
-  list-style: none;
-  padding: 0;
-  margin: 10px 0;
-}
-.reporte-info ul li {
-  padding: 6px 0;
-  color: var(--text-secondary);
-}
-.reporte-info ul li::before {
-  content: "• ";
-  color: var(--accent);
 }
