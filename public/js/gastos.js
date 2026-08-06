@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (!isGastosPage) {
     console.log('gastos.js: No estamos en la página de gastos, saliendo.');
-    return; // Salir si no estamos en gastos
+    return;
   }
 
   console.log('gastos.js: Inicializando en página de gastos');
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentGastoId = null;
   let editing = false;
 
-  // ===== Elementos (con comprobación de existencia) =====
+  // ===== Elementos =====
   const modalGasto = document.getElementById('modal-gasto');
   const modalCuentas = document.getElementById('modal-cuentas');
   const modalDividir = document.getElementById('modal-dividir');
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
     [modalGasto, modalCuentas, modalDividir].forEach(hideModal);
   }
 
-  // Cerrar modales al hacer clic en la 'X' o fuera del contenido
+  // Cerrar modales
   document.querySelectorAll('.modal .close').forEach(el => {
     el.addEventListener('click', closeAllModals);
   });
@@ -61,20 +61,30 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // ============================================================
-  // ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) CON LOGS =====
+  // ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) =====
   // ============================================================
   function cerrarTodosMenus() {
     document.querySelectorAll('.gasto-actions.open').forEach(container => {
       container.classList.remove('open');
+      // Restaurar estilos inline
+      container.style.maxHeight = '';
+      container.style.opacity = '';
+      container.style.padding = '';
+      container.style.display = '';
+      container.style.overflow = '';
+      // Restaurar visibilidad de botones
+      container.querySelectorAll('.action-btn').forEach(btn => {
+        btn.style.display = '';
+        btn.style.visibility = '';
+        btn.style.opacity = '';
+      });
     });
   }
 
-  // Asignar eventos a los 3 puntos
   document.querySelectorAll('.menu-tres-puntos').forEach(el => {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
       e.preventDefault();
-      console.log('Click en 3 puntos, ID:', this.dataset.id);
       const gastoId = this.dataset.id;
       const actionsContainer = document.getElementById(`acciones-${gastoId}`);
       
@@ -83,53 +93,53 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.gasto-actions.open').forEach(container => {
           if (container.id !== `acciones-${gastoId}`) {
             container.classList.remove('open');
+            // Restaurar estilos inline
+            container.style.maxHeight = '';
+            container.style.opacity = '';
+            container.style.padding = '';
+            container.style.display = '';
+            container.style.overflow = '';
+            container.querySelectorAll('.action-btn').forEach(btn => {
+              btn.style.display = '';
+              btn.style.visibility = '';
+              btn.style.opacity = '';
+            });
           }
         });
         
         // Toggle del actual
-        actionsContainer.classList.toggle('open');
-        console.log('Menú toggled:', actionsContainer.classList.contains('open'));
-
-        // ===== LOGS DETALLADOS =====
-        if (actionsContainer.classList.contains('open')) {
-          const styles = window.getComputedStyle(actionsContainer);
-          console.log('===== ESTILOS DEL MENÚ (después de toggle) =====');
-          console.log('max-height:', styles.maxHeight);
-          console.log('opacity:', styles.opacity);
-          console.log('padding:', styles.padding);
-          console.log('display:', styles.display);
-          console.log('overflow:', styles.overflow);
-          console.log('height:', styles.height);
-          console.log('visibility:', styles.visibility);
-          console.log('border-top-color:', styles.borderTopColor);
-          console.log('-----------------------------');
+        const isOpen = actionsContainer.classList.toggle('open');
+        
+        if (isOpen) {
+          // ===== FORZAR ESTILOS INLINE =====
+          actionsContainer.style.maxHeight = '300px';
+          actionsContainer.style.opacity = '1';
+          actionsContainer.style.padding = '10px 14px';
+          actionsContainer.style.display = 'block';
+          actionsContainer.style.overflow = 'visible';
           
-          // Posición y tamaño
-          const rect = actionsContainer.getBoundingClientRect();
-          console.log('Rectángulo del elemento:', rect);
-          console.log('¿Es visible?', rect.height > 0 && rect.width > 0);
-          
-          // Verificar si el contenedor tiene hijos visibles
+          // Asegurar que los botones sean visibles
           const children = actionsContainer.querySelectorAll('.action-btn');
-          console.log('Botones dentro del menú:', children.length);
-          if (children.length > 0) {
-            const firstChildStyles = window.getComputedStyle(children[0]);
-            console.log('Estilos del primer botón:', {
-              display: firstChildStyles.display,
-              visibility: firstChildStyles.visibility,
-              opacity: firstChildStyles.opacity,
-              width: firstChildStyles.width,
-              height: firstChildStyles.height
-            });
-          } else {
-            console.warn('⚠️ El menú no tiene botones (`.action-btn`)');
-          }
+          children.forEach(btn => {
+            btn.style.display = 'inline-flex';
+            btn.style.visibility = 'visible';
+            btn.style.opacity = '1';
+          });
           
-          // Clases CSS aplicadas al contenedor
-          console.log('Clases del contenedor:', actionsContainer.className);
-          
+          console.log('✅ Menú abierto (estilos inline forzados)');
         } else {
-          console.log('Menú cerrado (clase open removida)');
+          // Restaurar estilos inline
+          actionsContainer.style.maxHeight = '';
+          actionsContainer.style.opacity = '';
+          actionsContainer.style.padding = '';
+          actionsContainer.style.display = '';
+          actionsContainer.style.overflow = '';
+          actionsContainer.querySelectorAll('.action-btn').forEach(btn => {
+            btn.style.display = '';
+            btn.style.visibility = '';
+            btn.style.opacity = '';
+          });
+          console.log('Menú cerrado');
         }
       } else {
         console.warn('No se encontró contenedor de acciones para ID:', gastoId);
@@ -154,7 +164,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Cerrar el menú
       const actionsContainer = this.closest('.gasto-actions');
-      if (actionsContainer) actionsContainer.classList.remove('open');
+      if (actionsContainer) {
+        actionsContainer.classList.remove('open');
+        // Restaurar estilos inline
+        actionsContainer.style.maxHeight = '';
+        actionsContainer.style.opacity = '';
+        actionsContainer.style.padding = '';
+        actionsContainer.style.display = '';
+        actionsContainer.style.overflow = '';
+        actionsContainer.querySelectorAll('.action-btn').forEach(b => {
+          b.style.display = '';
+          b.style.visibility = '';
+          b.style.opacity = '';
+        });
+      }
 
       switch (action) {
         case 'editar':
@@ -178,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // =============================================
-  // El resto del código solo se ejecuta si estamos en el listado (no en detalle)
+  // El resto del código (listado, etc.)
   // =============================================
 
   const isDetalle = path.includes('/gastos/detalle/');
@@ -186,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!isDetalle) {
     console.log('gastos.js: Configurando eventos del listado');
 
-    // ===== Agregar / Editar gasto =====
     if (btnAgregarGasto) {
       btnAgregarGasto.addEventListener('click', function() {
         editing = false;
@@ -227,7 +249,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    // ===== GESTIÓN DE CUENTAS =====
     if (btnGestionCuentas) {
       btnGestionCuentas.addEventListener('click', function() {
         cargarCuentas();
@@ -256,7 +277,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    // ===== Filtro por cuenta =====
     document.querySelectorAll('.cuenta-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         const cuenta = this.dataset.cuenta;
@@ -265,7 +285,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
 
-    // ===== Toggle de archivados =====
     const archivadosToggle = document.getElementById('archivados-toggle');
     const archivadosContent = document.getElementById('archivados-content');
     if (archivadosToggle) {
@@ -275,14 +294,13 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
-    // ===== Cerrar menús al cambiar de cuenta =====
     document.querySelectorAll('.cuenta-btn').forEach(btn => {
       btn.addEventListener('click', cerrarTodosMenus);
     });
   }
 
   // =============================================
-  // Funciones compartidas (editar, dividir, etc.)
+  // Funciones compartidas
   // =============================================
 
   function cargarCuentas() {
@@ -310,7 +328,6 @@ document.addEventListener('DOMContentLoaded', function() {
           `;
           cuentasList.appendChild(div);
         });
-        // Eventos para editar y borrar
         document.querySelectorAll('.btn-edit-cuenta').forEach(btn => {
           btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -441,7 +458,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // ===== Archivar, Desarchivar y Borrar =====
   function archivarGasto(id) {
     if (!confirm('¿Archivar este gasto?')) return;
     fetch(`/gastos/archivar/${id}`, { method: 'PUT' })
@@ -472,7 +488,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   }
 
-  // ===== Checkbox de gasto =====
   document.querySelectorAll('.gasto-pagado').forEach(cb => {
     cb.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -500,7 +515,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // ===== Checkbox de cuotas =====
   document.querySelectorAll('.cuota-pagado').forEach(cb => {
     cb.addEventListener('change', function(e) {
       e.stopPropagation();
