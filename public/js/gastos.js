@@ -60,14 +60,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) =====
+  // ============================================================
+  // ===== MENÚ DESPLEGABLE DE OPCIONES (3 puntos) CON LOGS =====
+  // ============================================================
   function cerrarTodosMenus() {
     document.querySelectorAll('.gasto-actions.open').forEach(container => {
       container.classList.remove('open');
     });
   }
 
-  // Asignar eventos a los 3 puntos (SIEMPRE que existan)
+  // Asignar eventos a los 3 puntos
   document.querySelectorAll('.menu-tres-puntos').forEach(el => {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -75,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('Click en 3 puntos, ID:', this.dataset.id);
       const gastoId = this.dataset.id;
       const actionsContainer = document.getElementById(`acciones-${gastoId}`);
+      
       if (actionsContainer) {
         // Cerrar otros menús abiertos
         document.querySelectorAll('.gasto-actions.open').forEach(container => {
@@ -82,9 +85,52 @@ document.addEventListener('DOMContentLoaded', function() {
             container.classList.remove('open');
           }
         });
+        
         // Toggle del actual
         actionsContainer.classList.toggle('open');
         console.log('Menú toggled:', actionsContainer.classList.contains('open'));
+
+        // ===== LOGS DETALLADOS =====
+        if (actionsContainer.classList.contains('open')) {
+          const styles = window.getComputedStyle(actionsContainer);
+          console.log('===== ESTILOS DEL MENÚ (después de toggle) =====');
+          console.log('max-height:', styles.maxHeight);
+          console.log('opacity:', styles.opacity);
+          console.log('padding:', styles.padding);
+          console.log('display:', styles.display);
+          console.log('overflow:', styles.overflow);
+          console.log('height:', styles.height);
+          console.log('visibility:', styles.visibility);
+          console.log('border-top-color:', styles.borderTopColor);
+          console.log('-----------------------------');
+          
+          // Posición y tamaño
+          const rect = actionsContainer.getBoundingClientRect();
+          console.log('Rectángulo del elemento:', rect);
+          console.log('¿Es visible?', rect.height > 0 && rect.width > 0);
+          
+          // Verificar si el contenedor tiene hijos visibles
+          const children = actionsContainer.querySelectorAll('.action-btn');
+          console.log('Botones dentro del menú:', children.length);
+          if (children.length > 0) {
+            const firstChildStyles = window.getComputedStyle(children[0]);
+            console.log('Estilos del primer botón:', {
+              display: firstChildStyles.display,
+              visibility: firstChildStyles.visibility,
+              opacity: firstChildStyles.opacity,
+              width: firstChildStyles.width,
+              height: firstChildStyles.height
+            });
+          } else {
+            console.warn('⚠️ El menú no tiene botones (`.action-btn`)');
+          }
+          
+          // Clases CSS aplicadas al contenedor
+          console.log('Clases del contenedor:', actionsContainer.className);
+          
+        } else {
+          console.log('Menú cerrado (clase open removida)');
+        }
       } else {
         console.warn('No se encontró contenedor de acciones para ID:', gastoId);
       }
