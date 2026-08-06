@@ -1,0 +1,80 @@
+<%- include('../partials/header', { title: bolsillo.nombre, active: 'bolsillos' }) %>
+
+<div class="detalle-bolsillo">
+  <div class="detalle-header">
+    <a href="/bolsillos" class="btn-back">← Volver a bolsillos</a>
+    <h2><%= bolsillo.nombre %></h2>
+  </div>
+
+  <div class="bolsillo-resumen">
+    <div class="saldo-actual">
+      <span class="label">Saldo actual</span>
+      <span class="valor">$<%= bolsillo.saldo.toLocaleString() %></span>
+    </div>
+  </div>
+
+  <div class="bolsillo-acciones">
+    <button class="btn-primary" id="btn-ingreso">➕ Añadir</button>
+    <button class="btn-secondary" id="btn-egreso">➖ Retirar</button>
+    <button class="btn-secondary" id="btn-editar-bolsillo">✏️ Editar</button>
+  </div>
+
+  <h3 class="movimientos-titulo">📋 Movimientos</h3>
+  <div class="movimientos-list">
+    <% if (movimientos.length === 0) { %>
+      <p class="empty">No hay movimientos registrados.</p>
+    <% } else { %>
+      <% movimientos.forEach(m => { %>
+        <div class="movimiento-item <%= m.tipo %>">
+          <span class="movimiento-fecha"><%= new Date(m.fecha).toLocaleDateString() %> <%= new Date(m.fecha).toLocaleTimeString() %></span>
+          <span class="movimiento-monto <%= m.tipo %>">
+            <%= m.tipo === 'ingreso' ? '+' : '-' %>$<%= m.monto.toLocaleString() %>
+          </span>
+          <% if (m.descripcion) { %>
+            <span class="movimiento-descripcion"><%= m.descripcion %></span>
+          <% } %>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+</div>
+
+<!-- Modal para ingreso -->
+<div id="modal-ingreso" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Añadir dinero</h2>
+    <form id="form-ingreso">
+      <label>Monto (COP) <input type="number" step="0.01" id="monto-ingreso" required></label>
+      <label>Descripción (opcional) <input type="text" id="desc-ingreso" placeholder="Ej: Salario"></label>
+      <button type="submit" class="btn-primary">Añadir</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para egreso -->
+<div id="modal-egreso" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Retirar dinero</h2>
+    <form id="form-egreso">
+      <label>Monto (COP) <input type="number" step="0.01" id="monto-egreso" required></label>
+      <label>Descripción (opcional) <input type="text" id="desc-egreso" placeholder="Ej: Compra"></label>
+      <button type="submit" class="btn-primary">Retirar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para editar nombre -->
+<div id="modal-editar-bolsillo" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Editar nombre</h2>
+    <form id="form-editar-bolsillo">
+      <label>Nuevo nombre <input type="text" id="nombre-editar" required value="<%= bolsillo.nombre %>"></label>
+      <button type="submit" class="btn-primary">Guardar</button>
+    </form>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
