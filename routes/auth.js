@@ -4,7 +4,7 @@ const User = require('../models/User');
 
 // Login
 router.get('/login', (req, res) => {
-  if (req.session.user) return res.redirect('/gastos');
+  if (req.session.user) return res.redirect('/');
   res.render('auth/login', { title: 'Iniciar sesión', error: null });
 });
 
@@ -19,12 +19,12 @@ router.post('/login', (req, res) => {
     return res.render('auth/login', { title: 'Iniciar sesión', error: 'Contraseña incorrecta' });
   }
   req.session.user = { id: user.id, email: user.email };
-  res.redirect('/gastos');
+  res.redirect('/'); // ← REDIRECCIÓN AL DASHBOARD
 });
 
 // Registro
 router.get('/register', (req, res) => {
-  if (req.session.user) return res.redirect('/gastos');
+  if (req.session.user) return res.redirect('/');
   res.render('auth/register', { title: 'Registrarse', error: null });
 });
 
