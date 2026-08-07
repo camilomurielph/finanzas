@@ -1,20 +1,6 @@
 const router = require('express').Router();
-const PdfPrinter = require('pdfmake');
+const pdfmake = require('pdfmake'); // ← IMPORTANTE: minúscula
 const ReporteHelper = require('../models/ReporteHelper');
-
-// ===== Configurar fuentes para pdfmake =====
-// Fuentes básicas (Roboto)
-const fonts = {
-  Roboto: {
-    normal: 'fonts/Roboto-Regular.ttf',
-    bold: 'fonts/Roboto-Medium.ttf',
-    italics: 'fonts/Roboto-Italic.ttf',
-    bolditalics: 'fonts/Roboto-MediumItalic.ttf'
-  }
-};
-
-// Crear instancia del printer
-const printer = new PdfPrinter(fonts);
 
 function auth(req, res, next) {
   if (!req.session.user) return res.redirect('/login');
@@ -154,8 +140,8 @@ router.get('/pdf', auth, async (req, res) => {
       }
     };
 
-    // ===== Generar PDF con la nueva instancia =====
-    const pdfDoc = printer.createPdf(docDefinition);
+    // ===== Generar PDF =====
+    const pdfDoc = pdfmake.createPdf(docDefinition);
     const pdfBuffer = await new Promise((resolve, reject) => {
       pdfDoc.getBuffer((err, buffer) => {
         if (err) reject(err);
