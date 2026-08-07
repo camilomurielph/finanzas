@@ -27,13 +27,12 @@ router.get('/pdf', auth, async (req, res) => {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // ===== PALETA DE COLORES (NUEVA) =====
+    // ===== PALETA DE COLORES (UNIFICADA) =====
     const white = rgb(1, 1, 1);
     const black = rgb(0, 0, 0);
-    // Nuevo tono principal: #2E3E4F
+    // Único azul: #2E3E4F
     const primaryBlue = rgb(0.18, 0.24, 0.31);      // #2E3E4F
-    const primaryBlueLight = rgb(0.25, 0.35, 0.45); // #3F5A73
-    const accentBlue = rgb(0.2, 0.4, 0.6);          // #336699
+    const primaryBlueLight = rgb(0.25, 0.35, 0.45); // Tono más claro para fondos suaves
     const lightBg = rgb(0.96, 0.97, 0.99);
     const tableHeaderBg = rgb(0.92, 0.94, 0.96);
     const rowEvenBg = white;
@@ -43,13 +42,12 @@ router.get('/pdf', auth, async (req, res) => {
     const textMedium = rgb(0.4, 0.4, 0.4);
     const redAccent = rgb(0.7, 0.1, 0.1);
     const greenAccent = rgb(0, 0.5, 0.1);
-    const blueAccent = rgb(0.1, 0.3, 0.6);
 
     // ===== CONFIGURACIÓN DE PÁGINA =====
     const pageWidth = 595;
     const pageHeight = 842;
     const marginX = 55;
-    const marginY = 80;  // Aumentado para bajar el header
+    const marginY = 80;
     const lineHeight = 20;
     const headerHeight = 100;
     const sectionSpacing = 28;
@@ -57,7 +55,6 @@ router.get('/pdf', auth, async (req, res) => {
     const sectionTitleSize = 16;
     const subsectionSize = 12;
     const bodySize = 10;
-    const smallSize = 9;
 
     // ===== FUNCIONES DE DIBUJO =====
     let page = pdfDoc.addPage([pageWidth, pageHeight]);
@@ -83,7 +80,7 @@ router.get('/pdf', auth, async (req, res) => {
     }
 
     function drawHeader() {
-      // Fondo azul oscuro (nuevo color)
+      // Fondo azul oscuro (único azul)
       page.drawRectangle({
         x: 0,
         y: pageHeight - marginY - 10,
@@ -91,36 +88,36 @@ router.get('/pdf', auth, async (req, res) => {
         height: headerHeight + 20,
         color: primaryBlue
       });
-      // Título principal (bajado ligeramente)
+      // Título principal (blanco)
       page.drawText('REPORTE FINANCIERO', {
         x: marginX,
-        y: pageHeight - marginY + 32,  // Ajustado para bajar el título
+        y: pageHeight - marginY + 32,
         size: titleSize,
         font: fontBold,
         color: white
       });
-      // Línea decorativa (más abajo)
+      // Línea decorativa (usando el mismo azul)
       page.drawRectangle({
         x: marginX,
         y: pageHeight - marginY + 10,
         width: 90,
         height: 3,
-        color: rgb(0.7, 0.85, 1)
+        color: primaryBlueLight
       });
-      // Nombre y fecha (en blanco para mejor legibilidad)
+      // Nombre y fecha (EN NEGRO)
       page.drawText(`Preparado para: ${nombreUsuario}`, {
         x: marginX,
         y: pageHeight - marginY - 36,
         size: 11,
         font: font,
-        color: white
+        color: black
       });
       page.drawText(`Fecha: ${fecha}`, {
         x: marginX,
         y: pageHeight - marginY - 54,
         size: 10,
         font: font,
-        color: white
+        color: black
       });
     }
 
@@ -138,14 +135,14 @@ router.get('/pdf', auth, async (req, res) => {
         y: yPos,
         size: sectionTitleSize,
         font: fontBold,
-        color: primaryBlueLight
+        color: primaryBlue  // Usando el mismo azul
       });
       page.drawRectangle({
         x: marginX,
         y: yPos - 7,
         width: 60,
         height: 2.5,
-        color: primaryBlueLight
+        color: primaryBlue  // Usando el mismo azul
       });
       return yPos - sectionSpacing - 6;
     }
@@ -166,8 +163,8 @@ router.get('/pdf', auth, async (req, res) => {
       const totalWidth = pageWidth - 2 * marginX;
       let x = marginX;
       const rowHeight = 18;
-      const headerHeight = 20;
-      const tableHeight = headerHeight + (rows.length * rowHeight) + 2;
+      const headerHeightVal = 20;
+      const tableHeight = headerHeightVal + (rows.length * rowHeight) + 2;
       page.drawRectangle({
         x: x,
         y: yPos - tableHeight,
@@ -180,9 +177,9 @@ router.get('/pdf', auth, async (req, res) => {
 
       page.drawRectangle({
         x: x,
-        y: yPos - headerHeight,
+        y: yPos - headerHeightVal,
         width: totalWidth,
-        height: headerHeight,
+        height: headerHeightVal,
         color: headerBgColor
       });
       let currentX = x;
@@ -191,14 +188,14 @@ router.get('/pdf', auth, async (req, res) => {
         const colWidth = colWidths[i] || totalWidth / columns.length;
         page.drawText(col.label, {
           x: currentX + 8,
-          y: yPos - headerHeight + 5,
+          y: yPos - headerHeightVal + 5,
           size: 9.5,
           font: headerFont,
           color: headerTextColor
         });
         currentX += colWidth;
       });
-      yPos -= headerHeight + 1;
+      yPos -= headerHeightVal + 1;
 
       rows.forEach((row, index) => {
         const bgColor = index % 2 === 0 ? rowEvenColor : rowOddColor;
@@ -245,7 +242,7 @@ router.get('/pdf', auth, async (req, res) => {
           y: yPos,
           size: sectionTitleSize - 2,
           font: fontBold,
-          color: primaryBlueLight
+          color: primaryBlue
         });
         yPos -= sectionSpacing + 4;
       }
@@ -346,7 +343,7 @@ router.get('/pdf', auth, async (req, res) => {
             new Date(p.fecha_pago).toLocaleDateString(),
             `$${p.monto.toLocaleString()}`
           ],
-          colors: [textDark, blueAccent]
+          colors: [textDark, primaryBlue]  // Usando el azul unificado
         }));
 
         const tableX = cardX + padding + 8;
@@ -461,7 +458,7 @@ router.get('/pdf', auth, async (req, res) => {
           y: y,
           size: subsectionSize,
           font: fontBold,
-          color: primaryBlueLight
+          color: primaryBlue
         });
         y -= 18;
 
@@ -529,7 +526,7 @@ router.get('/pdf', auth, async (req, res) => {
         y: y,
         size: 10.5,
         font: fontBold,
-        color: blueAccent
+        color: primaryBlue
       });
       y -= 24;
     } else {
@@ -573,7 +570,7 @@ router.get('/pdf', auth, async (req, res) => {
         y: y,
         size: 10.5,
         font: fontBold,
-        color: greenAccent
+        color: primaryBlue
       });
       y -= 24;
     } else {
