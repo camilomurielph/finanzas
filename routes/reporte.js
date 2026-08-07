@@ -1,10 +1,35 @@
 const router = require('express').Router();
-const pdfMake = require('pdfmake/build/pdfmake');
-const pdfFonts = require('pdfmake/build/vfs_fonts');
 const ReporteHelper = require('../models/ReporteHelper');
 
-// ===== Configurar fuentes =====
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
+// ===== Importar pdfmake correctamente =====
+let pdfMake;
+try {
+  // Intento 1: Importación estándar
+  pdfMake = require('pdfmake');
+  
+  // Verificar si createPdf existe
+  if (typeof pdfMake.createPdf !== 'function') {
+    // Si no existe, intentar con PdfPrinter
+    const PdfPrinter = pdfMake;
+    pdfMake = {
+      createPdf: function(docDefinition) {
+        const printer = new PdfPrinter({});
+        return printer.createPdf(docDefinition);
+      }
+    };
+  }
+} catch (e) {
+  // Si falla, usar la versión con fuentes
+  try {
+    const pdfMakeModule = require('pdfmake/build/pdfmake');
+    const pdfFonts = require('pdfmake/build/vfs_fonts');
+    pdfMakeModule.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs || {};
+    pdfMake = pdfMakeModule;
+  } catch (e2) {
+    console.error('Error cargando pdfmake:', e2);
+    throw new Error('No se pudo cargar pdfmake. Verifica la instalación.');
+  }
+}
 
 function auth(req, res, next) {
   if (!req.session.user) return res.redirect('/login');
