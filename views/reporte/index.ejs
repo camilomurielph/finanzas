@@ -3,7 +3,7 @@
 <div class="toolbar">
   <h1>📊 Reporte Financiero</h1>
   <div>
-    <a href="/reporte/pdf" target="_blank" class="btn-primary">📄 Descargar PDF</a>
+    <button class="btn-primary" id="btn-generar-pdf">📄 Descargar PDF</button>
   </div>
 </div>
 
@@ -21,6 +21,21 @@
     <li>📋 Hacer seguimiento mensual de tus finanzas</li>
     <li>💰 Identificar áreas de mejora en tus finanzas</li>
   </ul>
+</div>
+
+<!-- Modal para solicitar nombre -->
+<div id="modal-nombre" class="modal hidden">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>Ingresa tu nombre</h2>
+    <p style="color: var(--text-muted); margin-bottom: 16px;">
+      El nombre aparecerá en el reporte PDF.
+    </p>
+    <form id="form-nombre">
+      <label>Nombre completo <input type="text" id="nombre-usuario" required placeholder="Ej: Juan Pérez"></label>
+      <button type="submit" class="btn-primary">Generar PDF</button>
+    </form>
+  </div>
 </div>
 
 <%- include('../partials/footer') %>
