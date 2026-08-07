@@ -34,11 +34,7 @@ app.use('/salario', require('./routes/salario'));
 app.use('/deudas', require('./routes/deudas'));
 app.use('/reporte', require('./routes/reporte'));
 
-// Redirección raíz (ya manejada por dashboard)
-// app.get('/', (req, res) => {
-//   if (req.session.user) return res.redirect('/');
-//   res.redirect('/login');
-// });
+// Nota: la ruta raíz ya está manejada por el dashboard.
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
