@@ -1,0 +1,150 @@
+<%- include('../partials/header', { title: 'Dashboard', active: 'dashboard' }) %>
+
+<!-- ===== TARJETAS DE RESUMEN ===== -->
+<div class="dashboard-grid">
+  <div class="stat-card gastos">
+    <div class="stat-icon">💰</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Gastos</div>
+      <div class="stat-value">$<%= data.totalGastos.toLocaleString() %></div>
+      <div class="stat-sub"><%= data.countGastos %> gastos</div>
+    </div>
+  </div>
+  <div class="stat-card suscripciones">
+    <div class="stat-icon">🔄</div>
+    <div class="stat-content">
+      <div class="stat-label">Suscripciones</div>
+      <div class="stat-value">$<%= data.totalSuscripciones.toLocaleString() %></div>
+      <div class="stat-sub"><%= data.countSuscripciones %> suscripciones</div>
+    </div>
+  </div>
+  <div class="stat-card bolsillos">
+    <div class="stat-icon">🏦</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Bolsillos</div>
+      <div class="stat-value">$<%= data.totalBolsillos.toLocaleString() %></div>
+      <div class="stat-sub"><%= data.bolsillos.length %> bolsillos</div>
+    </div>
+  </div>
+  <div class="stat-card deudas">
+    <div class="stat-icon">💳</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Deudas</div>
+      <div class="stat-value">$<%= data.totalDeudas.toLocaleString() %></div>
+      <div class="stat-sub"><%= data.countDeudas %> deudas activas</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GRÁFICOS ===== -->
+<div class="charts-row">
+  <div class="chart-card">
+    <h3>📊 Gastos por Categoría</h3>
+    <div class="chart-container">
+      <canvas id="gastosChart"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>🏦 Distribución de Bolsillos</h3>
+    <div class="chart-container">
+      <canvas id="bolsillosChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FILA INFERIOR ===== -->
+<div class="bottom-row">
+  <!-- Últimos Gastos -->
+  <div class="list-card">
+    <h3>📋 Últimos Gastos</h3>
+    <% if (data.ultimosGastos.length === 0) { %>
+      <p class="empty">No hay gastos recientes</p>
+    <% } else { %>
+      <ul class="item-list">
+        <% data.ultimosGastos.forEach(g => { %>
+          <li>
+            <span class="item-name"><%= g.nombre %></span>
+            <span class="item-category"><%= g.categoria %></span>
+            <span class="item-amount negative">- $<%= g.valor_total.toLocaleString() %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+    <a href="/gastos" class="link-more">Ver todos →</a>
+  </div>
+
+  <!-- Deudas Activas -->
+  <div class="list-card">
+    <h3>💳 Deudas Activas</h3>
+    <% if (data.deudasActivas.length === 0) { %>
+      <p class="empty">No hay deudas activas</p>
+    <% } else { %>
+      <ul class="item-list">
+        <% data.deudasActivas.forEach(d => { %>
+          <li>
+            <span class="item-name"><%= d.nombre %></span>
+            <span class="item-category">Cuota <%= d.cuota_actual %>/<%= d.numero_cuotas %></span>
+            <span class="item-amount negative">$<%= (d.valor_total - d.pagado_total).toLocaleString() %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+    <a href="/deudas" class="link-more">Ver todas →</a>
+  </div>
+
+  <!-- Suscripciones -->
+  <div class="list-card">
+    <h3>🔄 Suscripciones</h3>
+    <% if (data.suscripciones.length === 0) { %>
+      <p class="empty">No hay suscripciones</p>
+    <% } else { %>
+      <ul class="item-list">
+        <% data.suscripciones.slice(0, 5).forEach(s => { %>
+          <li>
+            <span class="item-name"><%= s.nombre %></span>
+            <span class="item-category">Día <%= s.dia_pago %></span>
+            <span class="item-amount">$<%= s.valor.toLocaleString() %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+    <a href="/suscripciones" class="link-more">Ver todas →</a>
+  </div>
+</div>
+
+<!-- ===== RESUMEN DE SALARIO ===== -->
+<% if (data.simulacro) { %>
+  <div class="salario-card">
+    <h3>💰 Simulador de Salario</h3>
+    <div class="salario-stats">
+      <div class="salario-item">
+        <span class="salario-label">Salario inicial</span>
+        <span class="salario-value">$<%= data.simulacro.salario_inicial.toLocaleString() %></span>
+      </div>
+      <div class="salario-item">
+        <span class="salario-label">Disponible</span>
+        <span class="salario-value disponible">$<%= data.simulacro.saldo_disponible.toLocaleString() %></span>
+      </div>
+      <div class="salario-item">
+        <span class="salario-label">Ahorro</span>
+        <span class="salario-value ahorro">$<%= data.simulacro.ahorro.toLocaleString() %></span>
+      </div>
+    </div>
+    <a href="/salario" class="link-more">Ver simulador →</a>
+  </div>
+<% } %>
+
+<!-- ===== ACCESOS RÁPIDOS ===== -->
+<div class="quick-actions">
+  <a href="/gastos" class="quick-btn">💰 Gastos</a>
+  <a href="/suscripciones" class="quick-btn">🔄 Suscripciones</a>
+  <a href="/bolsillos" class="quick-btn">🏦 Bolsillos</a>
+  <a href="/deudas" class="quick-btn">💳 Deudas</a>
+  <a href="/salario" class="quick-btn">💰 Salario</a>
+  <a href="/reporte" class="quick-btn">📊 Reporte</a>
+</div>
+
+<%- include('../partials/footer') %>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/js/dashboard.js"></script>
