@@ -854,6 +854,7 @@ a:hover {
   font-weight: 700;
   color: var(--accent);
 }
+
 .suscripcion-item {
   background: var(--bg-card);
   border-radius: var(--radius);
@@ -865,6 +866,7 @@ a:hover {
 .suscripcion-item:active {
   transform: scale(0.99);
 }
+
 .suscripcion-header {
   display: flex;
   justify-content: space-between;
@@ -896,27 +898,33 @@ a:hover {
   font-size: 0.95rem;
   white-space: nowrap;
 }
+
+/* ===== MENÚ DE ACCIONES (CON TRANSICIÓN ORIGINAL) ===== */
 .suscripcion-actions {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.3s ease, border-color 0.3s ease;
+  transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.3s ease;
   opacity: 0;
   padding: 0 14px;
   background: rgba(0, 0, 0, 0.2);
   border-top: 1px solid transparent;
 }
+
 .suscripcion-actions.open {
-  max-height: 300px;
+  max-height: 200px; /* ← VALOR ORIGINAL QUE FUNCIONABA */
   opacity: 1;
   padding: 10px 14px;
   border-top-color: var(--border-color);
-  overflow: visible;
+  /* SIN overflow: visible PARA QUE LA TRANSICIÓN FUNCIONE */
 }
+
 .suscripcion-actions .action-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* ===== BOTONES CON ESTILO GASTOS ===== */
 .suscripcion-actions .action-btn {
   display: inline-flex;
   align-items: center;
@@ -924,7 +932,7 @@ a:hover {
   padding: 6px 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
+  border-radius: 20px; /* ← ESTILO REDONDEADO */
   color: var(--text-secondary);
   font-size: 0.8rem;
   cursor: pointer;
@@ -932,10 +940,12 @@ a:hover {
   touch-action: manipulation;
   min-height: 36px;
 }
+
 .suscripcion-actions .action-btn:hover {
   background: var(--bg-hover);
   color: #fff;
 }
+
 .suscripcion-actions .action-btn.danger {
   color: var(--danger);
 }
@@ -943,6 +953,7 @@ a:hover {
   background: rgba(255, 107, 107, 0.15);
   border-color: var(--danger);
 }
+
 .suscripcion-actions .action-btn.primary {
   color: var(--accent);
 }
@@ -950,10 +961,10 @@ a:hover {
   background: rgba(59, 130, 246, 0.15);
   border-color: var(--accent);
 }
+
 .suscripcion-actions .action-btn:active {
   transform: scale(0.95);
 }
-
 /* ========================================================
    ===== BOLSILLOS =====
    ======================================================== */
