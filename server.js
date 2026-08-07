@@ -24,18 +24,21 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/', require('./routes/auth'));
+// ===== RUTAS =====
+app.use('/', require('./routes/dashboard')); // Dashboard como página principal
+app.use('/auth', require('./routes/auth'));
 app.use('/gastos', require('./routes/gastos'));
 app.use('/suscripciones', require('./routes/subscriptions'));
 app.use('/bolsillos', require('./routes/bolsillos'));
 app.use('/salario', require('./routes/salario'));
 app.use('/deudas', require('./routes/deudas'));
-app.use('/reporte', require('./routes/reporte')); // NUEVO
+app.use('/reporte', require('./routes/reporte'));
 
-app.get('/', (req, res) => {
-  if (req.session.user) return res.redirect('/gastos');
-  res.redirect('/login');
-});
+// Redirección raíz (ya manejada por dashboard)
+// app.get('/', (req, res) => {
+//   if (req.session.user) return res.redirect('/');
+//   res.redirect('/login');
+// });
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
