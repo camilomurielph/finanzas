@@ -14,13 +14,15 @@
   <div class="app-container">
     <!-- Menú lateral (drawer) -->
     <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <h2>💰 Finanzas</h2>
-        <button class="close-menu" id="close-menu" aria-label="Cerrar menú">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <nav>
+<div class="sidebar-header">
+  <a href="/" style="text-decoration:none;color:inherit;">
+    <h2>💰 Finanzas</h2>
+  </a>
+  <button class="close-menu" id="close-menu" aria-label="Cerrar menú">
+    <i class="fas fa-times"></i>
+  </button>
+</div>
+<nav>
         <ul>
 <li>
   <a href="/" class="<%= typeof active !== 'undefined' && active === 'dashboard' ? 'active' : '' %>">
