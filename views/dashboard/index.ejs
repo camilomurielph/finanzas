@@ -144,6 +144,14 @@
   <a href="/reporte" class="quick-btn">📊 Reporte</a>
 </div>
 
+<!-- ===== DATOS PARA GRÁFICOS (pasados como JSON) ===== -->
+<script id="gastos-data" type="application/json">
+  <%- JSON.stringify(data.gastosPorCategoria) %>
+</script>
+<script id="bolsillos-data" type="application/json">
+  <%- JSON.stringify(data.bolsillos) %>
+</script>
+
 <%- include('../partials/footer') %>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
