@@ -41,9 +41,7 @@
           <span class="deuda-minima">Cuota mínima: $<%= d.cuota_minima.toLocaleString() %></span>
           <span class="deuda-dia">📅 Día <%= d.dia_pago %></span>
         </div>
-        <div class="deuda-borrar">
-          <button class="btn-eliminar-deuda" data-id="<%= d.id %>">🗑️ Eliminar</button>
-        </div>
+        <!-- ELIMINADO: botón de eliminar -->
       </div>
     <% }) %>
   <% } %>
@@ -73,7 +71,7 @@
             </div>
             <div class="deuda-acciones-archivadas">
               <button class="btn-desarchivar" data-id="<%= d.id %>">📂 Restaurar</button>
-              <button class="btn-eliminar-deuda" data-id="<%= d.id %>">🗑️ Eliminar</button>
+              <!-- ELIMINADO: botón de eliminar -->
             </div>
           </div>
         <% }) %>
