@@ -1,6 +1,20 @@
 const router = require('express').Router();
-const PdfMake = require('pdfmake');
+const PdfPrinter = require('pdfmake');
 const ReporteHelper = require('../models/ReporteHelper');
+
+// ===== Configurar fuentes para pdfmake =====
+// Fuentes básicas (Roboto)
+const fonts = {
+  Roboto: {
+    normal: 'fonts/Roboto-Regular.ttf',
+    bold: 'fonts/Roboto-Medium.ttf',
+    italics: 'fonts/Roboto-Italic.ttf',
+    bolditalics: 'fonts/Roboto-MediumItalic.ttf'
+  }
+};
+
+// Crear instancia del printer
+const printer = new PdfPrinter(fonts);
 
 function auth(req, res, next) {
   if (!req.session.user) return res.redirect('/login');
@@ -60,26 +74,26 @@ router.get('/pdf', auth, async (req, res) => {
 
         // ===== GASTOS =====
         { text: 'Gastos', style: 'sectionTitle' },
-        buildTablaGastos(data.detalles.gastos.recientes), // <-- CORREGIDO (sin this)
+        buildTablaGastos(data.detalles.gastos.recientes),
 
         { text: 'Gastos por Categoría', style: 'subSectionTitle' },
-        buildTablaCategorias(data.detalles.gastos.porCategoria), // <-- CORREGIDO
+        buildTablaCategorias(data.detalles.gastos.porCategoria),
 
         // ===== SUSCRIPCIONES =====
         { text: 'Suscripciones', style: 'sectionTitle' },
-        buildTablaSuscripciones(data.detalles.suscripciones), // <-- CORREGIDO
+        buildTablaSuscripciones(data.detalles.suscripciones),
 
         // ===== BOLSILLOS =====
         { text: 'Bolsillos', style: 'sectionTitle' },
-        buildTablaBolsillos(data.detalles.bolsillos), // <-- CORREGIDO
+        buildTablaBolsillos(data.detalles.bolsillos),
 
         // ===== DEUDAS =====
         { text: 'Deudas Activas', style: 'sectionTitle' },
-        buildTablaDeudas(data.detalles.deudas), // <-- CORREGIDO
+        buildTablaDeudas(data.detalles.deudas),
 
         // ===== SALARIO =====
         { text: 'Simulador de Salario', style: 'sectionTitle' },
-        buildSeccionSalario(data.detalles.salario.simulacro, data.detalles.salario.gastos), // <-- CORREGIDO
+        buildSeccionSalario(data.detalles.salario.simulacro, data.detalles.salario.gastos),
 
         // Pie de página
         { text: `📊 Reporte generado automáticamente - Finanzas App`, style: 'footer' },
@@ -140,8 +154,8 @@ router.get('/pdf', auth, async (req, res) => {
       }
     };
 
-    // Generar PDF
-    const pdfDoc = PdfMake.createPdf(docDefinition);
+    // ===== Generar PDF con la nueva instancia =====
+    const pdfDoc = printer.createPdf(docDefinition);
     const pdfBuffer = await new Promise((resolve, reject) => {
       pdfDoc.getBuffer((err, buffer) => {
         if (err) reject(err);
@@ -160,7 +174,7 @@ router.get('/pdf', auth, async (req, res) => {
 });
 
 // ================================================
-// FUNCIONES AYUDA PARA CONSTRUIR TABLAS (SIN this)
+// FUNCIONES AYUDA PARA CONSTRUIR TABLAS
 // ================================================
 
 function buildTablaGastos(gastos) {
