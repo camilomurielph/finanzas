@@ -494,5 +494,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       });
     }
+
+    // =============================================
+    // ===== ELIMINAR BOLSILLO (NUEVO) =====
+    // =============================================
+    const btnEliminar = document.getElementById('btn-eliminar-bolsillo');
+    if (btnEliminar) {
+      btnEliminar.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!confirm('¿Eliminar este bolsillo? Se perderán todos los datos asociados (movimientos, sub-bolsillos, etc.).')) return;
+
+        fetch(`/bolsillos/${bolsilloId}`, {
+          method: 'DELETE'
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            window.location.href = '/bolsillos';
+          } else {
+            alert('Error: ' + result.error);
+          }
+        })
+        .catch(err => alert('Error de red: ' + err.message));
+      });
+    }
   }
 });
