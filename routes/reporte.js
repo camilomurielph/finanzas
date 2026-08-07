@@ -1,47 +1,6 @@
 const router = require('express').Router();
+const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const ReporteHelper = require('../models/ReporteHelper');
-
-// ===== Cargar pdfmake de forma robusta =====
-let pdfMake;
-
-// Intentar cargar pdfmake de diferentes formas
-try {
-  // Intento 1: importación estándar
-  const pdfmakeModule = require('pdfmake');
-  if (typeof pdfmakeModule.createPdf === 'function') {
-    pdfMake = pdfmakeModule;
-    console.log('✅ pdfmake cargado (modo estándar)');
-  } else if (typeof pdfmakeModule === 'function') {
-    // Es un constructor (PdfPrinter)
-    const PdfPrinter = pdfmakeModule;
-    pdfMake = {
-      createPdf: function(docDefinition) {
-        const printer = new PdfPrinter({});
-        return printer.createPdf(docDefinition);
-      }
-    };
-    console.log('✅ pdfmake cargado (modo PdfPrinter)');
-  } else {
-    throw new Error('Forma de importación desconocida');
-  }
-} catch (e) {
-  console.warn('⚠️ Error cargando pdfmake estándar:', e.message);
-  try {
-    // Intento 2: importar desde build con fuentes
-    const pdfmakeModule = require('pdfmake/build/pdfmake');
-    const pdfFonts = require('pdfmake/build/vfs_fonts');
-    pdfmakeModule.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : (pdfFonts.vfs || {});
-    if (typeof pdfmakeModule.createPdf === 'function') {
-      pdfMake = pdfmakeModule;
-      console.log('✅ pdfmake cargado (desde build)');
-    } else {
-      throw new Error('Fallo al cargar desde build');
-    }
-  } catch (e2) {
-    console.error('❌ No se pudo cargar pdfmake:', e2.message);
-    throw new Error('No se pudo cargar pdfmake. Verifica la instalación con: npm install pdfmake');
-  }
-}
 
 function auth(req, res, next) {
   if (!req.session.user) return res.redirect('/login');
@@ -56,359 +15,278 @@ router.get('/', auth, (req, res) => {
   });
 });
 
-// ===== Generar PDF con pdfmake =====
+// ===== Generar PDF con pdf-lib =====
 router.get('/pdf', auth, async (req, res) => {
   try {
     const data = ReporteHelper.getResumen(req.session.user.id);
     const usuario = req.session.user.email;
     const fecha = new Date().toLocaleDateString('es-CO');
 
-    // ===== Construir el documento =====
-    const docDefinition = {
-      pageSize: 'A4',
-      pageMargins: [40, 60, 40, 60],
-      defaultStyle: {
-        fontSize: 10,
-        color: '#e0e0e0'
-      },
-      background: {
-        color: '#0d0d0d'
-      },
-      content: [
-        // Título
-        { text: '📊 Reporte Financiero', style: 'header' },
-        { text: `👤 ${usuario}  |  📅 ${fecha}`, style: 'subheader' },
+    // ===== Crear PDF =====
+    const pdfDoc = await PDFDocument.create();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-        // ===== RESUMEN EJECUTIVO =====
-        { text: 'Resumen Ejecutivo', style: 'sectionTitle' },
-        {
-          columns: [
-            { text: `Total Gastos: - $${data.resumen.totalGastos.toLocaleString()}`, style: 'resumenItem' },
-            { text: `Total Suscripciones: - $${data.resumen.totalSuscripciones.toLocaleString()}`, style: 'resumenItem' },
-            { text: `Total Bolsillos: $${data.resumen.totalBolsillos.toLocaleString()}`, style: 'resumenItem' }
-          ],
-          columnGap: 10
-        },
-        {
-          columns: [
-            { text: `Total Deudas: - $${data.resumen.totalDeudas.toLocaleString()}`, style: 'resumenItem' },
-            { text: `Salario Disponible: $${data.resumen.salarioDisponible.toLocaleString()}`, style: 'resumenItem' },
-            { text: `Ahorro Simulador: $${data.resumen.salarioAhorro.toLocaleString()}`, style: 'resumenItem' }
-          ],
-          columnGap: 10
-        },
+    let page = pdfDoc.addPage([595, 842]); // A4
+    const { width, height } = page.getSize();
+    let y = height - 50;
+    const margin = 50;
+    const lineHeight = 20;
+    const fontSize = 10;
+    const titleSize = 18;
+    const subtitleSize = 14;
 
-        // ===== GASTOS =====
-        { text: 'Gastos', style: 'sectionTitle' },
-        buildTablaGastos(data.detalles.gastos.recientes),
-
-        { text: 'Gastos por Categoría', style: 'subSectionTitle' },
-        buildTablaCategorias(data.detalles.gastos.porCategoria),
-
-        // ===== SUSCRIPCIONES =====
-        { text: 'Suscripciones', style: 'sectionTitle' },
-        buildTablaSuscripciones(data.detalles.suscripciones),
-
-        // ===== BOLSILLOS =====
-        { text: 'Bolsillos', style: 'sectionTitle' },
-        buildTablaBolsillos(data.detalles.bolsillos),
-
-        // ===== DEUDAS =====
-        { text: 'Deudas Activas', style: 'sectionTitle' },
-        buildTablaDeudas(data.detalles.deudas),
-
-        // ===== SALARIO =====
-        { text: 'Simulador de Salario', style: 'sectionTitle' },
-        buildSeccionSalario(data.detalles.salario.simulacro, data.detalles.salario.gastos),
-
-        // Pie de página
-        { text: `📊 Reporte generado automáticamente - Finanzas App`, style: 'footer' },
-        { text: `Fecha: ${new Date().toLocaleString('es-CO')}`, style: 'footer' }
-      ],
-      styles: {
-        header: {
-          fontSize: 22,
-          bold: true,
-          color: '#ffffff',
-          marginBottom: 10
-        },
-        subheader: {
-          fontSize: 12,
-          color: '#888888',
-          marginBottom: 20
-        },
-        sectionTitle: {
-          fontSize: 16,
-          bold: true,
-          color: '#3b82f6',
-          marginTop: 15,
-          marginBottom: 8
-        },
-        subSectionTitle: {
-          fontSize: 13,
-          bold: true,
-          color: '#b0b0b0',
-          marginTop: 10,
-          marginBottom: 6
-        },
-        resumenItem: {
-          fontSize: 11,
-          color: '#e0e0e0',
-          background: '#1a1a1a',
-          padding: 8,
-          margin: [0, 4, 0, 4]
-        },
-        tableHeader: {
-          bold: true,
-          fontSize: 10,
-          color: '#3b82f6',
-          fillColor: '#121212',
-          alignment: 'left',
-          padding: 5
-        },
-        tableCell: {
-          fontSize: 9,
-          color: '#e0e0e0',
-          padding: 4
-        },
-        footer: {
-          fontSize: 8,
-          color: '#666666',
-          alignment: 'center',
-          marginTop: 20
-        }
-      }
-    };
-
-    // ===== Generar PDF usando pdfMake (ya sea estándar o envuelto) =====
-    const pdfDoc = pdfMake.createPdf(docDefinition);
-    const pdfBuffer = await new Promise((resolve, reject) => {
-      pdfDoc.getBuffer((err, buffer) => {
-        if (err) reject(err);
-        else resolve(buffer);
+    // Función auxiliar para agregar texto
+    function addText(text, x, y, size = fontSize, color = rgb(1, 1, 1), fontType = font) {
+      page.drawText(text, {
+        x,
+        y,
+        size,
+        font: fontType,
+        color
       });
+    }
+
+    // Función para nueva página si es necesario
+    function checkNewPage(neededLines) {
+      if (y - (neededLines * lineHeight) < 50) {
+        page = pdfDoc.addPage([595, 842]);
+        y = height - 50;
+        return true;
+      }
+      return false;
+    }
+
+    // ===== TÍTULO =====
+    addText('📊 Reporte Financiero', margin, y, titleSize, rgb(1, 1, 1), fontBold);
+    y -= lineHeight * 1.5;
+    addText(`👤 ${usuario}  |  📅 ${fecha}`, margin, y, 12, rgb(0.5, 0.5, 0.5));
+    y -= lineHeight * 2;
+
+    // ===== RESUMEN EJECUTIVO =====
+    addText('📋 Resumen Ejecutivo', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    y -= lineHeight * 1.5;
+
+    // Resumen en columnas (simuladas)
+    const resumenItems = [
+      { label: 'Total Gastos:', value: `- $${data.resumen.totalGastos.toLocaleString()}`, color: rgb(1, 0.42, 0.42) },
+      { label: 'Total Suscripciones:', value: `- $${data.resumen.totalSuscripciones.toLocaleString()}`, color: rgb(1, 0.42, 0.42) },
+      { label: 'Total Bolsillos:', value: `+ $${data.resumen.totalBolsillos.toLocaleString()}`, color: rgb(0.32, 0.81, 0.4) },
+      { label: 'Total Deudas:', value: `- $${data.resumen.totalDeudas.toLocaleString()}`, color: rgb(1, 0.42, 0.42) },
+      { label: 'Salario Disponible:', value: `$ ${data.resumen.salarioDisponible.toLocaleString()}`, color: rgb(0.23, 0.51, 0.96) },
+      { label: 'Ahorro Simulador:', value: `+ $${data.resumen.salarioAhorro.toLocaleString()}`, color: rgb(0.32, 0.81, 0.4) }
+    ];
+
+    resumenItems.forEach(item => {
+      addText(item.label, margin, y, 11, rgb(0.8, 0.8, 0.8), fontBold);
+      addText(item.value, margin + 150, y, 11, item.color, fontBold);
+      y -= lineHeight;
     });
+    y -= lineHeight;
+
+    // ===== GASTOS =====
+    addText('💳 Gastos', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    y -= lineHeight * 1.5;
+
+    const gastos = data.detalles.gastos.recientes;
+    if (gastos && gastos.length > 0) {
+      addText('Últimos gastos registrados:', margin, y, 11, rgb(0.7, 0.7, 0.7), fontBold);
+      y -= lineHeight;
+
+      // Encabezados de tabla
+      addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Categoría', margin + 180, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Fecha', margin + 340, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Valor', margin + 440, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      y -= lineHeight;
+
+      gastos.slice(0, 10).forEach(g => {
+        if (checkNewPage(1)) {
+          // Re-dibujar encabezados en nueva página si es necesario
+          addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Categoría', margin + 180, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Fecha', margin + 340, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Valor', margin + 440, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          y -= lineHeight;
+        }
+        addText(g.nombre.substring(0, 20), margin, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(g.tipo_nombre || 'Sin categoría', margin + 180, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(new Date(g.fecha).toLocaleDateString(), margin + 340, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(`$${g.valor_total.toLocaleString()}`, margin + 440, y, 9, rgb(1, 0.42, 0.42));
+        y -= lineHeight;
+      });
+      y -= lineHeight;
+
+      // Gastos por categoría
+      const categorias = data.detalles.gastos.porCategoria;
+      if (categorias && categorias.length > 0) {
+        addText('Gastos por Categoría:', margin, y, 11, rgb(0.7, 0.7, 0.7), fontBold);
+        y -= lineHeight;
+        addText('Categoría', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+        addText('Total', margin + 180, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+        y -= lineHeight;
+        categorias.forEach(c => {
+          if (checkNewPage(1)) {
+            addText('Categoría', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+            addText('Total', margin + 180, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+            y -= lineHeight;
+          }
+          addText(c.nombre, margin, y, 9, rgb(0.9, 0.9, 0.9));
+          addText(`$${c.total.toLocaleString()}`, margin + 180, y, 9, rgb(0.9, 0.9, 0.9));
+          y -= lineHeight;
+        });
+        y -= lineHeight;
+      }
+    } else {
+      addText('No hay gastos registrados.', margin, y, 10, rgb(0.6, 0.6, 0.6));
+      y -= lineHeight * 2;
+    }
+
+    // ===== SUSCRIPCIONES =====
+    addText('🔄 Suscripciones', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    y -= lineHeight * 1.5;
+
+    const suscripciones = data.detalles.suscripciones;
+    if (suscripciones && suscripciones.length > 0) {
+      addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Día de pago', margin + 200, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Valor', margin + 340, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      y -= lineHeight;
+      suscripciones.forEach(s => {
+        if (checkNewPage(1)) {
+          addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Día de pago', margin + 200, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Valor', margin + 340, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          y -= lineHeight;
+        }
+        addText(s.nombre, margin, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(s.dia_pago.toString(), margin + 200, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(`$${s.valor.toLocaleString()}`, margin + 340, y, 9, rgb(0.9, 0.9, 0.9));
+        y -= lineHeight;
+      });
+      y -= lineHeight;
+      addText(`Total mensual: $${data.resumen.totalSuscripciones.toLocaleString()}`, margin, y, 11, rgb(0.23, 0.51, 0.96), fontBold);
+      y -= lineHeight * 2;
+    } else {
+      addText('No hay suscripciones registradas.', margin, y, 10, rgb(0.6, 0.6, 0.6));
+      y -= lineHeight * 2;
+    }
+
+    // ===== BOLSILLOS =====
+    addText('🏦 Bolsillos', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    y -= lineHeight * 1.5;
+
+    const bolsillos = data.detalles.bolsillos;
+    if (bolsillos && bolsillos.length > 0) {
+      addText('Bolsillo', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Saldo', margin + 280, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      y -= lineHeight;
+      bolsillos.forEach(b => {
+        if (checkNewPage(1)) {
+          addText('Bolsillo', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Saldo', margin + 280, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          y -= lineHeight;
+        }
+        addText(b.nombre, margin, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(`$${b.saldo.toLocaleString()}`, margin + 280, y, 9, rgb(0.32, 0.81, 0.4));
+        y -= lineHeight;
+      });
+      y -= lineHeight;
+      addText(`Total en bolsillos: $${data.resumen.totalBolsillos.toLocaleString()}`, margin, y, 11, rgb(0.32, 0.81, 0.4), fontBold);
+      y -= lineHeight * 2;
+    } else {
+      addText('No hay bolsillos creados.', margin, y, 10, rgb(0.6, 0.6, 0.6));
+      y -= lineHeight * 2;
+    }
+
+    // ===== DEUDAS =====
+    addText('💳 Deudas Activas', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    y -= lineHeight * 1.5;
+
+    const deudas = data.detalles.deudas;
+    if (deudas && deudas.length > 0) {
+      addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Cuota', margin + 200, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Día', margin + 290, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Total', margin + 360, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Restante', margin + 460, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      y -= lineHeight;
+      deudas.forEach(d => {
+        if (checkNewPage(1)) {
+          addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Cuota', margin + 200, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Día', margin + 290, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Total', margin + 360, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Restante', margin + 460, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          y -= lineHeight;
+        }
+        addText(d.nombre, margin, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(`${d.cuota_actual}/${d.numero_cuotas}`, margin + 200, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(d.dia_pago.toString(), margin + 290, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(`$${d.valor_total.toLocaleString()}`, margin + 360, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(`$${(d.valor_total - d.pagado_total).toLocaleString()}`, margin + 460, y, 9, rgb(1, 0.42, 0.42));
+        y -= lineHeight;
+      });
+      y -= lineHeight;
+      addText(`Total adeudado: $${data.resumen.totalDeudas.toLocaleString()}`, margin, y, 11, rgb(1, 0.42, 0.42), fontBold);
+      y -= lineHeight * 2;
+    } else {
+      addText('No hay deudas activas.', margin, y, 10, rgb(0.6, 0.6, 0.6));
+      y -= lineHeight * 2;
+    }
+
+    // ===== SALARIO =====
+    addText('💰 Simulador de Salario', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    y -= lineHeight * 1.5;
+
+    const simulacro = data.detalles.salario.simulacro;
+    if (simulacro) {
+      addText(`Salario inicial: $${simulacro.salario_inicial.toLocaleString()}`, margin, y, 10, rgb(0.9, 0.9, 0.9));
+      y -= lineHeight;
+      addText(`Disponible: $${simulacro.saldo_disponible.toLocaleString()}`, margin, y, 10, rgb(0.23, 0.51, 0.96));
+      y -= lineHeight;
+      addText(`Ahorro acumulado: $${simulacro.ahorro.toLocaleString()}`, margin, y, 10, rgb(0.32, 0.81, 0.4));
+      y -= lineHeight * 1.5;
+
+      const gastosSalario = data.detalles.salario.gastos;
+      if (gastosSalario && gastosSalario.length > 0) {
+        addText('Gastos del simulacro:', margin, y, 11, rgb(0.7, 0.7, 0.7), fontBold);
+        y -= lineHeight;
+        addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+        addText('Valor', margin + 280, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+        y -= lineHeight;
+        gastosSalario.forEach(g => {
+          if (checkNewPage(1)) {
+            addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+            addText('Valor', margin + 280, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+            y -= lineHeight;
+          }
+          addText(g.nombre, margin, y, 9, rgb(0.9, 0.9, 0.9));
+          addText(`-$${g.valor.toLocaleString()}`, margin + 280, y, 9, rgb(1, 0.42, 0.42));
+          y -= lineHeight;
+        });
+      }
+    } else {
+      addText('No hay simulacro de salario activo.', margin, y, 10, rgb(0.6, 0.6, 0.6));
+      y -= lineHeight;
+    }
+
+    // ===== PIE DE PÁGINA =====
+    y -= lineHeight;
+    addText('📊 Reporte generado automáticamente - Finanzas App', margin, 40, 9, rgb(0.4, 0.4, 0.4));
+    addText(`Fecha: ${new Date().toLocaleString('es-CO')}`, margin, 25, 9, rgb(0.4, 0.4, 0.4));
+
+    // ===== Guardar PDF =====
+    const pdfBytes = await pdfDoc.save();
 
     // Enviar PDF
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=reporte-financiero-${Date.now()}.pdf`);
-    res.send(pdfBuffer);
+    res.send(Buffer.from(pdfBytes));
   } catch (err) {
     console.error('Error generando PDF:', err);
     res.status(500).send('Error generando el reporte: ' + err.message);
   }
 });
-
-// ================================================
-// FUNCIONES AYUDA PARA CONSTRUIR TABLAS
-// ================================================
-
-function buildTablaGastos(gastos) {
-  if (!gastos || gastos.length === 0) {
-    return { text: 'No hay gastos registrados.', style: 'footer' };
-  }
-  const body = [
-    [
-      { text: 'Nombre', style: 'tableHeader' },
-      { text: 'Categoría', style: 'tableHeader' },
-      { text: 'Fecha', style: 'tableHeader' },
-      { text: 'Valor', style: 'tableHeader', alignment: 'right' }
-    ]
-  ];
-  gastos.forEach(g => {
-    body.push([
-      { text: g.nombre, style: 'tableCell' },
-      { text: g.tipo_nombre, style: 'tableCell' },
-      { text: new Date(g.fecha).toLocaleDateString(), style: 'tableCell' },
-      { text: `$${g.valor_total.toLocaleString()}`, style: 'tableCell', alignment: 'right' }
-    ]);
-  });
-  return {
-    table: {
-      headerRows: 1,
-      widths: ['*', 'auto', 'auto', 'auto'],
-      body: body
-    },
-    layout: {
-      fillColor: function(rowIndex) {
-        return (rowIndex % 2 === 0) ? '#1a1a1a' : '#0d0d0d';
-      }
-    }
-  };
-}
-
-function buildTablaCategorias(categorias) {
-  if (!categorias || categorias.length === 0) {
-    return { text: 'No hay categorías con gastos.', style: 'footer' };
-  }
-  const body = [
-    [
-      { text: 'Categoría', style: 'tableHeader' },
-      { text: 'Total', style: 'tableHeader', alignment: 'right' }
-    ]
-  ];
-  categorias.forEach(c => {
-    body.push([
-      { text: c.nombre, style: 'tableCell' },
-      { text: `$${c.total.toLocaleString()}`, style: 'tableCell', alignment: 'right' }
-    ]);
-  });
-  return {
-    table: {
-      headerRows: 1,
-      widths: ['*', 'auto'],
-      body: body
-    },
-    layout: {
-      fillColor: function(rowIndex) {
-        return (rowIndex % 2 === 0) ? '#1a1a1a' : '#0d0d0d';
-      }
-    }
-  };
-}
-
-function buildTablaSuscripciones(suscripciones) {
-  if (!suscripciones || suscripciones.length === 0) {
-    return { text: 'No hay suscripciones registradas.', style: 'footer' };
-  }
-  const body = [
-    [
-      { text: 'Nombre', style: 'tableHeader' },
-      { text: 'Día de pago', style: 'tableHeader', alignment: 'center' },
-      { text: 'Valor', style: 'tableHeader', alignment: 'right' }
-    ]
-  ];
-  suscripciones.forEach(s => {
-    body.push([
-      { text: s.nombre, style: 'tableCell' },
-      { text: s.dia_pago.toString(), style: 'tableCell', alignment: 'center' },
-      { text: `$${s.valor.toLocaleString()}`, style: 'tableCell', alignment: 'right' }
-    ]);
-  });
-  return {
-    table: {
-      headerRows: 1,
-      widths: ['*', 'auto', 'auto'],
-      body: body
-    },
-    layout: {
-      fillColor: function(rowIndex) {
-        return (rowIndex % 2 === 0) ? '#1a1a1a' : '#0d0d0d';
-      }
-    }
-  };
-}
-
-function buildTablaBolsillos(bolsillos) {
-  if (!bolsillos || bolsillos.length === 0) {
-    return { text: 'No hay bolsillos creados.', style: 'footer' };
-  }
-  const body = [
-    [
-      { text: 'Bolsillo', style: 'tableHeader' },
-      { text: 'Saldo', style: 'tableHeader', alignment: 'right' }
-    ]
-  ];
-  bolsillos.forEach(b => {
-    body.push([
-      { text: b.nombre, style: 'tableCell' },
-      { text: `$${b.saldo.toLocaleString()}`, style: 'tableCell', alignment: 'right' }
-    ]);
-  });
-  return {
-    table: {
-      headerRows: 1,
-      widths: ['*', 'auto'],
-      body: body
-    },
-    layout: {
-      fillColor: function(rowIndex) {
-        return (rowIndex % 2 === 0) ? '#1a1a1a' : '#0d0d0d';
-      }
-    }
-  };
-}
-
-function buildTablaDeudas(deudas) {
-  if (!deudas || deudas.length === 0) {
-    return { text: 'No hay deudas activas.', style: 'footer' };
-  }
-  const body = [
-    [
-      { text: 'Nombre', style: 'tableHeader' },
-      { text: 'Cuota', style: 'tableHeader', alignment: 'center' },
-      { text: 'Día de pago', style: 'tableHeader', alignment: 'center' },
-      { text: 'Total', style: 'tableHeader', alignment: 'right' },
-      { text: 'Pagado', style: 'tableHeader', alignment: 'right' },
-      { text: 'Restante', style: 'tableHeader', alignment: 'right' }
-    ]
-  ];
-  deudas.forEach(d => {
-    body.push([
-      { text: d.nombre, style: 'tableCell' },
-      { text: `${d.cuota_actual}/${d.numero_cuotas}`, style: 'tableCell', alignment: 'center' },
-      { text: d.dia_pago.toString(), style: 'tableCell', alignment: 'center' },
-      { text: `$${d.valor_total.toLocaleString()}`, style: 'tableCell', alignment: 'right' },
-      { text: `$${d.pagado_total.toLocaleString()}`, style: 'tableCell', alignment: 'right' },
-      { text: `$${(d.valor_total - d.pagado_total).toLocaleString()}`, style: 'tableCell', alignment: 'right' }
-    ]);
-  });
-  return {
-    table: {
-      headerRows: 1,
-      widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto'],
-      body: body
-    },
-    layout: {
-      fillColor: function(rowIndex) {
-        return (rowIndex % 2 === 0) ? '#1a1a1a' : '#0d0d0d';
-      }
-    }
-  };
-}
-
-function buildSeccionSalario(simulacro, gastos) {
-  if (!simulacro) {
-    return { text: 'No hay simulacro de salario activo.', style: 'footer' };
-  }
-  const content = [];
-  content.push({
-    columns: [
-      { text: `Salario inicial: $${simulacro.salario_inicial.toLocaleString()}`, style: 'resumenItem' },
-      { text: `Disponible: $${simulacro.saldo_disponible.toLocaleString()}`, style: 'resumenItem' },
-      { text: `Ahorro: $${simulacro.ahorro.toLocaleString()}`, style: 'resumenItem' }
-    ],
-    columnGap: 10
-  });
-
-  if (gastos && gastos.length > 0) {
-    content.push({ text: 'Gastos del simulacro:', style: 'subSectionTitle' });
-    const body = [
-      [
-        { text: 'Nombre', style: 'tableHeader' },
-        { text: 'Valor', style: 'tableHeader', alignment: 'right' }
-      ]
-    ];
-    gastos.forEach(g => {
-      body.push([
-        { text: g.nombre, style: 'tableCell' },
-        { text: `-$${g.valor.toLocaleString()}`, style: 'tableCell', alignment: 'right' }
-      ]);
-    });
-    content.push({
-      table: {
-        headerRows: 1,
-        widths: ['*', 'auto'],
-        body: body
-      },
-      layout: {
-        fillColor: function(rowIndex) {
-          return (rowIndex % 2 === 0) ? '#1a1a1a' : '#0d0d0d';
-        }
-      }
-    });
-  }
-  return content;
-}
 
 module.exports = router;
