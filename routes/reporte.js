@@ -1,10 +1,10 @@
 const router = require('express').Router();
-const PdfPrinter = require('pdfmake'); // ← Importante: usar PdfPrinter
+const pdfMake = require('pdfmake/build/pdfmake');
+const pdfFonts = require('pdfmake/build/vfs_fonts');
 const ReporteHelper = require('../models/ReporteHelper');
 
-// ===== Crear instancia del printer (sin fuentes externas) =====
-// PdfPrinter usará las fuentes predeterminadas
-const printer = new PdfPrinter({});
+// ===== Configurar fuentes =====
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 function auth(req, res, next) {
   if (!req.session.user) return res.redirect('/login');
@@ -143,8 +143,8 @@ router.get('/pdf', auth, async (req, res) => {
       }
     };
 
-    // ===== Generar PDF usando el printer =====
-    const pdfDoc = printer.createPdf(docDefinition);
+    // ===== Generar PDF =====
+    const pdfDoc = pdfMake.createPdf(docDefinition);
     const pdfBuffer = await new Promise((resolve, reject) => {
       pdfDoc.getBuffer((err, buffer) => {
         if (err) reject(err);
