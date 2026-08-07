@@ -1,6 +1,47 @@
 const router = require('express').Router();
-const pdfMake = require('pdfmake');
 const ReporteHelper = require('../models/ReporteHelper');
+
+// ===== Cargar pdfmake de forma robusta =====
+let pdfMake;
+
+// Intentar cargar pdfmake de diferentes formas
+try {
+  // Intento 1: importación estándar
+  const pdfmakeModule = require('pdfmake');
+  if (typeof pdfmakeModule.createPdf === 'function') {
+    pdfMake = pdfmakeModule;
+    console.log('✅ pdfmake cargado (modo estándar)');
+  } else if (typeof pdfmakeModule === 'function') {
+    // Es un constructor (PdfPrinter)
+    const PdfPrinter = pdfmakeModule;
+    pdfMake = {
+      createPdf: function(docDefinition) {
+        const printer = new PdfPrinter({});
+        return printer.createPdf(docDefinition);
+      }
+    };
+    console.log('✅ pdfmake cargado (modo PdfPrinter)');
+  } else {
+    throw new Error('Forma de importación desconocida');
+  }
+} catch (e) {
+  console.warn('⚠️ Error cargando pdfmake estándar:', e.message);
+  try {
+    // Intento 2: importar desde build con fuentes
+    const pdfmakeModule = require('pdfmake/build/pdfmake');
+    const pdfFonts = require('pdfmake/build/vfs_fonts');
+    pdfmakeModule.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : (pdfFonts.vfs || {});
+    if (typeof pdfmakeModule.createPdf === 'function') {
+      pdfMake = pdfmakeModule;
+      console.log('✅ pdfmake cargado (desde build)');
+    } else {
+      throw new Error('Fallo al cargar desde build');
+    }
+  } catch (e2) {
+    console.error('❌ No se pudo cargar pdfmake:', e2.message);
+    throw new Error('No se pudo cargar pdfmake. Verifica la instalación con: npm install pdfmake');
+  }
+}
 
 function auth(req, res, next) {
   if (!req.session.user) return res.redirect('/login');
@@ -139,7 +180,7 @@ router.get('/pdf', auth, async (req, res) => {
       }
     };
 
-    // ===== Generar PDF =====
+    // ===== Generar PDF usando pdfMake (ya sea estándar o envuelto) =====
     const pdfDoc = pdfMake.createPdf(docDefinition);
     const pdfBuffer = await new Promise((resolve, reject) => {
       pdfDoc.getBuffer((err, buffer) => {
