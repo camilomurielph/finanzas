@@ -1641,3 +1641,28 @@ a:hover {
     font-size: 0.85rem;
   }
 }
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  touch-action: manipulation;
+  min-height: 44px;
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover {
+  background: #e55a5a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+.btn-danger:active {
+  transform: scale(0.97);
+}
