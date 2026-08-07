@@ -57,17 +57,16 @@ router.get('/pdf', auth, async (req, res) => {
       return false;
     }
 
-    // ===== TÍTULO =====
-    addText('📊 Reporte Financiero', margin, y, titleSize, rgb(1, 1, 1), fontBold);
+    // ===== TITULO =====
+    addText('REPORTE FINANCIERO', margin, y, titleSize, rgb(1, 1, 1), fontBold);
     y -= lineHeight * 1.5;
-    addText(`👤 ${usuario}  |  📅 ${fecha}`, margin, y, 12, rgb(0.5, 0.5, 0.5));
+    addText(`Usuario: ${usuario}  |  Fecha: ${fecha}`, margin, y, 12, rgb(0.5, 0.5, 0.5));
     y -= lineHeight * 2;
 
     // ===== RESUMEN EJECUTIVO =====
-    addText('📋 Resumen Ejecutivo', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    addText('RESUMEN EJECUTIVO', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
     y -= lineHeight * 1.5;
 
-    // Resumen en columnas (simuladas)
     const resumenItems = [
       { label: 'Total Gastos:', value: `- $${data.resumen.totalGastos.toLocaleString()}`, color: rgb(1, 0.42, 0.42) },
       { label: 'Total Suscripciones:', value: `- $${data.resumen.totalSuscripciones.toLocaleString()}`, color: rgb(1, 0.42, 0.42) },
@@ -85,49 +84,48 @@ router.get('/pdf', auth, async (req, res) => {
     y -= lineHeight;
 
     // ===== GASTOS =====
-    addText('💳 Gastos', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    addText('GASTOS', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
     y -= lineHeight * 1.5;
 
     const gastos = data.detalles.gastos.recientes;
     if (gastos && gastos.length > 0) {
-      addText('Últimos gastos registrados:', margin, y, 11, rgb(0.7, 0.7, 0.7), fontBold);
+      addText('Ultimos gastos registrados:', margin, y, 11, rgb(0.7, 0.7, 0.7), fontBold);
       y -= lineHeight;
 
       // Encabezados de tabla
       addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
-      addText('Categoría', margin + 180, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Categoria', margin + 180, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
       addText('Fecha', margin + 340, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
       addText('Valor', margin + 440, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
       y -= lineHeight;
 
       gastos.slice(0, 10).forEach(g => {
         if (checkNewPage(1)) {
-          // Re-dibujar encabezados en nueva página si es necesario
           addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
-          addText('Categoría', margin + 180, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Categoria', margin + 180, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
           addText('Fecha', margin + 340, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
           addText('Valor', margin + 440, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
           y -= lineHeight;
         }
         addText(g.nombre.substring(0, 20), margin, y, 9, rgb(0.9, 0.9, 0.9));
-        addText(g.tipo_nombre || 'Sin categoría', margin + 180, y, 9, rgb(0.9, 0.9, 0.9));
+        addText(g.tipo_nombre || 'Sin categoria', margin + 180, y, 9, rgb(0.9, 0.9, 0.9));
         addText(new Date(g.fecha).toLocaleDateString(), margin + 340, y, 9, rgb(0.9, 0.9, 0.9));
         addText(`$${g.valor_total.toLocaleString()}`, margin + 440, y, 9, rgb(1, 0.42, 0.42));
         y -= lineHeight;
       });
       y -= lineHeight;
 
-      // Gastos por categoría
+      // Gastos por categoria
       const categorias = data.detalles.gastos.porCategoria;
       if (categorias && categorias.length > 0) {
-        addText('Gastos por Categoría:', margin, y, 11, rgb(0.7, 0.7, 0.7), fontBold);
+        addText('Gastos por Categoria:', margin, y, 11, rgb(0.7, 0.7, 0.7), fontBold);
         y -= lineHeight;
-        addText('Categoría', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+        addText('Categoria', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
         addText('Total', margin + 180, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
         y -= lineHeight;
         categorias.forEach(c => {
           if (checkNewPage(1)) {
-            addText('Categoría', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+            addText('Categoria', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
             addText('Total', margin + 180, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
             y -= lineHeight;
           }
@@ -143,19 +141,19 @@ router.get('/pdf', auth, async (req, res) => {
     }
 
     // ===== SUSCRIPCIONES =====
-    addText('🔄 Suscripciones', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    addText('SUSCRIPCIONES', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
     y -= lineHeight * 1.5;
 
     const suscripciones = data.detalles.suscripciones;
     if (suscripciones && suscripciones.length > 0) {
       addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
-      addText('Día de pago', margin + 200, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Dia de pago', margin + 200, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
       addText('Valor', margin + 340, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
       y -= lineHeight;
       suscripciones.forEach(s => {
         if (checkNewPage(1)) {
           addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
-          addText('Día de pago', margin + 200, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Dia de pago', margin + 200, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
           addText('Valor', margin + 340, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
           y -= lineHeight;
         }
@@ -173,7 +171,7 @@ router.get('/pdf', auth, async (req, res) => {
     }
 
     // ===== BOLSILLOS =====
-    addText('🏦 Bolsillos', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    addText('BOLSILLOS', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
     y -= lineHeight * 1.5;
 
     const bolsillos = data.detalles.bolsillos;
@@ -200,14 +198,14 @@ router.get('/pdf', auth, async (req, res) => {
     }
 
     // ===== DEUDAS =====
-    addText('💳 Deudas Activas', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    addText('DEUDAS ACTIVAS', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
     y -= lineHeight * 1.5;
 
     const deudas = data.detalles.deudas;
     if (deudas && deudas.length > 0) {
       addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
       addText('Cuota', margin + 200, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
-      addText('Día', margin + 290, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+      addText('Dia', margin + 290, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
       addText('Total', margin + 360, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
       addText('Restante', margin + 460, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
       y -= lineHeight;
@@ -215,7 +213,7 @@ router.get('/pdf', auth, async (req, res) => {
         if (checkNewPage(1)) {
           addText('Nombre', margin, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
           addText('Cuota', margin + 200, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
-          addText('Día', margin + 290, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
+          addText('Dia', margin + 290, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
           addText('Total', margin + 360, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
           addText('Restante', margin + 460, y, 10, rgb(0.23, 0.51, 0.96), fontBold);
           y -= lineHeight;
@@ -236,7 +234,7 @@ router.get('/pdf', auth, async (req, res) => {
     }
 
     // ===== SALARIO =====
-    addText('💰 Simulador de Salario', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
+    addText('SIMULADOR DE SALARIO', margin, y, subtitleSize, rgb(0.23, 0.51, 0.96), fontBold);
     y -= lineHeight * 1.5;
 
     const simulacro = data.detalles.salario.simulacro;
@@ -271,9 +269,9 @@ router.get('/pdf', auth, async (req, res) => {
       y -= lineHeight;
     }
 
-    // ===== PIE DE PÁGINA =====
+    // ===== PIE DE PAGINA =====
     y -= lineHeight;
-    addText('📊 Reporte generado automáticamente - Finanzas App', margin, 40, 9, rgb(0.4, 0.4, 0.4));
+    addText('Reporte generado automaticamente - Finanzas App', margin, 40, 9, rgb(0.4, 0.4, 0.4));
     addText(`Fecha: ${new Date().toLocaleString('es-CO')}`, margin, 25, 9, rgb(0.4, 0.4, 0.4));
 
     // ===== Guardar PDF =====
