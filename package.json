@@ -12,6 +12,6 @@
     "better-sqlite3": "^9.0.0",
     "bcrypt": "^5.1.1",
     "express-session": "^1.17.3",
-    "pdfmake": "^0.2.7"
+    "pdfmake": "^0.2.10"
   }
 }
