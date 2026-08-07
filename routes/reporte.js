@@ -27,11 +27,13 @@ router.get('/pdf', auth, async (req, res) => {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // ===== PALETA DE COLORES =====
+    // ===== PALETA DE COLORES (NUEVA) =====
     const white = rgb(1, 1, 1);
     const black = rgb(0, 0, 0);
-    const darkBlue = rgb(0.05, 0.1, 0.25);
-    const mediumBlue = rgb(0.1, 0.25, 0.55);
+    // Nuevo tono principal: #2E3E4F
+    const primaryBlue = rgb(0.18, 0.24, 0.31);      // #2E3E4F
+    const primaryBlueLight = rgb(0.25, 0.35, 0.45); // #3F5A73
+    const accentBlue = rgb(0.2, 0.4, 0.6);          // #336699
     const lightBg = rgb(0.96, 0.97, 0.99);
     const tableHeaderBg = rgb(0.92, 0.94, 0.96);
     const rowEvenBg = white;
@@ -44,13 +46,13 @@ router.get('/pdf', auth, async (req, res) => {
     const blueAccent = rgb(0.1, 0.3, 0.6);
 
     // ===== CONFIGURACIÓN DE PÁGINA =====
-    const pageWidth = 595;  // A4
+    const pageWidth = 595;
     const pageHeight = 842;
     const marginX = 55;
-    const marginY = 70;  // Aumentado para dar más margen superior
+    const marginY = 80;  // Aumentado para bajar el header
     const lineHeight = 20;
-    const headerHeight = 100; // Aumentado para dar más espacio al título
-    const sectionSpacing = 28; // Más separación entre secciones
+    const headerHeight = 100;
+    const sectionSpacing = 28;
     const titleSize = 22;
     const sectionTitleSize = 16;
     const subsectionSize = 12;
@@ -72,7 +74,6 @@ router.get('/pdf', auth, async (req, res) => {
     }
     drawPageBackground();
 
-    // Función para nueva página
     function newPage() {
       page = pdfDoc.addPage([pageWidth, pageHeight]);
       y = pageHeight - marginY;
@@ -81,81 +82,74 @@ router.get('/pdf', auth, async (req, res) => {
       y -= headerHeight + 20;
     }
 
-    // Función para dibujar el header
     function drawHeader() {
-      // Fondo azul oscuro
+      // Fondo azul oscuro (nuevo color)
       page.drawRectangle({
         x: 0,
         y: pageHeight - marginY - 10,
         width: pageWidth,
         height: headerHeight + 20,
-        color: darkBlue
+        color: primaryBlue
       });
-      // Título principal (más abajo, con margen)
+      // Título principal (bajado ligeramente)
       page.drawText('REPORTE FINANCIERO', {
         x: marginX,
-        y: pageHeight - marginY + 40,
+        y: pageHeight - marginY + 32,  // Ajustado para bajar el título
         size: titleSize,
         font: fontBold,
         color: white
       });
-      // Línea decorativa
+      // Línea decorativa (más abajo)
       page.drawRectangle({
         x: marginX,
-        y: pageHeight - marginY + 18,
+        y: pageHeight - marginY + 10,
         width: 90,
         height: 3,
-        color: rgb(0.6, 0.8, 1)
+        color: rgb(0.7, 0.85, 1)
       });
-      // Nombre y fecha
+      // Nombre y fecha (en blanco para mejor legibilidad)
       page.drawText(`Preparado para: ${nombreUsuario}`, {
         x: marginX,
-        y: pageHeight - marginY - 32,
+        y: pageHeight - marginY - 36,
         size: 11,
         font: font,
-        color: rgb(0.85, 0.9, 0.95)
+        color: white
       });
       page.drawText(`Fecha: ${fecha}`, {
         x: marginX,
-        y: pageHeight - marginY - 50,
+        y: pageHeight - marginY - 54,
         size: 10,
         font: font,
-        color: rgb(0.7, 0.75, 0.85)
+        color: white
       });
     }
 
-    // Dibujar header en primera página
     drawHeader();
     y -= headerHeight + 25;
 
-    // Función para dibujar título de sección (con más separación)
     function drawSectionTitle(text, yPos) {
-      // Verificar que haya espacio suficiente para el título y al menos 3 líneas de contenido
       if (yPos < 120) {
         newPage();
         yPos = y;
       }
-      // Espacio antes del título
       yPos -= 10;
       page.drawText(text, {
         x: marginX,
         y: yPos,
         size: sectionTitleSize,
         font: fontBold,
-        color: mediumBlue
+        color: primaryBlueLight
       });
-      // Línea decorativa
       page.drawRectangle({
         x: marginX,
         y: yPos - 7,
         width: 60,
         height: 2.5,
-        color: mediumBlue
+        color: primaryBlueLight
       });
       return yPos - sectionSpacing - 6;
     }
 
-    // Función para dibujar tabla (ancho completo hasta el margen)
     function drawTable(columns, rows, yPos, options = {}) {
       const {
         headerBgColor = tableHeaderBg,
@@ -169,11 +163,8 @@ router.get('/pdf', auth, async (req, res) => {
         fontSize = bodySize
       } = options;
 
-      // Calcular ancho total (ocupa todo el espacio entre márgenes)
       const totalWidth = pageWidth - 2 * marginX;
       let x = marginX;
-
-      // Dibujar borde de la tabla (rectángulo completo)
       const rowHeight = 18;
       const headerHeight = 20;
       const tableHeight = headerHeight + (rows.length * rowHeight) + 2;
@@ -187,7 +178,6 @@ router.get('/pdf', auth, async (req, res) => {
         borderWidth: 0.8
       });
 
-      // Encabezados
       page.drawRectangle({
         x: x,
         y: yPos - headerHeight,
@@ -210,7 +200,6 @@ router.get('/pdf', auth, async (req, res) => {
       });
       yPos -= headerHeight + 1;
 
-      // Filas
       rows.forEach((row, index) => {
         const bgColor = index % 2 === 0 ? rowEvenColor : rowOddColor;
         page.drawRectangle({
@@ -240,33 +229,27 @@ router.get('/pdf', auth, async (req, res) => {
       return yPos - 4;
     }
 
-    // Función para dibujar tarjeta de deuda (con más espacio)
     function drawDebtCard(deuda, pagos, yPos) {
       const cardWidth = pageWidth - 2 * marginX;
       const cardX = marginX;
       const padding = 16;
-      const gap = 14;
 
-      // Calcular altura de la tarjeta
       let cardHeight = 120 + (pagos.length > 0 ? 50 : 0);
       if (pagos.length > 5) cardHeight += (pagos.length - 5) * 16;
 
-      // Verificar espacio en página
       if (yPos - cardHeight < 60) {
         newPage();
         yPos = y;
-        // Dibujar el título de sección nuevamente en la nueva página
         page.drawText('Deudas (continuación)', {
           x: marginX,
           y: yPos,
           size: sectionTitleSize - 2,
           font: fontBold,
-          color: mediumBlue
+          color: primaryBlueLight
         });
         yPos -= sectionSpacing + 4;
       }
 
-      // Fondo blanco con borde
       page.drawRectangle({
         x: cardX,
         y: yPos - cardHeight,
@@ -276,7 +259,6 @@ router.get('/pdf', auth, async (req, res) => {
         borderColor: borderGray,
         borderWidth: 0.8
       });
-      // Borde izquierdo rojo
       page.drawRectangle({
         x: cardX,
         y: yPos - cardHeight,
@@ -285,7 +267,6 @@ router.get('/pdf', auth, async (req, res) => {
         color: redAccent
       });
 
-      // Título de la deuda
       page.drawText(deuda.nombre, {
         x: cardX + padding + 8,
         y: yPos - 26,
@@ -295,7 +276,6 @@ router.get('/pdf', auth, async (req, res) => {
       });
       let currentY = yPos - 44;
 
-      // Estadísticas (fila 1) - con más espacio
       const stats1 = [
         { label: 'Total deuda', value: `$${deuda.valor_total.toLocaleString()}` },
         { label: 'Pagado', value: `$${deuda.pagado_total.toLocaleString()}` },
@@ -322,7 +302,6 @@ router.get('/pdf', auth, async (req, res) => {
       });
       currentY -= 22;
 
-      // Estadísticas (fila 2)
       const stats2 = [
         { label: 'Cuota mínima', value: `$${deuda.cuota_minima.toLocaleString()}` },
         { label: 'Día de pago', value: deuda.dia_pago.toString() },
@@ -348,7 +327,6 @@ router.get('/pdf', auth, async (req, res) => {
       });
       currentY -= 24;
 
-      // Historial de pagos
       if (pagos && pagos.length > 0) {
         page.drawText('Historial de Pagos', {
           x: cardX + padding + 8,
@@ -359,7 +337,6 @@ router.get('/pdf', auth, async (req, res) => {
         });
         currentY -= 18;
 
-        // Tabla de pagos (ancho fijo dentro de la tarjeta)
         const cols = [
           { label: 'Fecha', width: 40 },
           { label: 'Valor Pagado', width: 40 }
@@ -374,7 +351,6 @@ router.get('/pdf', auth, async (req, res) => {
 
         const tableX = cardX + padding + 8;
         const tableW = 260;
-        // Encabezados
         page.drawRectangle({
           x: tableX,
           y: currentY - 16,
@@ -419,7 +395,6 @@ router.get('/pdf', auth, async (req, res) => {
     // ============================================================
     y = drawSectionTitle('Resumen Ejecutivo', y);
 
-    // Cuadros de resumen (más altos y centrados)
     const resumenItems = [
       { label: 'Total Gastos', value: `$${data.resumen.totalGastos.toLocaleString()}`, color: redAccent },
       { label: 'Total Suscripciones', value: `$${data.resumen.totalSuscripciones.toLocaleString()}`, color: redAccent },
@@ -435,7 +410,6 @@ router.get('/pdf', auth, async (req, res) => {
       const xPos = marginX + index * (itemWidth + 14);
       const yPos = currentY - itemHeight;
 
-      // Fondo blanco con borde
       page.drawRectangle({
         x: xPos,
         y: yPos,
@@ -445,7 +419,6 @@ router.get('/pdf', auth, async (req, res) => {
         borderColor: borderGray,
         borderWidth: 0.5
       });
-      // Etiqueta (centrada horizontalmente)
       page.drawText(item.label, {
         x: xPos + itemWidth / 2 - 30,
         y: yPos + 14,
@@ -453,7 +426,6 @@ router.get('/pdf', auth, async (req, res) => {
         font: font,
         color: textMedium
       });
-      // Valor (centrado)
       page.drawText(item.value, {
         x: xPos + itemWidth / 2 - 35,
         y: yPos + 30,
@@ -479,23 +451,20 @@ router.get('/pdf', auth, async (req, res) => {
         }
         first = false;
 
-        // Verificar espacio
         if (y < 100) {
           newPage();
           y = drawSectionTitle('Registro de Gastos (cont.)', y);
         }
 
-        // Título de la tarjeta
         page.drawText(`Tarjeta/Cuenta: ${item.tarjeta}`, {
           x: marginX,
           y: y,
           size: subsectionSize,
           font: fontBold,
-          color: mediumBlue
+          color: primaryBlueLight
         });
         y -= 18;
 
-        // Tabla de gastos (ancho completo)
         const cols = [
           { label: 'Nombre del Gasto', width: 45 },
           { label: 'Valor', width: 25 },
@@ -628,7 +597,7 @@ router.get('/pdf', auth, async (req, res) => {
       deudas.forEach((deuda, index) => {
         const pagosDeuda = data.detalles.pagos.filter(p => p.deuda_id === deuda.id);
         y = drawDebtCard(deuda, pagosDeuda, y);
-        y -= 16; // Espacio entre tarjetas
+        y -= 16;
       });
     } else {
       page.drawText('No hay deudas activas.', {
@@ -644,7 +613,6 @@ router.get('/pdf', auth, async (req, res) => {
     // ============================================================
     // ===== PIE DE PÁGINA =====
     // ============================================================
-    // Siempre en la última página
     const lastPage = page;
     lastPage.drawText('Reporte generado automáticamente - Finanzas App', {
       x: marginX,
