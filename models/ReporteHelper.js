@@ -73,6 +73,15 @@ class ReporteHelper {
       WHERE usuario_id = ? AND activa = 1 AND archivada = 0
     `).get(usuario_id);
 
+    // ===== PAGOS DE DEUDAS (NUEVO) =====
+    const pagosDeuda = db.prepare(`
+      SELECT p.*, d.id as deuda_id
+      FROM pagos_deuda p
+      JOIN deudas d ON p.deuda_id = d.id
+      WHERE d.usuario_id = ?
+      ORDER BY p.fecha_pago DESC
+    `).all(usuario_id);
+
     // ===== SALARIO =====
     const simulacroActivo = db.prepare(`
       SELECT * FROM simulacros
@@ -109,6 +118,7 @@ class ReporteHelper {
       bolsillos: bolsillos,
       subBolsillos: subBolsillos,
       deudas: deudasActivas,
+      pagos: pagosDeuda, // NUEVO: historial de pagos de deudas
       salario: {
         simulacro: simulacroActivo,
         gastos: gastosSalario,
