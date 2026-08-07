@@ -4,29 +4,38 @@ class ReporteHelper {
   static getResumen(usuario_id) {
     const data = {};
 
-    // ===== GASTOS =====
-    const gastosActivos = db.prepare(`
-      SELECT g.*, t.nombre as tipo_nombre
-      FROM gastos g
-      JOIN tipos_gasto t ON g.tipo_gasto_id = t.id
-      WHERE g.usuario_id = ? AND g.archivado = 0
-      ORDER BY g.fecha DESC
-      LIMIT 10
+    // ===== GASTOS AGRUPADOS POR TARJETA/CUENTA =====
+    // Obtener todas las tarjetas/cuentas del usuario
+    const tiposGasto = db.prepare(`
+      SELECT * FROM tipos_gasto
+      WHERE usuario_id = ?
+      ORDER BY nombre ASC
     `).all(usuario_id);
-    
+
+    // Para cada tarjeta, obtener sus gastos
+    const gastosPorTarjeta = [];
+    tiposGasto.forEach(tipo => {
+      const gastos = db.prepare(`
+        SELECT * FROM gastos
+        WHERE usuario_id = ? AND tipo_gasto_id = ? AND archivado = 0
+        ORDER BY fecha DESC
+        LIMIT 20
+      `).all(usuario_id, tipo.id);
+      
+      if (gastos.length > 0) {
+        gastosPorTarjeta.push({
+          tarjeta: tipo.nombre,
+          gastos: gastos
+        });
+      }
+    });
+
+    // Total de gastos (para el resumen)
     const totalGastos = db.prepare(`
       SELECT SUM(valor_total) as total
       FROM gastos
       WHERE usuario_id = ? AND archivado = 0
     `).get(usuario_id);
-    
-    const gastosPorCategoria = db.prepare(`
-      SELECT t.nombre, SUM(g.valor_total) as total
-      FROM gastos g
-      JOIN tipos_gasto t ON g.tipo_gasto_id = t.id
-      WHERE g.usuario_id = ? AND g.archivado = 0
-      GROUP BY t.nombre
-    `).all(usuario_id);
 
     // ===== SUSCRIPCIONES =====
     const suscripciones = db.prepare(`
@@ -73,7 +82,7 @@ class ReporteHelper {
       WHERE usuario_id = ? AND activa = 1 AND archivada = 0
     `).get(usuario_id);
 
-    // ===== PAGOS DE DEUDAS (NUEVO) =====
+    // ===== PAGOS DE DEUDAS =====
     const pagosDeuda = db.prepare(`
       SELECT p.*, d.id as deuda_id
       FROM pagos_deuda p
@@ -110,15 +119,12 @@ class ReporteHelper {
 
     // ===== DETALLES =====
     data.detalles = {
-      gastos: {
-        recientes: gastosActivos,
-        porCategoria: gastosPorCategoria,
-      },
+      gastosPorTarjeta: gastosPorTarjeta,
       suscripciones: suscripciones,
       bolsillos: bolsillos,
       subBolsillos: subBolsillos,
       deudas: deudasActivas,
-      pagos: pagosDeuda, // NUEVO: historial de pagos de deudas
+      pagos: pagosDeuda,
       salario: {
         simulacro: simulacroActivo,
         gastos: gastosSalario,
