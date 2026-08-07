@@ -1,6 +1,10 @@
 const router = require('express').Router();
-const pdfmake = require('pdfmake'); // ← IMPORTANTE: minúscula
+const PdfPrinter = require('pdfmake'); // ← Importante: usar PdfPrinter
 const ReporteHelper = require('../models/ReporteHelper');
+
+// ===== Crear instancia del printer (sin fuentes externas) =====
+// PdfPrinter usará las fuentes predeterminadas
+const printer = new PdfPrinter({});
 
 function auth(req, res, next) {
   if (!req.session.user) return res.redirect('/login');
@@ -27,7 +31,6 @@ router.get('/pdf', auth, async (req, res) => {
       pageSize: 'A4',
       pageMargins: [40, 60, 40, 60],
       defaultStyle: {
-        font: 'Roboto',
         fontSize: 10,
         color: '#e0e0e0'
       },
@@ -140,8 +143,8 @@ router.get('/pdf', auth, async (req, res) => {
       }
     };
 
-    // ===== Generar PDF =====
-    const pdfDoc = pdfmake.createPdf(docDefinition);
+    // ===== Generar PDF usando el printer =====
+    const pdfDoc = printer.createPdf(docDefinition);
     const pdfBuffer = await new Promise((resolve, reject) => {
       pdfDoc.getBuffer((err, buffer) => {
         if (err) reject(err);
