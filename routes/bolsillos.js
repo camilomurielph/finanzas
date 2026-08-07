@@ -46,18 +46,6 @@ router.post('/', auth, (req, res) => {
   }
 });
 
-// ===== Editar nombre del bolsillo =====
-router.put('/:id', auth, (req, res) => {
-  const { nombre } = req.body;
-  if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
-  try {
-    Bolsillo.updateNombre(req.params.id, req.session.user.id, nombre);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ===== Añadir dinero al bolsillo (solo si NO tiene sub-bolsillos) =====
 router.post('/:id/ingreso', auth, (req, res) => {
   const { monto, descripcion } = req.body;
@@ -68,7 +56,6 @@ router.post('/:id/ingreso', auth, (req, res) => {
     const bolsillo = Bolsillo.findById(req.params.id, req.session.user.id);
     if (!bolsillo) return res.status(404).json({ error: 'Bolsillo no encontrado' });
 
-    // Verificar si tiene sub-bolsillos
     if (SubBolsillo.hasSubBolsillos(bolsillo.id)) {
       return res.status(400).json({ error: 'Este bolsillo tiene categorías. Usa las categorías para gestionar el dinero.' });
     }
@@ -118,7 +105,7 @@ router.delete('/:id', auth, (req, res) => {
   }
 });
 
-// ===== Actualizar orden (drag & drop) =====
+// ===== Actualizar orden (drag & drop) - DEBE IR ANTES DE PUT /:id =====
 router.put('/orden', auth, (req, res) => {
   const { ordenes } = req.body;
   if (!ordenes || !Array.isArray(ordenes)) {
@@ -129,6 +116,18 @@ router.put('/orden', auth, (req, res) => {
     ordenes.forEach(item => {
       Bolsillo.updateOrden(item.id, usuario_id, item.orden);
     });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== Editar nombre del bolsillo =====
+router.put('/:id', auth, (req, res) => {
+  const { nombre } = req.body;
+  if (!nombre) return res.status(400).json({ error: 'Nombre requerido' });
+  try {
+    Bolsillo.updateNombre(req.params.id, req.session.user.id, nombre);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -189,13 +188,10 @@ router.delete('/sub/:id', auth, (req, res) => {
     // Transferir saldo al bolsillo padre
     if (sub.saldo > 0) {
       Bolsillo.updateSaldo(sub.bolsillo_id, req.session.user.id, sub.saldo);
-      // Registrar movimiento en el padre
       Movimiento.create(sub.bolsillo_id, null, 'ingreso', sub.saldo, `Transferencia desde categoría "${sub.nombre}"`);
     }
 
-    // Eliminar movimientos del sub-bolsillo
     Movimiento.deleteAllBySubBolsillo(sub.id);
-    // Eliminar sub-bolsillo
     SubBolsillo.delete(sub.id, sub.bolsillo_id);
 
     res.json({ success: true });
@@ -215,11 +211,8 @@ router.post('/sub/:id/ingreso', auth, (req, res) => {
     if (!sub) return res.status(404).json({ error: 'Sub-bolsillo no encontrado' });
 
     const montoNum = parseFloat(monto);
-    // Actualizar saldo del sub-bolsillo
     SubBolsillo.updateSaldo(sub.id, sub.bolsillo_id, montoNum);
-    // Registrar movimiento en el sub-bolsillo
     Movimiento.create(null, sub.id, 'ingreso', montoNum, descripcion || null);
-    // Actualizar saldo del bolsillo padre
     Bolsillo.updateSaldo(sub.bolsillo_id, req.session.user.id, montoNum);
 
     res.json({ success: true });
@@ -242,11 +235,8 @@ router.post('/sub/:id/egreso', auth, (req, res) => {
     if (sub.saldo < montoNum) {
       return res.status(400).json({ error: 'Saldo insuficiente en esta categoría' });
     }
-    // Actualizar saldo del sub-bolsillo
     SubBolsillo.updateSaldo(sub.id, sub.bolsillo_id, -montoNum);
-    // Registrar movimiento en el sub-bolsillo
     Movimiento.create(null, sub.id, 'egreso', montoNum, descripcion || null);
-    // Actualizar saldo del bolsillo padre
     Bolsillo.updateSaldo(sub.bolsillo_id, req.session.user.id, -montoNum);
 
     res.json({ success: true });
@@ -268,7 +258,7 @@ router.get('/sub/:id/movimientos', auth, (req, res) => {
 });
 
 // ============================================================
-// ===== VISTA DETALLE DE BOLSILLO (con soporte para sub-bolsillos) =====
+// ===== VISTA DETALLE DE BOLSILLO (DEBE IR AL FINAL) =====
 // ============================================================
 router.get('/:id', auth, (req, res) => {
   const bolsillo = Bolsillo.findById(req.params.id, req.session.user.id);
@@ -279,14 +269,10 @@ router.get('/:id', auth, (req, res) => {
   let movimientos = [];
 
   if (tieneSub) {
-    // Obtener sub-bolsillos
     subBolsillos = SubBolsillo.findAllByBolsillo(bolsillo.id);
-    // Obtener movimientos del bolsillo (incluye los de sub-bolsillos)
     movimientos = Movimiento.findAllByBolsillo(bolsillo.id);
-    // Calcular saldo total del bolsillo como suma de sub-bolsillos
     bolsillo.saldo = SubBolsillo.getTotalSaldo(bolsillo.id);
   } else {
-    // Movimientos directos del bolsillo
     movimientos = Movimiento.findAllByBolsillo(bolsillo.id);
   }
 
