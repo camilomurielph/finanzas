@@ -2,7 +2,7 @@ const router = require('express').Router();
 const DashboardHelper = require('../models/DashboardHelper');
 
 function auth(req, res, next) {
-  if (!req.session.user) return res.redirect('/login');
+  if (!req.session.user) return res.redirect('/login'); // ← Redirige a /login
   next();
 }
 
