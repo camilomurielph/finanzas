@@ -4,9 +4,7 @@
   <div class="detalle-header">
     <a href="/deudas" class="btn-back">← Volver a deudas</a>
     <h2><%= deuda.nombre %></h2>
-    <% if (deuda.archivada === 0) { %>
-      <button class="btn-eliminar-deuda" data-id="<%= deuda.id %>" style="margin-left:auto;">🗑️</button>
-    <% } %>
+    <!-- ELIMINADO: botón de eliminar del header -->
   </div>
 
   <div class="deuda-resumen">
@@ -44,6 +42,13 @@
       <% if (deuda.activa === 0) { %>
         <button class="btn-secondary" id="btn-archivar">📁 Archivar</button>
       <% } %>
+      <!-- NUEVO: botón Eliminar (siempre visible, incluso si está archivada) -->
+      <button class="btn-danger btn-eliminar-deuda" data-id="<%= deuda.id %>">🗑️ Eliminar</button>
+    </div>
+  <% } else { %>
+    <!-- Si está archivada, solo mostrar el botón Eliminar -->
+    <div class="deuda-acciones">
+      <button class="btn-danger btn-eliminar-deuda" data-id="<%= deuda.id %>">🗑️ Eliminar</button>
     </div>
   <% } %>
 
