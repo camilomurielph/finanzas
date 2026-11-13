@@ -1,54 +1,58 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const dbPath = path.join(__dirname, '..', 'finanzas.db');
-const db = new Database(dbPath);
-
-// Enable WAL mode for better concurrency
-db.pragma('journal_mode = WAL');
+const db = new Database(path.join(__dirname, '../database/finanzas.db'));
 db.pragma('foreign_keys = ON');
 
-// Create tables
 db.exec(`
   CREATE TABLE IF NOT EXISTS usuarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    created_at TEXT DEFAULT (datetime('now'))
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
-  CREATE TABLE IF NOT EXISTS categorias (
+  CREATE TABLE IF NOT EXISTS tipos_gasto (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER NOT NULL,
     nombre TEXT NOT NULL,
-    color TEXT DEFAULT '#6366f1',
-    icono TEXT DEFAULT 'tag',
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS gastos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER NOT NULL,
-    categoria_id INTEGER,
-    descripcion TEXT NOT NULL,
-    monto REAL NOT NULL,
-    fecha TEXT NOT NULL,
-    created_at TEXT DEFAULT (datetime('now')),
+    tipo_gasto_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    fecha DATE NOT NULL,
+    valor_total REAL NOT NULL,
+    pagado BOOLEAN DEFAULT 0,
+    archivado BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
-    FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL
+    FOREIGN KEY (tipo_gasto_id) REFERENCES tipos_gasto(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS cuotas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    gasto_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    valor REAL NOT NULL,
+    pagado BOOLEAN DEFAULT 0,
+    fecha_pago DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (gasto_id) REFERENCES gastos(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS suscripciones (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER NOT NULL,
     nombre TEXT NOT NULL,
-    monto REAL NOT NULL,
-    dia_cobro INTEGER NOT NULL CHECK(dia_cobro BETWEEN 1 AND 31),
-    frecuencia TEXT DEFAULT 'mensual',
-    mes_cobro INTEGER,
-    activa INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT (datetime('now')),
+    valor REAL NOT NULL,
+    dia_pago INTEGER NOT NULL CHECK (dia_pago >= 1 AND dia_pago <= 31),
+    frecuencia TEXT NOT NULL DEFAULT 'mensual',
+    mes_cobro INTEGER CHECK (mes_cobro IS NULL OR (mes_cobro >= 1 AND mes_cobro <= 12)),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
 
@@ -56,107 +60,207 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER NOT NULL,
     nombre TEXT NOT NULL,
-    saldo REAL DEFAULT 0,
-    meta REAL DEFAULT 0,
-    color TEXT DEFAULT '#6366f1',
-    created_at TEXT DEFAULT (datetime('now')),
+    saldo REAL NOT NULL DEFAULT 0,
+    orden INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
 
-  CREATE TABLE IF NOT EXISTS bolsillo_movimientos (
+  CREATE TABLE IF NOT EXISTS sub_bolsillos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bolsillo_id INTEGER NOT NULL,
-    tipo TEXT NOT NULL CHECK(tipo IN ('deposito', 'retiro')),
-    monto REAL NOT NULL,
-    descripcion TEXT DEFAULT '',
-    fecha TEXT DEFAULT (datetime('now')),
+    nombre TEXT NOT NULL,
+    saldo REAL NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (bolsillo_id) REFERENCES bolsillos(id) ON DELETE CASCADE
   );
 
+  CREATE TABLE IF NOT EXISTS movimientos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bolsillo_id INTEGER,
+    sub_bolsillo_id INTEGER,
+    tipo TEXT NOT NULL CHECK (tipo IN ('ingreso', 'egreso')),
+    monto REAL NOT NULL,
+    descripcion TEXT,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (bolsillo_id) REFERENCES bolsillos(id) ON DELETE CASCADE,
+    FOREIGN KEY (sub_bolsillo_id) REFERENCES sub_bolsillos(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS simulacros (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id INTEGER NOT NULL,
+    salario_inicial REAL NOT NULL,
+    saldo_disponible REAL NOT NULL,
+    ahorro REAL NOT NULL DEFAULT 0,
+    activo BOOLEAN DEFAULT 1,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS gastos_simulacro (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    simulacro_id INTEGER NOT NULL,
+    nombre TEXT NOT NULL,
+    valor REAL NOT NULL,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (simulacro_id) REFERENCES simulacros(id) ON DELETE CASCADE
+  );
+
+  -- TABLAS DE DEUDAS (ACTUALIZADAS)
   CREATE TABLE IF NOT EXISTS deudas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER NOT NULL,
-    acreedor TEXT NOT NULL,
-    descripcion TEXT DEFAULT '',
-    monto_total REAL NOT NULL,
-    monto_pagado REAL DEFAULT 0,
-    pago_minimo REAL DEFAULT 0,
-    cuotas_totales INTEGER DEFAULT 1,
-    cuota_actual INTEGER DEFAULT 1,
-    fecha_limite TEXT DEFAULT '',
-    estado TEXT DEFAULT 'activa' CHECK(estado IN ('activa', 'pagada')),
-    created_at TEXT DEFAULT (datetime('now')),
+    nombre TEXT NOT NULL,
+    valor_total REAL NOT NULL,
+    pagado_total REAL NOT NULL DEFAULT 0,
+    cuota_minima REAL NOT NULL,
+    numero_cuotas INTEGER NOT NULL CHECK (numero_cuotas >= 1),
+    cuota_actual INTEGER NOT NULL DEFAULT 1,
+    dia_pago INTEGER NOT NULL CHECK (dia_pago >= 1 AND dia_pago <= 31),
+    activa BOOLEAN DEFAULT 1,
+    archivada BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
 
-  CREATE TABLE IF NOT EXISTS deuda_abonos (
+  CREATE TABLE IF NOT EXISTS pagos_deuda (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     deuda_id INTEGER NOT NULL,
     monto REAL NOT NULL,
-    nota TEXT DEFAULT '',
-    fecha TEXT DEFAULT (datetime('now')),
+    tipo TEXT NOT NULL CHECK (tipo IN ('minimo', 'abono', 'total')),
+    fecha_pago DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (deuda_id) REFERENCES deudas(id) ON DELETE CASCADE
-  );
-
-  CREATE TABLE IF NOT EXISTS salario_config (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    usuario_id INTEGER NOT NULL UNIQUE,
-    salario_mensual REAL DEFAULT 0,
-    created_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
-  );
-
-  CREATE TABLE IF NOT EXISTS salario_distribuciones (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    usuario_id INTEGER NOT NULL,
-    nombre TEXT NOT NULL,
-    porcentaje REAL NOT NULL,
-    color TEXT DEFAULT '#6366f1',
-    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
 `);
 
-// Migración segura para bases de datos existentes en suscripciones
-const colsSuscripciones = db.prepare("PRAGMA table_info(suscripciones)").all();
-if (!colsSuscripciones.some(col => col.name === 'frecuencia')) {
-  db.exec("ALTER TABLE suscripciones ADD COLUMN frecuencia TEXT DEFAULT 'mensual'");
-}
-if (!colsSuscripciones.some(col => col.name === 'mes_cobro')) {
-  db.exec("ALTER TABLE suscripciones ADD COLUMN mes_cobro INTEGER");
-}
+// ================================================
+// MIGRACIONES
+// ================================================
 
-function seedDefaultCategories(usuarioId) {
-  const count = db.prepare('SELECT COUNT(*) as c FROM categorias WHERE usuario_id = ?').get(usuarioId).c;
-  if (count === 0) {
-    const insert = db.prepare('INSERT INTO categorias (usuario_id, nombre, color, icono) VALUES (?, ?, ?, ?)');
-    const defaults = [
-      ['Comida', '#f59e0b', 'utensils'],
-      ['Transporte', '#3b82f6', 'car'],
-      ['Entretenimiento', '#ec4899', 'gamepad'],
-      ['Servicios', '#10b981', 'zap'],
-      ['Salud', '#ef4444', 'heart'],
-      ['Otros', '#8b5cf6', 'tag']
-    ];
-    for (const [nombre, color, icono] of defaults) {
-      insert.run(usuarioId, nombre, color, icono);
-    }
+// 1. Migración para gastos (columna pagado)
+try {
+  const columnInfo = db.prepare("PRAGMA table_info(gastos)").all();
+  const hasPagado = columnInfo.some(col => col.name === 'pagado');
+  if (!hasPagado) {
+    db.exec('ALTER TABLE gastos ADD COLUMN pagado BOOLEAN DEFAULT 0;');
+    console.log('Migración: columna pagado agregada a gastos');
   }
+} catch (err) {
+  console.error('Error en migración de gastos:', err.message);
 }
 
-function seedDefaultSalario(usuarioId) {
-  const existing = db.prepare('SELECT id FROM salario_config WHERE usuario_id = ?').get(usuarioId);
-  if (!existing) {
-    db.prepare('INSERT INTO salario_config (usuario_id, salario_mensual) VALUES (?, 0)').run(usuarioId);
-    const insert = db.prepare('INSERT INTO salario_distribuciones (usuario_id, nombre, porcentaje, color) VALUES (?, ?, ?, ?)');
-    const defaults = [
-      ['Gastos Fijos / Necesidades', 50, '#6366f1'],
-      ['Ahorro e Inversión', 30, '#10b981'],
-      ['Entretenimiento / Personal', 20, '#f59e0b']
-    ];
-    for (const [nombre, porcentaje, color] of defaults) {
-      insert.run(usuarioId, nombre, porcentaje, color);
+// 2. Migración para movimientos (bolsillo_id permitir NULL)
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(movimientos)").all();
+  const bolsilloCol = tableInfo.find(col => col.name === 'bolsillo_id');
+  
+  if (bolsilloCol && bolsilloCol.notnull === 1) {
+    const hasSubCol = tableInfo.some(col => col.name === 'sub_bolsillo_id');
+    
+    if (!hasSubCol) {
+      db.exec('ALTER TABLE movimientos ADD COLUMN sub_bolsillo_id INTEGER;');
     }
+    
+    db.exec(`
+      CREATE TABLE movimientos_temp (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        bolsillo_id INTEGER,
+        sub_bolsillo_id INTEGER,
+        tipo TEXT NOT NULL CHECK (tipo IN ('ingreso', 'egreso')),
+        monto REAL NOT NULL,
+        descripcion TEXT,
+        fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (bolsillo_id) REFERENCES bolsillos(id) ON DELETE CASCADE,
+        FOREIGN KEY (sub_bolsillo_id) REFERENCES sub_bolsillos(id) ON DELETE CASCADE
+      );
+
+      INSERT INTO movimientos_temp (id, bolsillo_id, sub_bolsillo_id, tipo, monto, descripcion, fecha)
+      SELECT id, bolsillo_id, NULL, tipo, monto, descripcion, fecha FROM movimientos;
+
+      DROP TABLE movimientos;
+      ALTER TABLE movimientos_temp RENAME TO movimientos;
+
+      CREATE INDEX idx_movimientos_bolsillo ON movimientos(bolsillo_id);
+      CREATE INDEX idx_movimientos_sub ON movimientos(sub_bolsillo_id);
+    `);
+    console.log('Migración: movimientos.bolsillo_id ahora permite NULL');
   }
+} catch (err) {
+  console.error('Error en migración de movimientos:', err.message);
 }
 
-module.exports = { db, seedDefaultCategories, seedDefaultSalario };
+// 3. Migración para deudas: convertir fecha_pago a dia_pago
+try {
+  const deudaInfo = db.prepare("PRAGMA table_info(deudas)").all();
+  const hasFechaPago = deudaInfo.some(col => col.name === 'fecha_pago');
+  const hasDiaPago = deudaInfo.some(col => col.name === 'dia_pago');
+  
+  // Si existe fecha_pago pero no dia_pago, migrar
+  if (hasFechaPago && !hasDiaPago) {
+    // Agregar columna dia_pago
+    db.exec('ALTER TABLE deudas ADD COLUMN dia_pago INTEGER CHECK (dia_pago >= 1 AND dia_pago <= 31);');
+    
+    // Extraer el día de fecha_pago (formato YYYY-MM-DD)
+    const deudas = db.prepare('SELECT id, fecha_pago FROM deudas WHERE fecha_pago IS NOT NULL').all();
+    const updateStmt = db.prepare('UPDATE deudas SET dia_pago = ? WHERE id = ?');
+    deudas.forEach(d => {
+      if (d.fecha_pago) {
+        const day = new Date(d.fecha_pago).getDate();
+        updateStmt.run(day, d.id);
+      }
+    });
+    
+    // Eliminar columna fecha_pago
+    // SQLite no permite DROP COLUMN directamente, así que recreamos la tabla
+    db.exec(`
+      CREATE TABLE deudas_temp (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        usuario_id INTEGER NOT NULL,
+        nombre TEXT NOT NULL,
+        valor_total REAL NOT NULL,
+        pagado_total REAL NOT NULL DEFAULT 0,
+        cuota_minima REAL NOT NULL,
+        numero_cuotas INTEGER NOT NULL CHECK (numero_cuotas >= 1),
+        cuota_actual INTEGER NOT NULL DEFAULT 1,
+        dia_pago INTEGER NOT NULL CHECK (dia_pago >= 1 AND dia_pago <= 31),
+        activa BOOLEAN DEFAULT 1,
+        archivada BOOLEAN DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+      );
+
+      INSERT INTO deudas_temp (id, usuario_id, nombre, valor_total, pagado_total, cuota_minima, numero_cuotas, cuota_actual, dia_pago, activa, archivada, created_at)
+      SELECT id, usuario_id, nombre, valor_total, pagado_total, cuota_minima, numero_cuotas, cuota_actual, dia_pago, activa, 0, created_at FROM deudas;
+
+      DROP TABLE deudas;
+      ALTER TABLE deudas_temp RENAME TO deudas;
+    `);
+    console.log('Migración: deudas actualizada con dia_pago y archivada');
+  }
+  
+  // Si no existe archivada, agregarla
+  if (!deudaInfo.some(col => col.name === 'archivada')) {
+    db.exec('ALTER TABLE deudas ADD COLUMN archivada BOOLEAN DEFAULT 0;');
+    console.log('Migración: columna archivada agregada a deudas');
+  }
+} catch (err) {
+  console.error('Error en migración de deudas:', err.message);
+}
+
+// 4. Migración para suscripciones: agregar frecuencia y mes_cobro
+try {
+  const subInfo = db.prepare("PRAGMA table_info(suscripciones)").all();
+  if (!subInfo.some(col => col.name === 'frecuencia')) {
+    db.exec("ALTER TABLE suscripciones ADD COLUMN frecuencia TEXT NOT NULL DEFAULT 'mensual';");
+    console.log('Migración: columna frecuencia agregada a suscripciones');
+  }
+  if (!subInfo.some(col => col.name === 'mes_cobro')) {
+    db.exec('ALTER TABLE suscripciones ADD COLUMN mes_cobro INTEGER;');
+    console.log('Migración: columna mes_cobro agregada a suscripciones');
+  }
+} catch (err) {
+  console.error('Error en migración de suscripciones:', err.message);
+}
+
+module.exports = db;
