@@ -1,68 +1,94 @@
-const router = require('express').Router();
-const Subscription = require('../models/Subscription');
+const express = require('express');
+const { db } = require('../database/db');
+const router = express.Router();
 
-// Middleware de autenticación
-function auth(req, res, next) {
-  if (!req.session.user) return res.redirect('/login');
-  next();
-}
+const MESES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
 
-// ===== Página principal de suscripciones =====
-router.get('/', auth, (req, res) => {
-  const suscripciones = Subscription.findAllByUser(req.session.user.id);
-  const totalMensual = Subscription.getTotalMensual(req.session.user.id);
-  res.render('subscriptions/index', {
+router.get('/', (req, res) => {
+  const uid = req.session.userId;
+  const suscripciones = db.prepare('SELECT * FROM suscripciones WHERE usuario_id = ? ORDER BY activa DESC, frecuencia ASC, mes_cobro ASC, dia_cobro ASC').all(uid);
+  
+  const activas = suscripciones.filter(s => s.activa === 1);
+  
+  // Equivalente mensual: las mensuales suman 100%, las anuales se prorratean entre 12 meses
+  const totalMensual = activas.reduce((acc, s) => {
+    return acc + (s.frecuencia === 'anual' ? s.monto / 12 : s.monto);
+  }, 0);
+  
+  const totalAnual = activas.reduce((acc, s) => {
+    return acc + (s.frecuencia === 'anual' ? s.monto : s.monto * 12);
+  }, 0);
+
+  res.render('suscripciones/index', {
     title: 'Suscripciones',
+    active: 'suscripciones',
     suscripciones,
     totalMensual,
-    active: 'suscripciones'
+    totalAnual,
+    meses: MESES
   });
 });
 
-// ===== API: Obtener una suscripción para editar =====
-router.get('/api/:id', auth, (req, res) => {
-  const subscription = Subscription.findById(req.params.id, req.session.user.id);
-  if (!subscription) return res.status(404).json({ error: 'No encontrado' });
-  res.json(subscription);
+router.post('/', (req, res) => {
+  const uid = req.session.userId;
+  const { nombre, monto, dia_cobro, frecuencia, mes_cobro } = req.body;
+  const montoNum = parseFloat(monto);
+  const diaNum = parseInt(dia_cobro);
+  const freq = frecuencia === 'anual' ? 'anual' : 'mensual';
+  const mesNum = freq === 'anual' ? parseInt(mes_cobro) : null;
+
+  if (!nombre || isNaN(montoNum) || montoNum <= 0 || isNaN(diaNum) || diaNum < 1 || diaNum > 31) {
+    return res.redirect('/suscripciones?error=Datos inválidos');
+  }
+
+  if (freq === 'anual' && (isNaN(mesNum) || mesNum < 1 || mesNum > 12)) {
+    return res.redirect('/suscripciones?error=Debe seleccionar un mes válido para suscripciones anuales');
+  }
+
+  db.prepare('INSERT INTO suscripciones (usuario_id, nombre, monto, dia_cobro, frecuencia, mes_cobro) VALUES (?, ?, ?, ?, ?, ?)').run(
+    uid, nombre.trim(), montoNum, diaNum, freq, mesNum
+  );
+  res.redirect('/suscripciones?success=Suscripción creada');
 });
 
-// ===== Crear nueva suscripción =====
-router.post('/agregar', auth, (req, res) => {
-  const { nombre, valor, dia_pago } = req.body;
-  if (!nombre || !valor || !dia_pago) {
-    return res.status(400).json({ error: 'Faltan datos' });
+router.post('/:id/edit', (req, res) => {
+  const uid = req.session.userId;
+  const { nombre, monto, dia_cobro, frecuencia, mes_cobro } = req.body;
+  const montoNum = parseFloat(monto);
+  const diaNum = parseInt(dia_cobro);
+  const freq = frecuencia === 'anual' ? 'anual' : 'mensual';
+  const mesNum = freq === 'anual' ? parseInt(mes_cobro) : null;
+
+  if (!nombre || isNaN(montoNum) || montoNum <= 0 || isNaN(diaNum) || diaNum < 1 || diaNum > 31) {
+    return res.redirect('/suscripciones?error=Datos inválidos');
   }
-  try {
-    const id = Subscription.create(req.session.user.id, nombre, parseFloat(valor), parseInt(dia_pago));
-    res.json({ success: true, id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+  if (freq === 'anual' && (isNaN(mesNum) || mesNum < 1 || mesNum > 12)) {
+    return res.redirect('/suscripciones?error=Debe seleccionar un mes válido');
   }
+
+  db.prepare('UPDATE suscripciones SET nombre = ?, monto = ?, dia_cobro = ?, frecuencia = ?, mes_cobro = ? WHERE id = ? AND usuario_id = ?').run(
+    nombre.trim(), montoNum, diaNum, freq, mesNum, req.params.id, uid
+  );
+  res.redirect('/suscripciones?success=Suscripción actualizada');
 });
 
-// ===== Editar suscripción =====
-router.put('/editar/:id', auth, (req, res) => {
-  const { nombre, valor, dia_pago } = req.body;
-  try {
-    Subscription.update(req.params.id, req.session.user.id, {
-      nombre,
-      valor: parseFloat(valor),
-      dia_pago: parseInt(dia_pago)
-    });
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+router.post('/:id/toggle', (req, res) => {
+  const uid = req.session.userId;
+  const sub = db.prepare('SELECT * FROM suscripciones WHERE id = ? AND usuario_id = ?').get(req.params.id, uid);
+  if (sub) {
+    db.prepare('UPDATE suscripciones SET activa = ? WHERE id = ?').run(sub.activa === 1 ? 0 : 1, sub.id);
   }
+  res.redirect('/suscripciones');
 });
 
-// ===== Borrar suscripción =====
-router.delete('/borrar/:id', auth, (req, res) => {
-  try {
-    Subscription.delete(req.params.id, req.session.user.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+router.post('/:id/delete', (req, res) => {
+  const uid = req.session.userId;
+  db.prepare('DELETE FROM suscripciones WHERE id = ? AND usuario_id = ?').run(req.params.id, uid);
+  res.redirect('/suscripciones?success=Suscripción eliminada');
 });
 
 module.exports = router;
