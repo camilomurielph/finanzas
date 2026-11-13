@@ -50,8 +50,6 @@ db.exec(`
     nombre TEXT NOT NULL,
     valor REAL NOT NULL,
     dia_pago INTEGER NOT NULL CHECK (dia_pago >= 1 AND dia_pago <= 31),
-    frecuencia TEXT NOT NULL DEFAULT 'mensual',
-    mes_cobro INTEGER CHECK (mes_cobro IS NULL OR (mes_cobro >= 1 AND mes_cobro <= 12)),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
@@ -246,21 +244,6 @@ try {
   }
 } catch (err) {
   console.error('Error en migración de deudas:', err.message);
-}
-
-// 4. Migración para suscripciones: agregar frecuencia y mes_cobro
-try {
-  const subInfo = db.prepare("PRAGMA table_info(suscripciones)").all();
-  if (!subInfo.some(col => col.name === 'frecuencia')) {
-    db.exec("ALTER TABLE suscripciones ADD COLUMN frecuencia TEXT NOT NULL DEFAULT 'mensual';");
-    console.log('Migración: columna frecuencia agregada a suscripciones');
-  }
-  if (!subInfo.some(col => col.name === 'mes_cobro')) {
-    db.exec('ALTER TABLE suscripciones ADD COLUMN mes_cobro INTEGER;');
-    console.log('Migración: columna mes_cobro agregada a suscripciones');
-  }
-} catch (err) {
-  console.error('Error en migración de suscripciones:', err.message);
 }
 
 module.exports = db;
