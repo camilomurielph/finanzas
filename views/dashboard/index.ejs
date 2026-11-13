@@ -1,281 +1,158 @@
-<%- include('../partials/header') %>
+<%- include('../partials/header', { title: 'Dashboard', active: 'dashboard' }) %>
 
-<div class="page-header">
-  <div>
-    <h1 class="page-title">Dashboard</h1>
-    <p class="page-subtitle">Resumen financiero de <%= new Date().toLocaleDateString('es-CO', { month: 'long', year: 'numeric' }) %></p>
-  </div>
-  <a href="/reporte/pdf" class="btn btn-primary" target="_blank">
-    📄 Generar PDF
-  </a>
-</div>
-
-<!-- Stats Cards -->
-<div class="stats-grid">
-  <div class="stat-card clickable-card" data-href="/gastos" style="--accent: #ef4444;">
-    <div class="stat-label">Total Gastos (Mes)</div>
-    <div class="stat-value" style="color: #f87171;">$<%= gastosMes.toLocaleString('es-CO') %></div>
-    <div class="stat-sub">En el mes actual</div>
-  </div>
-  <div class="stat-card clickable-card" data-href="/suscripciones" style="--accent: #ec4899;">
-    <div class="stat-label">Suscripciones</div>
-    <div class="stat-value" style="color: #f472b6;">$<%= totalSuscripciones.toLocaleString('es-CO') %></div>
-    <div class="stat-sub"><%= suscripciones.length %> activas (equiv. mensual)</div>
-  </div>
-  <div class="stat-card clickable-card" data-href="/bolsillos" style="--accent: #10b981;">
-    <div class="stat-label">Total Bolsillos</div>
-    <div class="stat-value" style="color: #34d399;">$<%= totalBolsillos.toLocaleString('es-CO') %></div>
-    <div class="stat-sub"><%= bolsillos.length %> bolsillos creados</div>
-  </div>
-  <div class="stat-card clickable-card" data-href="/deudas" style="--accent: #f59e0b;">
-    <div class="stat-label">Total Deudas</div>
-    <div class="stat-value" style="color: #fbbf24;">$<%= totalDeudas.toLocaleString('es-CO') %></div>
-    <div class="stat-sub"><%= deudas.length %> deudas activas</div>
-  </div>
-</div>
-
-<!-- Charts Row -->
-<div class="grid-2" style="margin-bottom: 1.5rem;">
-  <div class="card clickable-card" data-href="/gastos">
-    <div class="card-header">
-      <h3 class="card-title">Gastos por Categoría</h3>
-      <span class="badge badge-muted">Este mes</span>
+<!-- ===== TARJETAS DE RESUMEN ===== -->
+<div class="dashboard-grid">
+  <div class="stat-card gastos">
+    <div class="stat-icon">💰</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Gastos</div>
+      <div class="stat-value">$<%= data.totalGastos.toLocaleString() %></div>
+      <div class="stat-sub"><%= data.countGastos %> gastos</div>
     </div>
-    <% if (gastosPorCategoria.length === 0) { %>
-      <div class="empty-state">
-        <div class="empty-icon">📊</div>
-        <div class="empty-title">Sin gastos registrados</div>
-        <p>Registra gastos para ver la gráfica</p>
-      </div>
-    <% } else { %>
-      <div class="chart-wrapper">
-        <canvas id="chartCategorias"></canvas>
-      </div>
-    <% } %>
   </div>
-
-  <div class="card clickable-card" data-href="/bolsillos">
-    <div class="card-header">
-      <h3 class="card-title">Distribución de Bolsillos</h3>
-      <span class="badge badge-info">$<%= totalBolsillos.toLocaleString('es-CO') %></span>
+  <div class="stat-card suscripciones">
+    <div class="stat-icon">🔄</div>
+    <div class="stat-content">
+      <div class="stat-label">Suscripciones</div>
+      <div class="stat-value">$<%= data.totalSuscripciones.toLocaleString() %></div>
+      <div class="stat-sub"><%= data.countSuscripciones %> suscripciones</div>
     </div>
-    <% if (bolsillos.length === 0) { %>
-      <div class="empty-state">
-        <div class="empty-icon">💰</div>
-        <div class="empty-title">Sin bolsillos</div>
-        <p>Crea bolsillos para organizar tu ahorro</p>
-      </div>
-    <% } else { %>
-      <div class="chart-wrapper">
-        <canvas id="chartBolsillos"></canvas>
-      </div>
-    <% } %>
+  </div>
+  <div class="stat-card bolsillos">
+    <div class="stat-icon">🏦</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Bolsillos</div>
+      <div class="stat-value">$<%= data.totalBolsillos.toLocaleString() %></div>
+      <div class="stat-sub"><%= data.bolsillos.length %> bolsillos</div>
+    </div>
+  </div>
+  <div class="stat-card deudas">
+    <div class="stat-icon">💳</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Deudas</div>
+      <div class="stat-value">$<%= data.totalDeudas.toLocaleString() %></div>
+      <div class="stat-sub"><%= data.countDeudas %> deudas activas</div>
+    </div>
   </div>
 </div>
 
-<!-- Lists Row -->
-<div class="grid-2" style="margin-bottom: 1.5rem;">
+<!-- ===== GRÁFICOS ===== -->
+<div class="charts-row">
+  <div class="chart-card">
+    <h3>📊 Gastos por Categoría</h3>
+    <div class="chart-container">
+      <canvas id="gastosChart"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>🏦 Distribución de Bolsillos</h3>
+    <div class="chart-container">
+      <canvas id="bolsillosChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FILA INFERIOR ===== -->
+<div class="bottom-row">
   <!-- Últimos Gastos -->
-  <div class="card clickable-card" data-href="/gastos">
-    <div class="card-header">
-      <h3 class="card-title">Últimos Gastos</h3>
-      <a href="/gastos" class="btn btn-secondary btn-sm">Ver todos →</a>
-    </div>
-    <% if (ultimosGastos.length === 0) { %>
-      <div class="empty-state">
-        <div class="empty-title">No hay gastos aún</div>
-      </div>
+  <div class="list-card">
+    <h3>📋 Últimos Gastos</h3>
+    <% if (data.ultimosGastos.length === 0) { %>
+      <p class="empty">No hay gastos recientes</p>
     <% } else { %>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Descripción</th>
-              <th>Categoría</th>
-              <th>Monto</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% ultimosGastos.forEach(g => { %>
-              <tr>
-                <td>
-                  <div style="font-weight: 500;"><%= g.descripcion %></div>
-                  <div style="font-size: 0.72rem; color: var(--text-muted);"><%= g.fecha %></div>
-                </td>
-                <td>
-                  <span class="badge" style="background: <%= g.categoria_color || '#8b5cf6' %>22; color: <%= g.categoria_color || '#8b5cf6' %>;">
-                    <%= g.categoria_nombre || 'Sin categoría' %>
-                  </span>
-                </td>
-                <td style="font-weight: 600; color: #f87171;">-$<%= g.monto.toLocaleString('es-CO') %></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
+      <ul class="item-list">
+        <% data.ultimosGastos.forEach(g => { %>
+          <li>
+            <span class="item-name"><%= g.nombre %></span>
+            <span class="item-category"><%= g.categoria %></span>
+            <span class="item-amount negative">- $<%= g.valor_total.toLocaleString() %></span>
+          </li>
+        <% }) %>
+      </ul>
     <% } %>
+    <a href="/gastos" class="link-more">Ver todos →</a>
   </div>
 
   <!-- Deudas Activas -->
-  <div class="card clickable-card" data-href="/deudas">
-    <div class="card-header">
-      <h3 class="card-title">Deudas Activas</h3>
-      <a href="/deudas" class="btn btn-secondary btn-sm">Gestionar →</a>
-    </div>
-    <% if (deudas.length === 0) { %>
-      <div class="empty-state">
-        <div class="empty-icon">🎉</div>
-        <div class="empty-title">¡Sin deudas activas!</div>
-      </div>
+  <div class="list-card">
+    <h3>💳 Deudas Activas</h3>
+    <% if (data.deudasActivas.length === 0) { %>
+      <p class="empty">No hay deudas activas</p>
     <% } else { %>
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
-        <% deudas.forEach(d => { 
-          const pct = Math.min(100, Math.round((d.monto_pagado / d.monto_total) * 100));
-          const restante = d.monto_total - d.monto_pagado;
-        %>
-          <div style="padding: 0.85rem; background: var(--bg-input); border-radius: var(--radius-sm);">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;">
-              <span style="font-weight: 600;"><%= d.acreedor %></span>
-              <span style="font-size: 0.8rem; color: var(--warning);">Restante: $<%= restante.toLocaleString('es-CO') %></span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: <%= pct %>%; background: linear-gradient(90deg, #6366f1, #10b981);"></div>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 0.35rem; font-size: 0.72rem; color: var(--text-muted);">
-              <span>Cuota <%= d.cuota_actual %>/<%= d.cuotas_totales %></span>
-              <span><%= pct %>% pagado</span>
-            </div>
-          </div>
+      <ul class="item-list">
+        <% data.deudasActivas.forEach(d => { %>
+          <li>
+            <span class="item-name"><%= d.nombre %></span>
+            <span class="item-category">Cuota <%= d.cuota_actual %>/<%= d.numero_cuotas %></span>
+            <span class="item-amount negative">$<%= (d.valor_total - d.pagado_total).toLocaleString() %></span>
+          </li>
         <% }) %>
-      </div>
+      </ul>
     <% } %>
+    <a href="/deudas" class="link-more">Ver todas →</a>
+  </div>
+
+  <!-- Suscripciones -->
+  <div class="list-card">
+    <h3>🔄 Suscripciones</h3>
+    <% if (data.suscripciones.length === 0) { %>
+      <p class="empty">No hay suscripciones</p>
+    <% } else { %>
+      <ul class="item-list">
+        <% data.suscripciones.slice(0, 5).forEach(s => { %>
+          <li>
+            <span class="item-name"><%= s.nombre %></span>
+            <span class="item-category">Día <%= s.dia_pago %></span>
+            <span class="item-amount">$<%= s.valor.toLocaleString() %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+    <a href="/suscripciones" class="link-more">Ver todas →</a>
   </div>
 </div>
 
-<!-- Suscripciones & Salario -->
-<div class="grid-2">
-  <div class="card clickable-card" data-href="/suscripciones">
-    <div class="card-header">
-      <h3 class="card-title">Suscripciones Activas</h3>
-      <a href="/suscripciones" class="btn btn-secondary btn-sm">Ver todas →</a>
+<!-- ===== RESUMEN DE SALARIO ===== -->
+<% if (data.simulacro) { %>
+  <div class="salario-card">
+    <h3>💰 Simulador de Salario</h3>
+    <div class="salario-stats">
+      <div class="salario-item">
+        <span class="salario-label">Salario inicial</span>
+        <span class="salario-value">$<%= data.simulacro.salario_inicial.toLocaleString() %></span>
+      </div>
+      <div class="salario-item">
+        <span class="salario-label">Disponible</span>
+        <span class="salario-value disponible">$<%= data.simulacro.saldo_disponible.toLocaleString() %></span>
+      </div>
+      <div class="salario-item">
+        <span class="salario-label">Ahorro</span>
+        <span class="salario-value ahorro">$<%= data.simulacro.ahorro.toLocaleString() %></span>
+      </div>
     </div>
-    <% if (suscripciones.length === 0) { %>
-      <div class="empty-state">
-        <div class="empty-title">Sin suscripciones</div>
-      </div>
-    <% } else { %>
-      <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-        <% suscripciones.slice(0, 5).forEach(s => { %>
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: var(--bg-input); border-radius: var(--radius-sm);">
-            <div>
-              <div style="font-weight: 500;"><%= s.nombre %></div>
-              <div style="font-size: 0.72rem; color: var(--text-muted);">
-                <% if (s.frecuencia === 'anual' && s.mes_cobro) { %>
-                  Anual · Día <%= s.dia_cobro %> de <%= meses[s.mes_cobro - 1] %>
-                <% } else { %>
-                  Mensual · Día <%= s.dia_cobro %> de cada mes
-                <% } %>
-              </div>
-            </div>
-            <span style="font-weight: 600; color: #f472b6;">$<%= s.monto.toLocaleString('es-CO') %></span>
-          </div>
-        <% }) %>
-      </div>
-    <% } %>
+    <a href="/salario" class="link-more">Ver simulador →</a>
   </div>
+<% } %>
 
-  <div class="card clickable-card" data-href="/salario">
-    <div class="card-header">
-      <h3 class="card-title">Simulador de Salario</h3>
-      <a href="/salario" class="btn btn-secondary btn-sm">Configurar →</a>
-    </div>
-    <% if (salarioConfig.salario_mensual <= 0) { %>
-      <div class="empty-state">
-        <div class="empty-title">Configura tu salario</div>
-        <p>Define cómo distribuir tus ingresos</p>
-      </div>
-    <% } else { %>
-      <div style="margin-bottom: 1rem;">
-        <div style="font-size: 0.78rem; color: var(--text-muted);">Salario Mensual Base</div>
-        <div style="font-size: 1.5rem; font-weight: 700; color: #818cf8;">$<%= salarioConfig.salario_mensual.toLocaleString('es-CO') %></div>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 0.65rem;">
-        <% salarioDistribuciones.forEach(d => { %>
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0.85rem; background: var(--bg-input); border-radius: var(--radius-sm);">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="width: 10px; height: 10px; border-radius: 50%; background: <%= d.color %>; display: inline-block;"></span>
-              <span style="font-weight: 500;"><%= d.nombre %> (<%= d.porcentaje %>%)</span>
-            </div>
-            <span style="font-weight: 600; color: var(--success);">$<%= Math.round(salarioConfig.salario_mensual * d.porcentaje / 100).toLocaleString('es-CO') %></span>
-          </div>
-        <% }) %>
-      </div>
-    <% } %>
-  </div>
+<!-- ===== ACCESOS RÁPIDOS ===== -->
+<div class="quick-actions">
+  <a href="/gastos" class="quick-btn">💰 Gastos</a>
+  <a href="/suscripciones" class="quick-btn">🔄 Suscripciones</a>
+  <a href="/bolsillos" class="quick-btn">🏦 Bolsillos</a>
+  <a href="/deudas" class="quick-btn">💳 Deudas</a>
+  <a href="/salario" class="quick-btn">💰 Salario</a>
+  <a href="/reporte" class="quick-btn">📊 Reporte</a>
 </div>
 
-<script>
-// Navegación en tarjetas clickeables del Dashboard
-document.querySelectorAll('.clickable-card[data-href]').forEach(card => {
-  card.addEventListener('click', (e) => {
-    // No interferir si se hizo clic directamente en un enlace o botón interno, o si se está seleccionando texto
-    if (e.target.closest('a, button') || window.getSelection().toString().length > 0) return;
-    window.location.href = card.dataset.href;
-  });
-});
-
-<% if (gastosPorCategoria.length > 0) { %>
-new Chart(document.getElementById('chartCategorias'), {
-  type: 'doughnut',
-  data: {
-    labels: <%- JSON.stringify(gastosPorCategoria.map(c => c.nombre)) %>,
-    datasets: [{
-      data: <%- JSON.stringify(gastosPorCategoria.map(c => c.total)) %>,
-      backgroundColor: <%- JSON.stringify(gastosPorCategoria.map(c => c.color)) %>,
-      borderWidth: 0,
-      hoverOffset: 6
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'right',
-        labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 }, padding: 14 }
-      }
-    },
-    cutout: '65%'
-  }
-});
-<% } %>
-
-<% if (bolsillos.length > 0) { %>
-new Chart(document.getElementById('chartBolsillos'), {
-  type: 'bar',
-  data: {
-    labels: <%- JSON.stringify(bolsillos.map(b => b.nombre)) %>,
-    datasets: [{
-      label: 'Saldo ($)',
-      data: <%- JSON.stringify(bolsillos.map(b => b.saldo)) %>,
-      backgroundColor: <%- JSON.stringify(bolsillos.map(b => b.color)) %>,
-      borderRadius: 8,
-      borderSkipped: false
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false }
-    },
-    scales: {
-      x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
-      y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-    }
-  }
-});
-<% } %>
+<!-- ===== DATOS PARA GRÁFICOS (pasados como JSON) ===== -->
+<script id="gastos-data" type="application/json">
+  <%- JSON.stringify(data.gastosPorCategoria) %>
+</script>
+<script id="bolsillos-data" type="application/json">
+  <%- JSON.stringify(data.bolsillos) %>
 </script>
 
 <%- include('../partials/footer') %>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/js/dashboard.js"></script>
