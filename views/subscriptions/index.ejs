@@ -1,6 +1,34 @@
 <%- include('../partials/header', { title: 'Suscripciones', active: 'suscripciones' }) %>
 
-<% const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']; %>
+<%
+  const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const hoy = new Date();
+  const mesActual = hoy.getMonth() + 1; // 1 - 12
+  const diaActual = hoy.getDate();       // 1 - 31
+
+  // 1. Mensuales: ordenadas del día más bajo al más alto (1 -> 31)
+  const mensuales = suscripciones
+    .filter(s => s.frecuencia !== 'anual')
+    .sort((a, b) => a.dia_pago - b.dia_pago);
+
+  // 2. Anuales: ordenadas de la más próxima a la más lejana respecto a hoy
+  const anuales = suscripciones
+    .filter(s => s.frecuencia === 'anual')
+    .sort((a, b) => {
+      const mesA = a.mes_pago || 1;
+      const mesB = b.mes_pago || 1;
+
+      // Distancia en meses (0 = este mes, 1 = próximo mes, ..., 11 = hace un mes)
+      let distA = (mesA - mesActual + 12) % 12;
+      if (distA === 0 && a.dia_pago < diaActual) distA = 12; // Ya pasó este mes -> va al final del ciclo
+
+      let distB = (mesB - mesActual + 12) % 12;
+      if (distB === 0 && b.dia_pago < diaActual) distB = 12;
+
+      if (distA !== distB) return distA - distB;
+      return a.dia_pago - b.dia_pago;
+    });
+%>
 
 <div class="toolbar">
   <h1>Mis suscripciones</h1>
@@ -49,36 +77,71 @@
   <% if (suscripciones.length === 0) { %>
     <p class="empty">No tienes suscripciones registradas.</p>
   <% } else { %>
-    <% suscripciones.forEach(s => { %>
-      <% const esAnual = s.frecuencia === 'anual'; %>
-      <div class="suscripcion-item" data-id="<%= s.id %>">
-        <div class="suscripcion-header">
-          <div class="suscripcion-info">
-            <strong><%= s.nombre %></strong>
-            <% if (esAnual && s.mes_pago) { %>
-              <span class="dia-pago">📅 <%= s.dia_pago %> de <%= MESES[s.mes_pago - 1] %> · Anual</span>
-            <% } else { %>
-              <span class="dia-pago">📅 Día <%= s.dia_pago %> · Mensual</span>
-            <% } %>
+
+    <!-- Sección Mensuales -->
+    <h2 style="font-size: 1rem; opacity: 0.8; margin: 1.25rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+      Suscripciones mensuales (<%= mensuales.length %>)
+    </h2>
+    <% if (mensuales.length === 0) { %>
+      <p class="empty" style="margin-bottom: 1rem;">No tienes suscripciones mensuales.</p>
+    <% } else { %>
+      <% mensuales.forEach(s => { %>
+        <div class="suscripcion-item" data-id="<%= s.id %>">
+          <div class="suscripcion-header">
+            <div class="suscripcion-info">
+              <strong><%= s.nombre %></strong>
+              <span class="dia-pago">📅 Día <%= s.dia_pago %></span>
+            </div>
+            <div class="suscripcion-valor">
+              $<%= s.valor.toLocaleString() %>
+              <span class="menu-tres-puntos" data-id="<%= s.id %>">⋮</span>
+            </div>
           </div>
-          <div class="suscripcion-valor">
-            $<%= s.valor.toLocaleString() %>
-            <% if (esAnual) { %>
+          
+          <!-- Menú de acciones desplegable -->
+          <div class="suscripcion-actions" id="acciones-<%= s.id %>">
+            <div class="action-buttons">
+              <button class="action-btn primary" data-action="editar" data-id="<%= s.id %>">✏️ Editar</button>
+              <button class="action-btn danger" data-action="borrar" data-id="<%= s.id %>">🗑️ Borrar</button>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+
+    <!-- Separador y Sección Anuales -->
+    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 1.75rem 0 1.25rem;">
+    <h2 style="font-size: 1rem; opacity: 0.8; margin: 0 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+      Suscripciones anuales (<%= anuales.length %>)
+    </h2>
+    <% if (anuales.length === 0) { %>
+      <p class="empty">No tienes suscripciones anuales.</p>
+    <% } else { %>
+      <% anuales.forEach(s => { %>
+        <div class="suscripcion-item" data-id="<%= s.id %>">
+          <div class="suscripcion-header">
+            <div class="suscripcion-info">
+              <strong><%= s.nombre %></strong>
+              <span class="dia-pago">📅 <%= s.dia_pago %> de <%= s.mes_pago ? MESES[s.mes_pago - 1] : '' %></span>
+            </div>
+            <div class="suscripcion-valor">
+              $<%= s.valor.toLocaleString() %>
               <small style="display: block; font-size: 0.78em; opacity: 0.75;">($<%= Math.round(s.valor / 12).toLocaleString() %>/mes)</small>
-            <% } %>
-            <span class="menu-tres-puntos" data-id="<%= s.id %>">⋮</span>
+              <span class="menu-tres-puntos" data-id="<%= s.id %>">⋮</span>
+            </div>
+          </div>
+          
+          <!-- Menú de acciones desplegable -->
+          <div class="suscripcion-actions" id="acciones-<%= s.id %>">
+            <div class="action-buttons">
+              <button class="action-btn primary" data-action="editar" data-id="<%= s.id %>">✏️ Editar</button>
+              <button class="action-btn danger" data-action="borrar" data-id="<%= s.id %>">🗑️ Borrar</button>
+            </div>
           </div>
         </div>
-        
-        <!-- Menú de acciones desplegable -->
-        <div class="suscripcion-actions" id="acciones-<%= s.id %>">
-          <div class="action-buttons">
-            <button class="action-btn primary" data-action="editar" data-id="<%= s.id %>">✏️ Editar</button>
-            <button class="action-btn danger" data-action="borrar" data-id="<%= s.id %>">🗑️ Borrar</button>
-          </div>
-        </div>
-      </div>
-    <% }) %>
+      <% }) %>
+    <% } %>
+
   <% } %>
 </div>
 
