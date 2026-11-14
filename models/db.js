@@ -50,6 +50,8 @@ db.exec(`
     nombre TEXT NOT NULL,
     valor REAL NOT NULL,
     dia_pago INTEGER NOT NULL CHECK (dia_pago >= 1 AND dia_pago <= 31),
+    frecuencia TEXT NOT NULL DEFAULT 'mensual',
+    mes_pago INTEGER CHECK (mes_pago IS NULL OR (mes_pago >= 1 AND mes_pago <= 12)),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
   );
@@ -194,12 +196,9 @@ try {
   const hasFechaPago = deudaInfo.some(col => col.name === 'fecha_pago');
   const hasDiaPago = deudaInfo.some(col => col.name === 'dia_pago');
   
-  // Si existe fecha_pago pero no dia_pago, migrar
   if (hasFechaPago && !hasDiaPago) {
-    // Agregar columna dia_pago
     db.exec('ALTER TABLE deudas ADD COLUMN dia_pago INTEGER CHECK (dia_pago >= 1 AND dia_pago <= 31);');
     
-    // Extraer el día de fecha_pago (formato YYYY-MM-DD)
     const deudas = db.prepare('SELECT id, fecha_pago FROM deudas WHERE fecha_pago IS NOT NULL').all();
     const updateStmt = db.prepare('UPDATE deudas SET dia_pago = ? WHERE id = ?');
     deudas.forEach(d => {
@@ -209,8 +208,6 @@ try {
       }
     });
     
-    // Eliminar columna fecha_pago
-    // SQLite no permite DROP COLUMN directamente, así que recreamos la tabla
     db.exec(`
       CREATE TABLE deudas_temp (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -237,13 +234,27 @@ try {
     console.log('Migración: deudas actualizada con dia_pago y archivada');
   }
   
-  // Si no existe archivada, agregarla
   if (!deudaInfo.some(col => col.name === 'archivada')) {
     db.exec('ALTER TABLE deudas ADD COLUMN archivada BOOLEAN DEFAULT 0;');
     console.log('Migración: columna archivada agregada a deudas');
   }
 } catch (err) {
   console.error('Error en migración de deudas:', err.message);
+}
+
+// 4. Migración para suscripciones: frecuencia (mensual/anual) y mes_pago
+try {
+  const subInfo = db.prepare("PRAGMA table_info(suscripciones)").all();
+  if (!subInfo.some(col => col.name === 'frecuencia')) {
+    db.exec("ALTER TABLE suscripciones ADD COLUMN frecuencia TEXT NOT NULL DEFAULT 'mensual';");
+    console.log('Migración: columna frecuencia agregada a suscripciones');
+  }
+  if (!subInfo.some(col => col.name === 'mes_pago')) {
+    db.exec('ALTER TABLE suscripciones ADD COLUMN mes_pago INTEGER;');
+    console.log('Migración: columna mes_pago agregada a suscripciones');
+  }
+} catch (err) {
+  console.error('Error en migración de suscripciones:', err.message);
 }
 
 module.exports = db;
