@@ -14,7 +14,7 @@ module.exports = {
     const stmt = db.prepare(`
       SELECT * FROM suscripciones
       WHERE usuario_id = ?
-      ORDER BY created_at ASC
+      ORDER BY dia_pago ASC, created_at ASC
     `);
     return stmt.all(usuario_id);
   },
