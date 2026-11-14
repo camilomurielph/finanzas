@@ -7,8 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const modal = document.getElementById('modal-suscripcion');
   const form = document.getElementById('form-suscripcion');
   const idInput = document.getElementById('suscripcion-id');
+  const frecuenciaSelect = document.getElementById('frecuencia');
   const nombreInput = document.getElementById('nombre');
   const valorInput = document.getElementById('valor');
+  const labelValor = document.getElementById('label-valor');
+  const campoMesPago = document.getElementById('campo-mes-pago');
+  const mesSelect = document.getElementById('mes_pago');
   const diaInput = document.getElementById('dia_pago');
   const modalTitle = document.getElementById('modal-suscripcion-title');
   const btnAgregar = document.getElementById('btn-agregar-suscripcion');
@@ -16,6 +20,22 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('btnAgregar:', btnAgregar);
 
   // ===== Funciones auxiliares =====
+  function actualizarCamposFrecuencia() {
+    const esAnual = frecuenciaSelect && frecuenciaSelect.value === 'anual';
+    if (campoMesPago) {
+      campoMesPago.classList.toggle('hidden', !esAnual);
+      campoMesPago.style.display = esAnual ? 'block' : 'none';
+    }
+    if (mesSelect) {
+      mesSelect.required = esAnual;
+      if (!esAnual) mesSelect.value = '';
+    }
+    if (labelValor && valorInput) {
+      // Actualiza solo el nodo de texto de la etiqueta sin perder el input
+      labelValor.firstChild.textContent = esAnual ? 'Valor anual (COP) ' : 'Valor mensual (COP) ';
+    }
+  }
+
   function showModal() {
     if (modal) {
       modal.classList.add('visible');
@@ -32,6 +52,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.suscripcion-actions.open').forEach(el => {
       el.classList.remove('open');
     });
+  }
+
+  if (frecuenciaSelect) {
+    frecuenciaSelect.addEventListener('change', actualizarCamposFrecuencia);
   }
 
   // Cerrar modal al hacer clic en la 'X' o fuera del contenido
@@ -85,6 +109,8 @@ document.addEventListener('DOMContentLoaded', function() {
       if (idInput) idInput.value = '';
       if (modalTitle) modalTitle.textContent = 'Agregar suscripción';
       if (form) form.reset();
+      if (frecuenciaSelect) frecuenciaSelect.value = 'mensual';
+      actualizarCamposFrecuencia();
       showModal();
     });
   } else {
@@ -94,10 +120,13 @@ document.addEventListener('DOMContentLoaded', function() {
   if (form) {
     form.addEventListener('submit', function(e) {
       e.preventDefault();
+      const frecuencia = frecuenciaSelect ? frecuenciaSelect.value : 'mensual';
       const data = {
         nombre: nombreInput ? nombreInput.value.trim() : '',
         valor: valorInput ? valorInput.value : '',
-        dia_pago: diaInput ? diaInput.value : ''
+        dia_pago: diaInput ? diaInput.value : '',
+        frecuencia: frecuencia,
+        mes_pago: frecuencia === 'anual' && mesSelect ? mesSelect.value : null
       };
       const id = idInput ? idInput.value : '';
       const url = id ? `/suscripciones/editar/${id}` : '/suscripciones/agregar';
@@ -130,8 +159,11 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(s => {
         if (idInput) idInput.value = s.id;
         if (modalTitle) modalTitle.textContent = 'Editar suscripción';
+        if (frecuenciaSelect) frecuenciaSelect.value = s.frecuencia || 'mensual';
+        actualizarCamposFrecuencia();
         if (nombreInput) nombreInput.value = s.nombre;
         if (valorInput) valorInput.value = s.valor;
+        if (mesSelect && s.mes_pago) mesSelect.value = s.mes_pago;
         if (diaInput) diaInput.value = s.dia_pago;
         showModal();
       })
