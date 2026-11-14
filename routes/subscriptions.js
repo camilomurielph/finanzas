@@ -28,12 +28,26 @@ router.get('/api/:id', auth, (req, res) => {
 
 // ===== Crear nueva suscripción =====
 router.post('/agregar', auth, (req, res) => {
-  const { nombre, valor, dia_pago } = req.body;
+  const { nombre, valor, dia_pago, frecuencia, mes_pago } = req.body;
+  const freq = frecuencia === 'anual' ? 'anual' : 'mensual';
+  const mesNum = freq === 'anual' ? parseInt(mes_pago) : null;
+
   if (!nombre || !valor || !dia_pago) {
     return res.status(400).json({ error: 'Faltan datos' });
   }
+  if (freq === 'anual' && (!mesNum || mesNum < 1 || mesNum > 12)) {
+    return res.status(400).json({ error: 'Debes seleccionar el mes de pago para una suscripción anual' });
+  }
+
   try {
-    const id = Subscription.create(req.session.user.id, nombre, parseFloat(valor), parseInt(dia_pago));
+    const id = Subscription.create(
+      req.session.user.id,
+      nombre,
+      parseFloat(valor),
+      parseInt(dia_pago),
+      freq,
+      mesNum
+    );
     res.json({ success: true, id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -42,12 +56,21 @@ router.post('/agregar', auth, (req, res) => {
 
 // ===== Editar suscripción =====
 router.put('/editar/:id', auth, (req, res) => {
-  const { nombre, valor, dia_pago } = req.body;
+  const { nombre, valor, dia_pago, frecuencia, mes_pago } = req.body;
+  const freq = frecuencia === 'anual' ? 'anual' : 'mensual';
+  const mesNum = freq === 'anual' ? parseInt(mes_pago) : null;
+
+  if (freq === 'anual' && (!mesNum || mesNum < 1 || mesNum > 12)) {
+    return res.status(400).json({ error: 'Debes seleccionar el mes de pago para una suscripción anual' });
+  }
+
   try {
     Subscription.update(req.params.id, req.session.user.id, {
       nombre,
       valor: parseFloat(valor),
-      dia_pago: parseInt(dia_pago)
+      dia_pago: parseInt(dia_pago),
+      frecuencia: freq,
+      mes_pago: mesNum
     });
     res.json({ success: true });
   } catch (err) {
