@@ -30,9 +30,9 @@ class DashboardHelper {
       LIMIT 5
     `).all(usuario_id);
 
-    // ===== SUSCRIPCIONES =====
+    // ===== SUSCRIPCIONES (mensuales + anuales prorrateadas / 12) =====
     const totalSuscripciones = db.prepare(`
-      SELECT SUM(valor) as total
+      SELECT SUM(CASE WHEN frecuencia = 'anual' THEN valor / 12.0 ELSE valor END) as total
       FROM suscripciones
       WHERE usuario_id = ?
     `).get(usuario_id);
